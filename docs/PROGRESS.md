@@ -78,6 +78,12 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Status `applied` untuk quietTime/emptyDay/transitionGap belum diatur setelah sheet Tambah/Ubah dari saran berhasil disimpan.
   - Tes widget untuk form Tambah/Ubah belum ada (yang dites hanya fungsi murni dan komponen anak).
 
+## Tahap 4–5 — Perbaikan audit (2 November 2026)
+- **Status:** selesai. Audit baca-kode atas Tahap 4 dan 5 menemukan 9 bug + 12 kekurangan (T4) dan 11 bug + 10 kekurangan (T5); semua dikerjakan kecuali B7/B12 T4 (sengaja dilewati).
+- **Hasil:** `flutter analyze` 0 issue; `flutter test` 139 lulus (tes baru: `tahap4_logic`, `tahap4_widgets`, `tahap5_*`).
+- **Bug utama yang ditutup:** Urungkan hapus tidak lagi melempar StateError; `shortTitle` ikut nama di form Ubah; saran "Geser" bisa diterapkan; saran hari kosong disaring per tanggal; satu kegiatan "Sekarang" (`findCurrentActivity`); validasi Selesai > Mulai; `end` null hanya untuk Tidur; keyboard tidak menutupi isian; status `applied` diatur setelah saran dipakai.
+- **Utang:** langkah asli tidak disimpan saat saran independence (§9.3 "Bisa dikembalikan"); swipe abaikan saran (§9.5) belum ada; tombol bulan belum membuka pemilih; `ChildSegmented` di Beranda tidak ada di OT-01; `findNearestFreeSlot` belum menangani lewat tengah malam; kegiatan berulang tidak diperluas saat tanggal diubah; belum dijalankan di perangkat (overflow 360 dp / skala 1.3x belum diuji).
+
 ## Tahap 6 — Anak
 - **Status:** belum dimulai. Ingat catatan di DECISIONS.md: pasang `RoleSwitchButton` di Jadwal anak yang asli.
 

@@ -20,6 +20,21 @@ import 'widgets/add_activity_sheet.dart';
 import 'widgets/schedule_activity_rows.dart';
 import 'widgets/schedule_empty_day.dart';
 
+/// Berpindah [weeks] minggu pada strip. Tanggal terpilih ikut bergeser
+/// (hari yang sama di minggu tujuan) supaya selalu terlihat di strip dan
+/// ringkasan hari/daftar kegiatan konsisten dengan strip (OT-04).
+({DateTime weekStart, DateTime selectedDate}) shiftWeek(
+  DateTime weekStart,
+  DateTime selectedDate,
+  int weeks,
+) {
+  final delta = Duration(days: 7 * weeks);
+  return (
+    weekStart: weekStart.add(delta),
+    selectedDate: selectedDate.add(delta),
+  );
+}
+
 class CaregiverScheduleScreen extends ConsumerWidget {
   const CaregiverScheduleScreen({super.key});
 
@@ -33,15 +48,19 @@ class CaregiverScheduleScreen extends ConsumerWidget {
     final now = clock.now;
 
     final child = state.children.firstWhere((c) => c.id == selectedChildId);
-    final childIndex = state.children.indexWhere((c) => c.id == selectedChildId);
+    final childIndex = state.children.indexWhere(
+      (c) => c.id == selectedChildId,
+    );
     final weekDates = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
     final selectedDayActivities = state.activities
-        .where((a) =>
-            a.childId == selectedChildId &&
-            a.date.year == selectedDate.year &&
-            a.date.month == selectedDate.month &&
-            a.date.day == selectedDate.day)
+        .where(
+          (a) =>
+              a.childId == selectedChildId &&
+              a.date.year == selectedDate.year &&
+              a.date.month == selectedDate.month &&
+              a.date.day == selectedDate.day,
+        )
         .toList();
 
     final sortedActivities = sortActivitiesByStartTime(selectedDayActivities);
@@ -54,16 +73,17 @@ class CaregiverScheduleScreen extends ConsumerWidget {
     );
 
     final datesWithActivities = <DateTime>{};
-    for (final a in state.activities.where((a) => a.childId == selectedChildId)) {
+    for (final a in state.activities.where(
+      (a) => a.childId == selectedChildId,
+    )) {
       datesWithActivities.add(DateTime(a.date.year, a.date.month, a.date.day));
     }
 
-    final suggestions = generateSuggestions(state, now, selectedChildId);
-    final emptyDayList = suggestions
-        .where((s) => s.type == SuggestionType.emptyDay)
-        .toList();
-    final emptyDaySuggestion = sortedActivities.isEmpty && emptyDayList.isNotEmpty
-        ? emptyDayList.first
+    final emptyDaySuggestion = sortedActivities.isEmpty
+        ? emptyDaySuggestionForDate(
+            generateSuggestions(state, now, selectedChildId),
+            selectedDate,
+          )
         : null;
 
     final monthYear = DateFormat('MMMM yyyy', 'id_ID').format(selectedDate);
@@ -73,7 +93,7 @@ class CaregiverScheduleScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context, monthYear),
+            _buildHeader(context, monthYear, state.notifications),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.grid16),
@@ -91,13 +111,17 @@ class CaregiverScheduleScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.grid12),
                   GestureDetector(
                     onHorizontalDragEnd: (details) {
-                      if (details.primaryVelocity! < 0) {
-                        ref.read(selectedWeekStartProvider.notifier).state =
-                            weekStart.add(const Duration(days: 7));
-                      } else if (details.primaryVelocity! > 0) {
-                        ref.read(selectedWeekStartProvider.notifier).state =
-                            weekStart.subtract(const Duration(days: 7));
-                      }
+                      final v = details.primaryVelocity ?? 0;
+                      if (v == 0) return;
+                      final shifted = shiftWeek(
+                        weekStart,
+                        selectedDate,
+                        v < 0 ? 1 : -1,
+                      );
+                      ref.read(selectedWeekStartProvider.notifier).state =
+                          shifted.weekStart;
+                      ref.read(selectedDateProvider.notifier).state =
+                          shifted.selectedDate;
                     },
                     child: WeekStrip(
                       dates: weekDates,
@@ -151,25 +175,31 @@ class CaregiverScheduleScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String monthYear) {
+  Widget _buildHeader(
+    BuildContext context,
+    String monthYear,
+    List<CaregiverNotification> notifications,
+  ) {
     return CaregiverHeader(
       title: 'Jadwal',
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(monthYear, style: AppTypography.judulBaris),
-          const SizedBox(width: 4),
-          const Icon(LucideIcons.chevronDown, size: AppSpacing.iconSize18, color: AppColors.teks),
-          const SizedBox(width: AppSpacing.grid12),
-          IconButton(
-            icon: const Icon(LucideIcons.bell),
-            iconSize: AppSpacing.iconSize22,
-            color: AppColors.teks,
-            onPressed: () => context.push('/ortu/notifikasi'),
+          Text(
+            monthYear,
+            style: AppTypography.judulBaris.copyWith(color: AppColors.utama),
+          ),
+          const SizedBox(width: AppSpacing.grid4),
+          const Icon(
+            LucideIcons.chevronDown,
+            size: AppSpacing.iconSize18,
+            color: AppColors.utama,
           ),
         ],
       ),
-      showBell: false,
+      showBell: true,
+      onBellTap: () => context.push('/ortu/notifikasi'),
+      bellHasBadge: notifications.any((n) => !n.read),
     );
   }
 }

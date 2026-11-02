@@ -48,8 +48,9 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
                         const SizedBox(width: AppSpacing.grid12),
                         Expanded(
                           child: Text(
-                            'Saran dibuat otomatis dari pola jadwal dan profil ${child.name}. '
-                            'Anda yang memutuskan.',
+                            'Saran dibuat dari pola jadwal dan profil ${child.name}. '
+                            'Bukan saran medis. '
+                            'Diskusikan dengan terapis bila ragu.',
                             style: AppTypography.kecil.copyWith(
                               color: AppColors.teksSekunder,
                             ),
@@ -77,25 +78,16 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.grid24),
-                  Text('Cek otomatis', style: AppTypography.judulBagian),
-                  const SizedBox(height: AppSpacing.grid12),
-                  _buildAutoCheckItem(
-                    'Waktu tenang sebelum tidur',
-                    'Layar < 30 menit sebelum tidur',
-                  ),
-                  _buildAutoCheckItem(
-                    'Jeda antar kegiatan',
-                    'Minimal 10 menit',
-                  ),
-                  _buildAutoCheckItem(
-                    'Latihan mandiri',
-                    'Selesai tepat waktu 5 hari berturut',
-                  ),
-                  _buildAutoCheckItem(
-                    'Hari kosong',
-                    'Sesuai minat ${child.name}',
-                  ),
+                  if (transitionGapAllClear(state, now, selectedChildId)) ...[
+                    const SizedBox(height: AppSpacing.grid24),
+                    Text('Cek otomatis', style: AppTypography.judulBagian),
+                    const SizedBox(height: AppSpacing.grid12),
+                    _buildAutoCheckItem(
+                      'Jeda transisi aman',
+                      'Semua kegiatan hari ini punya jeda minimal '
+                          '${state.settings.minGapMinutes} menit.',
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -165,8 +157,10 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid12),
       decoration: const BoxDecoration(
         border: Border(
-          bottom:
-              BorderSide(color: AppColors.garis, width: AppSpacing.strokeThin),
+          bottom: BorderSide(
+            color: AppColors.garis,
+            width: AppSpacing.strokeThin,
+          ),
         ),
       ),
       child: Row(
@@ -198,7 +192,7 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
         return (
           LucideIcons.sparkles,
           AppColors.saranTeks,
-          AppColors.saranLembut
+          AppColors.saranLembut,
         );
       case SuggestionType.quietTime:
         return (LucideIcons.moon, AppColors.saranTeks, AppColors.saranLembut);
@@ -208,9 +202,8 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
         return (
           LucideIcons.hourglass,
           AppColors.saranTeks,
-          AppColors.saranLembut
+          AppColors.saranLembut,
         );
     }
   }
 }
-

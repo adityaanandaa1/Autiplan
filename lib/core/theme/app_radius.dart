@@ -5,6 +5,7 @@ abstract final class AppRadius {
   static const double kolomIsianValue = 12.0;
   static const double pilValue = 12.0;
   static const double ubinIkon10Value = 10.0;
+  static const double ubinIkon44Value = 11.0; // 25% dari 44
   static const double sheetAtasValue = 24.0;
   static const double dialogValue = 20.0;
   static const double kartuAnakValue = 20.0;
@@ -28,6 +29,9 @@ abstract final class AppRadius {
   static const BorderRadius pil = BorderRadius.all(Radius.circular(pilValue));
   static const BorderRadius ubinIkon10 = BorderRadius.all(
     Radius.circular(ubinIkon10Value),
+  );
+  static const BorderRadius ubinIkon44 = BorderRadius.all(
+    Radius.circular(ubinIkon44Value),
   );
   static const BorderRadius sheetAtas = BorderRadius.vertical(
     top: Radius.circular(sheetAtasValue),

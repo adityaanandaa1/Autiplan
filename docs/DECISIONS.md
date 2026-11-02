@@ -46,3 +46,13 @@ Tulis setiap keputusan yang tidak tertulis di HANDOFF.md, atau setiap perbedaan 
 - **2 November 2026** · **Lint bersih Tahap 4–5** · `suggestions_screen.dart`: import ganda dihapus. `form_field.dart`: `if (x != null) x!` di collection literal diganti penanda null-aware Dart 3.12 (`?leading`, `?trailing`) mengikuti lint `use_null_aware_elements`. `add_activity_advanced.dart`: `activeColor` yang sudah deprecated diganti `activeThumbColor` pada `SwitchListTile`.
 - **2 November 2026** · **OT-01 FAB Beranda** · FAB Beranda kini membuka sheet Tambah jadwal untuk anak terpilih dengan tanggal hari ini (sebelumnya masih TODO), sesuai HANDOFF OT-01: "FAB Tambah → sheet Tambah jadwal (untuk anak terpilih, tanggal hari ini)".
 - **2 November 2026** · **16 Tes role_switch** · `role_switch_test.dart` ditambah `scrollUntilVisible` sebelum `expect`/`tap` tombol "Ganti peran" di Beranda asli: ListView malas tidak mem-build widget di luar viewport (800×600 di tes), sedangkan sejak Tahap 4 Beranda bukan lagi placeholder sehingga tombol ada di ujung daftar. Intent tes (tombol ada dan kembali ke Pilih peran) tidak berubah.
+- **2 November 2026** · **Perbaikan audit Tahap 4–5** · Koreksi: snackbar Ubah tertulis di HANDOFF 8.7 ("Perubahan terkirim ke {anak}"); butir (3) catatan OT-10/11 di atas salah dan digantikan. Pilihan yang tidak tertulis di HANDOFF:
+  - Tidur tanpa jam selesai tampil "{mulai} – Pagi" (HANDOFF 7.3); kegiatan lain tanpa selesai hanya menampilkan jam mulai.
+  - Padding header orang tua 20/12 diubah jadi 8/8 supaya tinggi 64 dan target sentuh 48 terpenuhi (HANDOFF 14); judul bergeser ~4 px.
+  - Geser strip minggu memindahkan tanggal terpilih ke hari yang sama di minggu tujuan.
+  - Ikon notifikasi kegiatan diturunkan dari judul di teks (model tanpa id kegiatan); fallback `calendar`.
+  - Grup "Cek otomatis" hanya satu baris "Jeda transisi aman" (HANDOFF 9.2), tampil bila tidak ada pemicu gap 7 hari dan hari ini ≥2 kegiatan; angka dari `Settings.minGapMinutes`.
+  - Notice hapus tampil "{lama} → Waktu bebas, {jam}" (A-02).
+  - Form Ubah: nama singkat mengikuti nama hanya bila nama berubah dan nama singkat tidak diisi manual; maks 2 kata. Tanggal bukan perubahan inti: ubah tanggal saja = "Simpan" tanpa notice. Teks validasi baru (tenang, `saranTeks`): "Jam selesai harus setelah jam mulai.", "Pilih jam selesai. Hanya kegiatan Tidur yang boleh tanpa jam selesai.", "Nama kegiatan wajib diisi.", "Nama singkat maksimal 2 kata.".
+  - Pratinjau perubahan: judul "Dulu → Sekarang", subjudul "di HP {anak}"; teks karangan ("Pesan dari Ibu:") dihapus; ubin ikon 48 (belum ada token 52).
+

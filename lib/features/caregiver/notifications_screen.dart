@@ -5,9 +5,35 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
+import '../../core/widgets/activity_icon_data.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+
+/// Ikon kegiatan untuk notifikasi activityStarted/activityDone (OT-15).
+/// Model tidak menyimpan id kegiatan, jadi diturunkan dari judul pada teks
+/// ("{anak} mulai {judul}" / "{anak} menyelesaikan {judul}"). Null bila tidak
+/// ditemukan.
+ActivityIcon? notificationActivityIcon(
+  CaregiverNotification notif,
+  AppState state,
+) {
+  final verb = switch (notif.type) {
+    NotificationType.activityStarted => 'mulai',
+    NotificationType.activityDone => 'menyelesaikan',
+    _ => null,
+  };
+  if (verb == null) return null;
+  for (final child in state.children) {
+    final prefix = '${child.name} $verb ';
+    if (!notif.text.startsWith(prefix)) continue;
+    final title = notif.text.substring(prefix.length);
+    for (final a in state.activities) {
+      if (a.childId == child.id && a.title == title) return a.icon;
+    }
+  }
+  return null;
+}
 
 class CaregiverNotificationsScreen extends ConsumerWidget {
   const CaregiverNotificationsScreen({super.key});
@@ -22,7 +48,8 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
     final olderNotifications = <CaregiverNotification>[];
 
     for (final notif in state.notifications) {
-      final isToday = notif.at.year == now.year &&
+      final isToday =
+          notif.at.year == now.year &&
           notif.at.month == now.month &&
           notif.at.day == now.day;
       if (isToday) {
@@ -37,15 +64,17 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
 
     // Mark all as read when opening screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final unreadIds =
-          state.notifications.where((n) => !n.read).map((n) => n.id).toList();
+      final unreadIds = state.notifications
+          .where((n) => !n.read)
+          .map((n) => n.id)
+          .toList();
       if (unreadIds.isNotEmpty) {
         final updatedNotifications = state.notifications
             .map((n) => unreadIds.contains(n.id) ? n.copyWith(read: true) : n)
             .toList();
-        ref.read(appStateProvider.notifier).updateState(
-              state.copyWith(notifications: updatedNotifications),
-            );
+        ref
+            .read(appStateProvider.notifier)
+            .updateState(state.copyWith(notifications: updatedNotifications));
       }
     });
 
@@ -104,15 +133,17 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
   }
 
   Widget _buildNotificationRow(CaregiverNotification notif, AppState state) {
-    final (icon, color) = _getIconAndColor(notif, state);
+    final (icon, color, bgColor) = _getIconAndColor(notif, state);
     final timeStr = DateFormat('HH.mm', 'id_ID').format(notif.at);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid14),
       decoration: const BoxDecoration(
         border: Border(
-          bottom:
-              BorderSide(color: AppColors.garis, width: AppSpacing.strokeThin),
+          bottom: BorderSide(
+            color: AppColors.garis,
+            width: AppSpacing.strokeThin,
+          ),
         ),
       ),
       child: Row(
@@ -121,7 +152,7 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
             width: AppSpacing.iconTile40,
             height: AppSpacing.iconTile40,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: bgColor,
               borderRadius: AppRadius.ubinIkon10,
             ),
             child: Icon(icon, size: AppSpacing.iconSize20, color: color),
@@ -145,8 +176,9 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
                     ),
                     child: Text(
                       notif.badge!,
-                      style:
-                          AppTypography.mikro.copyWith(color: AppColors.utama),
+                      style: AppTypography.mikro.copyWith(
+                        color: AppColors.utama,
+                      ),
                     ),
                   ),
                 ],
@@ -160,17 +192,36 @@ class CaregiverNotificationsScreen extends ConsumerWidget {
     );
   }
 
-  (IconData, Color) _getIconAndColor(
-      CaregiverNotification notif, AppState state) {
+  (IconData, Color, Color) _getIconAndColor(
+    CaregiverNotification notif,
+    AppState state,
+  ) {
+    final activityIcon = notificationActivityIcon(notif, state);
     switch (notif.type) {
       case NotificationType.changeSeen:
-        return (LucideIcons.circleCheckBig, AppColors.sukses);
+        return (
+          LucideIcons.circleCheckBig,
+          AppColors.sukses,
+          AppColors.suksesLembut,
+        );
       case NotificationType.activityStarted:
+        return (
+          activityIcon != null
+              ? lucideIconFor(activityIcon)
+              : LucideIcons.calendar,
+          AppColors.utama,
+          AppColors.utamaLembut,
+        );
       case NotificationType.activityDone:
-        return (LucideIcons.calendar, AppColors.utama);
+        return (
+          activityIcon != null
+              ? lucideIconFor(activityIcon)
+              : LucideIcons.calendar,
+          AppColors.teks,
+          AppColors.anakLembut,
+        );
       case NotificationType.emergencyPressed:
-        return (LucideIcons.phone, AppColors.bahaya);
+        return (LucideIcons.phone, AppColors.bahaya, AppColors.bahayaLembut);
     }
   }
 }
-

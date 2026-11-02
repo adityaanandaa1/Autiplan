@@ -62,8 +62,12 @@ class CaregiverAccountScreen extends ConsumerWidget {
                           icon: LucideIcons.sun,
                           label: 'Hindari',
                           value: rafi.avoids.join(', '),
-                          onTap: () =>
-                              showProfileListSheet(context, ref, rafi, 'Hindari'),
+                          onTap: () => showProfileListSheet(
+                            context,
+                            ref,
+                            rafi,
+                            'Hindari',
+                          ),
                         ),
                       ],
                     ),
@@ -77,7 +81,8 @@ class CaregiverAccountScreen extends ConsumerWidget {
                         AccountListRow(
                           icon: LucideIcons.bell,
                           label: 'Pengingat sebelum kegiatan',
-                          value: '${state.settings.reminderMinutesBefore} menit',
+                          value:
+                              '${state.settings.reminderMinutesBefore} menit',
                           onTap: () => showReminderSheet(context, ref),
                         ),
                         const AccountListDivider(),

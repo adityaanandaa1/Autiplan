@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/activity_icon_data.dart';
 import '../../../data/models/models.dart';
 import '../forms/sheet_scaffold.dart';
 
+/// Pratinjau kecil "Dulu → Sekarang" di HP anak (§8.7), bergaya A-02:
+/// ubin Dulu (opasitas 60%, tanpa tepi) → ikon `arrowRight` → ubin Sekarang
+/// (tepi 2 `anakAksen`), lalu kotak alasan berisi pesan untuk anak.
 class ChangePreviewSheet extends StatelessWidget {
   const ChangePreviewSheet({
     super.key,
@@ -12,6 +16,7 @@ class ChangePreviewSheet extends StatelessWidget {
     required this.before,
     required this.after,
     required this.message,
+    this.palette = ChildPalette.lautTenang,
   });
 
   final String childName;
@@ -19,33 +24,47 @@ class ChangePreviewSheet extends StatelessWidget {
   final ActivitySnapshot after;
   final String message;
 
+  /// Warna tema anak (A-09), supaya pratinjau sama dengan tampilan di HP anak.
+  final ChildPalette palette;
+
   @override
   Widget build(BuildContext context) {
     return SheetScaffold(
-      title: 'Tampilan di HP $childName',
-      subtitle: 'Format tenang Dulu → Sekarang',
+      title: 'Dulu → Sekarang',
+      subtitle: 'di HP $childName',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: _buildTile(
-                  label: 'DULU',
-                  title: before.shortTitle,
-                  icon: before.icon,
-                  time: before.start.toString(),
-                  color: AppColors.teksSekunder,
+                child: Opacity(
+                  opacity: AppColors.alphaSelesai,
+                  child: _tile(
+                    label: 'Dulu',
+                    snapshot: before,
+                    labelColor: AppColors.teksSekunder,
+                    highlighted: false,
+                  ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.grid12),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.grid8,
+                ),
+                child: Icon(
+                  LucideIcons.arrowRight,
+                  size: AppSpacing.iconSize24,
+                  color: palette.anakAksenKuat,
+                ),
+              ),
               Expanded(
-                child: _buildTile(
-                  label: 'SEKARANG',
-                  title: after.shortTitle,
-                  icon: after.icon,
-                  time: after.start.toString(),
-                  color: AppColors.utama,
+                child: _tile(
+                  label: 'Sekarang',
+                  snapshot: after,
+                  labelColor: palette.anakAksenKuat,
+                  highlighted: true,
                 ),
               ),
             ],
@@ -53,15 +72,13 @@ class ChangePreviewSheet extends StatelessWidget {
           if (message.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.grid16),
             Container(
-              padding: const EdgeInsets.all(AppSpacing.grid14),
-              decoration: const BoxDecoration(
-                color: AppColors.saranLembut,
-                borderRadius: AppRadius.kartuSaran,
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.grid16),
+              decoration: BoxDecoration(
+                color: palette.anakAksenLembut,
+                borderRadius: AppRadius.kartuAnak,
               ),
-              child: Text(
-                'Pesan dari Ibu: "$message"',
-                style: AppTypography.kecil,
-              ),
+              child: Text(message, style: AppTypography.isiAnak),
             ),
           ],
         ],
@@ -69,31 +86,51 @@ class ChangePreviewSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildTile({
+  Widget _tile({
     required String label,
-    required String title,
-    required ActivityIcon icon,
-    required String time,
-    required Color color,
+    required ActivitySnapshot snapshot,
+    required Color labelColor,
+    required bool highlighted,
   }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.grid12),
-      decoration: const BoxDecoration(
-        color: AppColors.latar,
-        borderRadius: AppRadius.kolomIsian,
+      decoration: BoxDecoration(
+        color: AppColors.permukaan,
+        borderRadius: AppRadius.kartuAnak,
+        border: highlighted
+            ? Border.all(
+                color: palette.anakAksen,
+                width: AppSpacing.strokeAccent,
+              )
+            : null,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: AppTypography.mikro.copyWith(color: color),
+            style: AppTypography.labelAnak.copyWith(color: labelColor),
           ),
-          const SizedBox(height: AppSpacing.grid6),
-          Icon(lucideIconFor(icon), size: AppSpacing.iconSize24, color: color),
-          const SizedBox(height: AppSpacing.grid6),
-          Text(title, style: AppTypography.judulBaris),
-          Text(time, style: AppTypography.meta),
+          const SizedBox(height: AppSpacing.grid8),
+          Container(
+            width: AppSpacing.iconTileLarge,
+            height: AppSpacing.iconTileLarge,
+            decoration: BoxDecoration(
+              color: palette.anakAksenLembut,
+              borderRadius: AppRadius.ubinIkonKartuAnak,
+            ),
+            child: Icon(
+              lucideIconFor(snapshot.icon),
+              size: AppSpacing.iconSize26,
+              color: palette.anakAksenKuat,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.grid8),
+          Text(
+            snapshot.shortTitle,
+            textAlign: TextAlign.center,
+            style: AppTypography.kegiatanAnak,
+          ),
+          Text(snapshot.start.toString(), style: AppTypography.jamAnak),
         ],
       ),
     );

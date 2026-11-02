@@ -7,8 +7,12 @@ class SuggestionCard extends StatelessWidget {
     super.key,
     required this.content,
     required this.actionLabel,
+    this.label = 'SARAN',
     this.onTap,
   });
+
+  /// Label di baris atas, mis. "Saran untuk Rafi · 1 dari 3".
+  final String label;
 
   final String content;
   final String actionLabel;
@@ -40,7 +44,7 @@ class SuggestionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.grid6),
                 Text(
-                  'SARAN',
+                  label,
                   style: AppTypography.mikro.copyWith(
                     color: AppColors.saranTeks,
                   ),

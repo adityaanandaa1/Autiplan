@@ -24,53 +24,48 @@ class CurrentActivityCard extends StatelessWidget {
   final int totalCount;
   final VoidCallback onTapSchedule;
 
+  /// Kunci ubin ikon (untuk tes ukuran).
+  static const Key iconTileKey = ValueKey('current-activity-icon-tile');
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Kegiatan sekarang', style: AppTypography.judulBagian),
-        const SizedBox(height: AppSpacing.grid12),
-        CardSurface(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return CardSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: AppSpacing.iconTile40,
-                    height: AppSpacing.iconTile40,
-                    decoration: BoxDecoration(
-                      color: currentActivity != null
-                          ? AppColors.utamaLembut
-                          : AppColors.anakLembut,
-                      borderRadius: AppRadius.ubinIkon10,
-                    ),
-                    child: Icon(
-                      currentActivity != null
-                          ? lucideIconFor(currentActivity!.icon)
-                          : (nextActivity != null
-                              ? lucideIconFor(nextActivity!.icon)
-                              : LucideIcons.sun),
-                      size: AppSpacing.iconSize22,
-                      color: currentActivity != null
-                          ? AppColors.utama
-                          : AppColors.teks,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.grid12),
-                  Expanded(
-                    child: _buildContent(),
-                  ),
-                ],
+              Container(
+                key: iconTileKey,
+                width: AppSpacing.iconTile44,
+                height: AppSpacing.iconTile44,
+                decoration: BoxDecoration(
+                  color: currentActivity != null
+                      ? AppColors.utamaLembut
+                      : AppColors.anakLembut,
+                  borderRadius: AppRadius.ubinIkon44,
+                ),
+                child: Icon(
+                  currentActivity != null
+                      ? lucideIconFor(currentActivity!.icon)
+                      : (nextActivity != null
+                            ? lucideIconFor(nextActivity!.icon)
+                            : LucideIcons.sun),
+                  size: AppSpacing.iconSize22,
+                  color: currentActivity != null
+                      ? AppColors.utama
+                      : AppColors.teks,
+                ),
               ),
-              if (totalCount > 0) _buildProgress(),
-              const SizedBox(height: AppSpacing.grid12),
-              _buildScheduleLink(),
+              const SizedBox(width: AppSpacing.grid12),
+              Expanded(child: _buildContent()),
             ],
           ),
-        ),
-      ],
+          if (totalCount > 0) _buildProgress(),
+          const SizedBox(height: AppSpacing.grid4),
+          _buildScheduleLink(),
+        ],
+      ),
     );
   }
 
@@ -84,7 +79,7 @@ class CurrentActivityCard extends StatelessWidget {
             style: AppTypography.mikro.copyWith(color: AppColors.utama),
           ),
           const SizedBox(height: AppSpacing.grid2),
-          Text(currentActivity!.title, style: AppTypography.judulBaris),
+          Text(currentActivity!.title, style: AppTypography.judulKartu),
           const SizedBox(height: AppSpacing.grid2),
           Text(
             _formatTimeRange(currentActivity!.start, currentActivity!.end),
@@ -100,11 +95,10 @@ class CurrentActivityCard extends StatelessWidget {
         children: [
           Text(
             'BERIKUTNYA · ${child.name.toUpperCase()}',
-            style:
-                AppTypography.mikro.copyWith(color: AppColors.teksSekunder),
+            style: AppTypography.mikro.copyWith(color: AppColors.teksSekunder),
           ),
           const SizedBox(height: AppSpacing.grid2),
-          Text(nextActivity!.title, style: AppTypography.judulBaris),
+          Text(nextActivity!.title, style: AppTypography.judulKartu),
           const SizedBox(height: AppSpacing.grid2),
           Text(
             _formatTimeRange(nextActivity!.start, nextActivity!.end),
@@ -126,7 +120,7 @@ class CurrentActivityCard extends StatelessWidget {
       children: [
         const SizedBox(height: AppSpacing.grid16),
         Text(
-          '$completedCount dari $totalCount selesai hari ini',
+          '$completedCount dari $totalCount kegiatan hari ini selesai',
           style: AppTypography.meta,
         ),
         const SizedBox(height: AppSpacing.grid8),
@@ -146,17 +140,20 @@ class CurrentActivityCard extends StatelessWidget {
   Widget _buildScheduleLink() {
     return InkWell(
       onTap: onTapSchedule,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text('Buka jadwal', style: AppTypography.tautanAksi),
-          const SizedBox(width: AppSpacing.grid4),
-          const Icon(
-            LucideIcons.chevronRight,
-            size: AppSpacing.iconSize16,
-            color: AppColors.utama,
-          ),
-        ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text('Buka jadwal', style: AppTypography.tautanAksi),
+            const SizedBox(width: AppSpacing.grid4),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: AppSpacing.iconSize16,
+              color: AppColors.utama,
+            ),
+          ],
+        ),
       ),
     );
   }

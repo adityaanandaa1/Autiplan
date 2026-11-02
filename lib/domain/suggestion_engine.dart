@@ -28,6 +28,53 @@ List<Suggestion> generateSuggestions(
       .toList();
 }
 
+/// Saran `emptyDay` yang berlaku untuk [date] saja (§9.4, §11 OT-07).
+/// Mengembalikan null bila tidak ada saran untuk tanggal itu.
+Suggestion? emptyDaySuggestionForDate(
+  List<Suggestion> suggestions,
+  DateTime date,
+) {
+  final key = _dateKey(date);
+  for (final s in suggestions) {
+    if (s.type == SuggestionType.emptyDay && s.payload['date'] == key) {
+      return s;
+    }
+  }
+  return null;
+}
+
+/// Benar bila "Cek otomatis · Jeda transisi aman" berlaku (§9.2): tidak ada
+/// pemicu `transitionGap` dalam 7 hari ke depan (status saran diabaikan,
+/// supaya saran yang di-dismiss tidak dianggap aman) dan hari ini punya
+/// minimal dua kegiatan.
+bool transitionGapAllClear(AppState state, DateTime now, String childId) {
+  final today = DateTime(now.year, now.month, now.day);
+  var todayCount = 0;
+  for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+    final date = today.add(Duration(days: dayOffset));
+    final sorted = sortActivitiesByStartTime(
+      state.activities
+          .where(
+            (a) =>
+                a.childId == childId &&
+                a.date.year == date.year &&
+                a.date.month == date.month &&
+                a.date.day == date.day,
+          )
+          .toList(),
+    );
+    if (dayOffset == 0) todayCount = sorted.length;
+    for (int i = 0; i < sorted.length - 1; i++) {
+      final gap = calculateGapMinutes(sorted[i], sorted[i + 1]);
+      if (gap != null && gap < state.settings.minGapMinutes) return false;
+    }
+  }
+  return todayCount >= 2;
+}
+
+String _dateKey(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 /// §9.3 Independence
 List<Suggestion> _generateIndependenceSuggestions(
   AppState state,
@@ -78,6 +125,9 @@ List<Suggestion> _generateIndependenceSuggestions(
             payload: {
               'activityId': activity.id,
               'originalSteps': activity.steps.length,
+              // Teks detail (§9.3, OT-17); daftar memakai [body].
+              'detailBody':
+                  '${child.name} menyelesaikan ${activity.title} tepat waktu $streak hari berturut-turut. Coba kurangi langkah instruksi dari ${activity.steps.length} menjadi 1 supaya ${child.name} berlatih mandiri.',
             },
             status: status,
           ),

@@ -7,17 +7,21 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/activity_icon_data.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/calm_snackbar.dart';
+import '../../../core/widgets/suggestion_card.dart';
 import '../../../data/models/models.dart';
 import '../../../data/providers.dart';
 import '../../../domain/schedule_rules.dart';
+import '../../../domain/suggestion_engine.dart';
 import '../forms/form_field.dart';
 import '../forms/form_utils.dart';
 import '../forms/icon_picker_sheet.dart';
 import '../forms/sheet_scaffold.dart';
+import '../forms/time_feedback.dart';
 import '../forms/time_picker_sheet.dart';
 import 'add_activity_advanced.dart';
 import 'change_preview_sheet.dart';
 import 'delete_activity_dialog.dart';
+import 'suggestion_detail_sheet.dart';
 
 /// Sheet Ubah jadwal (OT-10/11, aturan §8.7).
 class EditActivitySheet extends ConsumerStatefulWidget {
@@ -25,10 +29,24 @@ class EditActivitySheet extends ConsumerStatefulWidget {
     super.key,
     required this.activity,
     required this.child,
+    this.prefillStart,
+    this.prefillEnd,
+    this.suggestionId,
   });
 
+  /// Kegiatan asli seperti tersimpan di state. Dasar pembanding "sebelum"
+  /// untuk perubahan inti (§8.7); jangan diisi objek yang sudah dimodifikasi.
   final Activity activity;
   final Child child;
+
+  /// Jam usulan yang sudah terisi di form (mis. dari saran "Geser", §9.2).
+  /// [prefillEnd] hanya dipakai bila [prefillStart] diisi.
+  final TimeOfDayLite? prefillStart;
+  final TimeOfDayLite? prefillEnd;
+
+  /// ID saran asal sheet ini. Setelah perubahan berhasil disimpan, status
+  /// saran menjadi `applied` (§9.1).
+  final String? suggestionId;
 
   @override
   ConsumerState<EditActivitySheet> createState() => _EditActivitySheetState();
@@ -48,6 +66,11 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
   late bool _independentMode;
   bool _showAdvanced = false;
 
+  /// True bila pengguna mengisi Nama singkat sendiri di sheet ini. Selain
+  /// itu Nama singkat mengikuti Nama bila Nama diubah (§8.6), dan tetap
+  /// seperti semula bila Nama tidak diubah.
+  bool _shortManual = false;
+
   Activity get _original => widget.activity;
 
   @override
@@ -59,8 +82,8 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     _messageController = TextEditingController();
     _icon = a.icon;
     _date = dateOnly(a.date);
-    _start = a.start;
-    _end = a.end;
+    _start = widget.prefillStart ?? a.start;
+    _end = widget.prefillStart != null ? widget.prefillEnd : a.end;
     _repeatWeekdays = {...a.repeatWeekdays};
     _independentMode = a.independentMode;
     for (final step in a.steps) {
@@ -79,6 +102,26 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     super.dispose();
   }
 
+  void _syncShortTitle() {
+    final title = _titleController.text.trim();
+    _shortTitleController.text = title == _original.title
+        ? _original.shortTitle
+        : shortTitleFromTitle(title);
+  }
+
+  void _onTitleChanged(String _) {
+    setState(() {
+      if (!_shortManual) _syncShortTitle();
+    });
+  }
+
+  void _onShortTitleChanged(String value) {
+    setState(() {
+      _shortManual = value.trim().isNotEmpty;
+      if (!_shortManual) _syncShortTitle();
+    });
+  }
+
   void _addStep() {
     if (_stepControllers.length < 5) {
       setState(() => _stepControllers.add(TextEditingController()));
@@ -92,13 +135,18 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     });
   }
 
+  void _reorderStep(int oldIndex, int newIndex) {
+    setState(() {
+      final moved = _stepControllers.removeAt(oldIndex);
+      _stepControllers.insert(newIndex, moved);
+    });
+  }
+
   Activity _buildCandidate() {
     final built = buildActivity(
       id: _original.id,
       childId: _original.childId,
-      title: _titleController.text.trim().isNotEmpty
-          ? _titleController.text.trim()
-          : _original.title,
+      title: _titleController.text,
       icon: _icon,
       date: _date,
       start: _start,
@@ -125,8 +173,11 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
       candidate.start != _original.start ||
       candidate.end != _original.end;
 
+  /// Semua perubahan, termasuk yang tidak memicu pesan: tanggal, nama
+  /// singkat, langkah, ulangi, mode mandiri.
   bool _anyChanged(Activity candidate) =>
       _coreChanged(candidate) ||
+      !isSameDay(candidate.date, _original.date) ||
       candidate.shortTitle != _original.shortTitle ||
       !_sameList(candidate.steps, _original.steps) ||
       candidate.repeatWeekdays.length != _original.repeatWeekdays.length ||
@@ -141,26 +192,49 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     return true;
   }
 
-  /// Kartu saran kontekstual waktu tenang (§9.2): kegiatan memakai layar,
-  /// selesai kurang dari {quietTimeMinutes} sebelum kegiatan Tidur.
-  String? _quietTimeSuggestionText(AppState state, Activity candidate) {
+  /// Kartu saran kontekstual waktu tenang (§8.7): kegiatan hasil ubahan
+  /// memakai layar dan selesai kurang dari {quietTimeMinutes} sebelum Tidur.
+  /// Saran diambil dari mesin saran (§9.1) atas state hipotetis yang memuat
+  /// kegiatan hasil ubahan, supaya "Lihat alasannya" membuka detail saran
+  /// quietTime yang sebenarnya.
+  ({Suggestion suggestion, int gap})? _quietTimeSuggestion(
+    AppState state,
+    Activity candidate,
+  ) {
     if (!candidate.usesScreen || candidate.end == null) return null;
-    final sleepActivities = state.activities
-        .where(
-          (a) =>
-              a.childId == candidate.childId &&
-              a.icon == ActivityIcon.tidur &&
-              isSameDay(a.date, candidate.date),
-        )
-        .toList();
-    if (sleepActivities.isEmpty) return null;
-    final sleep = sleepActivities.first;
-    if (sleep.start.toMinutes() <= candidate.end!.toMinutes()) return null;
-    final gap = sleep.start.toMinutes() - candidate.end!.toMinutes();
-    if (gap >= state.settings.quietTimeMinutes) return null;
-    return '${candidate.title} selesai $gap menit sebelum tidur. '
-        'Layar menjelang tidur bisa membuat ${widget.child.name} '
-        'lebih lama tertidur. Tambahkan waktu tenang tanpa layar?';
+    final hypothetical = state.copyWith(
+      activities: [
+        for (final a in state.activities) a.id == candidate.id ? candidate : a,
+      ],
+    );
+    final found =
+        generateSuggestions(
+          hypothetical,
+          candidate.date,
+          candidate.childId,
+        ).where(
+          (s) =>
+              s.type == SuggestionType.quietTime &&
+              s.payload['screenActivityId'] == candidate.id,
+        );
+    if (found.isEmpty) return null;
+    final suggestion = found.first;
+    final sleepStart = TimeOfDayLite.fromJson(
+      Map<String, dynamic>.from(suggestion.payload['sleepStart'] as Map),
+    );
+    final gap = sleepStart.toMinutes() - candidate.end!.toMinutes();
+    // Data kegiatan hasil ubahan belum tersimpan: sertakan jam selesai dan
+    // tanggalnya supaya aksi "Tambahkan waktu tenang" tidak memakai data lama.
+    return (
+      suggestion: suggestion.copyWith(
+        payload: {
+          ...suggestion.payload,
+          'screenEnd': candidate.end!.toJson(),
+          'screenDate': candidate.date.toIso8601String(),
+        },
+      ),
+      gap: gap,
+    );
   }
 
   @override
@@ -170,28 +244,21 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     final coreChanged = _coreChanged(candidate);
     final anyChanged = _anyChanged(candidate);
 
-    final conflicts = findConflicts(
-      activity: candidate,
-      allActivities: state.activities,
-    );
-    final isConflicting = conflicts.isNotEmpty;
-
-    TimeOfDayLite? freeSlot;
-    if (isConflicting) {
-      freeSlot = findNearestFreeSlot(
-        activity: candidate,
-        allActivities: state.activities,
-        conflictingActivity: conflicts.first,
-        minGapMinutes: state.settings.minGapMinutes,
-      );
-    }
-
-    final quietTime = _quietTimeSuggestionText(state, candidate);
+    final titleBlank = _titleController.text.trim().isEmpty;
+    final shortTitleValid = isValidShortTitle(_shortTitleController.text);
+    final quiet = _quietTimeSuggestion(state, candidate);
     final message = _messageController.text.trim();
-    final canSave = !isConflicting &&
+    final canSave =
+        !titleBlank &&
+        shortTitleValid &&
+        !TimeFeedback.blocksSave(candidate, state.activities) &&
         anyChanged &&
         (!coreChanged || (message.isNotEmpty && message.length <= 120));
-    final saveLabel = coreChanged ? 'Kirim perubahan' : 'Simpan';
+    // "Simpan" hanya bila yang berubah cuma bagian di luar nama/ikon/jam
+    // (§8.7); selebihnya "Kirim perubahan" (nonaktif sampai ada perubahan).
+    final saveLabel = (!coreChanged && anyChanged)
+        ? 'Simpan'
+        : 'Kirim perubahan';
 
     return SheetScaffold(
       title: 'Ubah jadwal',
@@ -200,17 +267,17 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Label nama dengan ikon pencil (OT-10).
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.grid6),
+          const Padding(
+            padding: EdgeInsets.only(bottom: AppSpacing.grid6),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.pencil,
                   size: AppSpacing.iconSize16,
                   color: AppColors.teksSekunder,
                 ),
-                const SizedBox(width: AppSpacing.grid6),
-                const Text('Nama kegiatan', style: AppTypography.meta),
+                SizedBox(width: AppSpacing.grid6),
+                Text('Nama kegiatan', style: AppTypography.meta),
               ],
             ),
           ),
@@ -218,7 +285,8 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
             controller: _titleController,
             hint: 'Nama kegiatan',
             maxLength: 40,
-            onChanged: (_) => setState(() {}),
+            onChanged: _onTitleChanged,
+            errorText: titleBlank ? 'Nama kegiatan wajib diisi.' : null,
           ),
           const SizedBox(height: AppSpacing.grid16),
           const FormLabel('Ikon'),
@@ -231,12 +299,19 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
             text: activityIconLabel(_icon),
             trailing: const Text('Ganti', style: AppTypography.tautanAksi),
             onTap: () async {
-              final picked =
-                  await showIconPickerSheet(context, selected: _icon);
+              final picked = await showIconPickerSheet(
+                context,
+                selected: _icon,
+              );
               if (picked != null) {
                 setState(() {
                   _icon = picked;
-                  if (picked == ActivityIcon.tidur) _end = null;
+                  if (picked == ActivityIcon.tidur) {
+                    _end = null;
+                  } else {
+                    // Selesai kosong hanya untuk Tidur (§8.6): kembalikan.
+                    _end ??= defaultEndFor(_start, preferred: _original.end);
+                  }
                 });
               }
             },
@@ -268,29 +343,16 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
               }
             },
           ),
-          if (isConflicting) ...[
-            const SizedBox(height: AppSpacing.grid12),
-            FormInfoBox(
-              text:
-                  'Waktu ini bentrok dengan ${conflicts.first.title} (${formatTimeLite(conflicts.first.start)}–${conflicts.first.end != null ? formatTimeLite(conflicts.first.end!) : "Pagi"}). Pilih waktu lain supaya ${widget.child.name} tidak bingung.',
-              actionLabel: freeSlot != null
-                  ? 'Pakai ${formatTimeLite(freeSlot)}'
-                  : null,
-              onAction: freeSlot != null
-                  ? () {
-                      setState(() {
-                        final dur = candidate.end != null
-                            ? candidate.end!.toMinutes() -
-                                candidate.start.toMinutes()
-                            : 30;
-                        _start = freeSlot!;
-                        final endMin = freeSlot.toMinutes() + dur;
-                        _end = TimeOfDayLite(endMin ~/ 60, endMin % 60);
-                      });
-                    }
-                  : null,
-            ),
-          ],
+          TimeFeedback(
+            candidate: candidate,
+            allActivities: state.activities,
+            minGapMinutes: state.settings.minGapMinutes,
+            childName: widget.child.name,
+            onUseSlot: (start, end) => setState(() {
+              _start = start;
+              _end = end;
+            }),
+          ),
           const SizedBox(height: AppSpacing.grid16),
           if (coreChanged) ...[
             FormLabel('Pesan untuk ${widget.child.name}', optional: 'wajib'),
@@ -312,10 +374,11 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
                   'Lihat tampilan Dulu → Sekarang di HP ${widget.child.name}',
               onTap: () => showModalBottomSheet(
                 context: context,
-                backgroundColor: Colors.transparent,
+                backgroundColor: AppColors.transparan,
                 isScrollControlled: true,
                 builder: (ctx) => ChangePreviewSheet(
                   childName: widget.child.name,
+                  palette: ChildPalette.fromTheme(widget.child.theme),
                   before: ActivitySnapshot(
                     shortTitle: _original.shortTitle,
                     title: _original.title,
@@ -337,11 +400,22 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
               text:
                   'Kolom "Pesan untuk ${widget.child.name}" muncul setelah kamu mengubah nama, ikon, atau jam.',
             ),
-          if (quietTime != null) ...[
+          if (quiet != null) ...[
             const SizedBox(height: AppSpacing.grid12),
-            FormInfoBox(text: quietTime),
+            SuggestionCard(
+              content:
+                  '${candidate.title} selesai ${quiet.gap} menit sebelum tidur. '
+                  'Layar menjelang tidur bisa membuat ${widget.child.name} '
+                  'lebih lama tertidur. Tambahkan waktu tenang tanpa layar?',
+              actionLabel: 'Lihat alasannya',
+              onTap: () => showSuggestionDetailSheet(
+                context,
+                suggestion: quiet.suggestion,
+              ),
+            ),
           ],
           const SizedBox(height: AppSpacing.grid16),
+          const FormLabel('Opsi lanjutan'),
           FormLinkRow(
             leading: const Icon(
               LucideIcons.slidersHorizontal,
@@ -363,6 +437,7 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
               independentMode: _independentMode,
               onAddStep: _addStep,
               onRemoveStep: _removeStep,
+              onReorderStep: _reorderStep,
               onDayToggled: (day) => setState(() {
                 if (_repeatWeekdays.contains(day)) {
                   _repeatWeekdays.remove(day);
@@ -370,6 +445,10 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
                   _repeatWeekdays.add(day);
                 }
               }),
+              onShortTitleChanged: _onShortTitleChanged,
+              shortTitleError: shortTitleValid
+                  ? null
+                  : 'Nama singkat maksimal 2 kata.',
               onIndependentChanged: (v) => setState(() => _independentMode = v),
             ),
           const SizedBox(height: AppSpacing.grid24),
@@ -392,6 +471,7 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     final appState = ref.read(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
     final now = ref.read(clockProvider).now;
+    final suggestionId = widget.suggestionId;
 
     final result = applyActivityEdit(
       state: appState,
@@ -400,13 +480,23 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
       now: now,
       noticeId: generateId('notice'),
     );
-    notifier.updateState(result.state);
+    // Status saran menjadi applied hanya setelah perubahan tersimpan (§9.1).
+    notifier.updateState(
+      suggestionId == null
+          ? result.state
+          : result.state.copyWith(
+              suggestionStatus: {
+                ...result.state.suggestionStatus,
+                suggestionId: SuggestionStatus.applied,
+              },
+            ),
+    );
 
     Navigator.of(context).pop();
     CalmSnackbar.show(
       context,
       message: coreChanged
-          ? 'Perubahan dikirim ke HP ${widget.child.name}'
+          ? 'Perubahan terkirim ke ${widget.child.name}'
           : 'Jadwal tersimpan dan dikirim ke HP ${widget.child.name}',
     );
   }
@@ -420,17 +510,19 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
     );
     if (confirmed != true || !mounted) return;
 
-    final appState = ref.read(appStateProvider);
-    final notifier = ref.read(appStateProvider.notifier);
-    final now = ref.read(clockProvider).now;
+    // Setelah sheet ditutup, `ref` ikut tidak berlaku (StateError). Ambil
+    // container provider sekarang; ia hidup lebih lama daripada sheet, jadi
+    // aman dipakai di callback Urungkan.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final now = container.read(clockProvider).now;
 
     final deleted = deleteActivity(
-      state: appState,
+      state: container.read(appStateProvider),
       activityId: activity.id,
       now: now,
       noticeId: generateId('notice'),
     );
-    notifier.updateState(deleted.state);
+    container.read(appStateProvider.notifier).updateState(deleted.state);
 
     Navigator.of(context).pop();
     CalmSnackbar.show(
@@ -438,8 +530,8 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
       message: '${activity.title} dihapus',
       actionLabel: 'Urungkan',
       onActionPressed: () {
-        final current = ref.read(appStateProvider);
-        ref
+        final current = container.read(appStateProvider);
+        container
             .read(appStateProvider.notifier)
             .updateState(undoDeleteActivity(current, deleted));
       },

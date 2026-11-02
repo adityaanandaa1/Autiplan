@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/clock.dart';
@@ -19,6 +20,23 @@ import '../../domain/suggestion_engine.dart';
 import 'widgets/add_activity_sheet.dart';
 import 'widgets/current_activity_card.dart';
 
+/// Sapaan Beranda (OT-01): pagi 04–10.59, siang 11–14.59, sore 15–17.59,
+/// malam 18–03.59.
+String caregiverGreeting(DateTime now) {
+  final h = now.hour;
+  final String part;
+  if (h >= 4 && h < 11) {
+    part = 'pagi';
+  } else if (h >= 11 && h < 15) {
+    part = 'siang';
+  } else if (h >= 15 && h < 18) {
+    part = 'sore';
+  } else {
+    part = 'malam';
+  }
+  return 'Selamat $part, Bu Sari';
+}
+
 class CaregiverHomeScreen extends ConsumerWidget {
   const CaregiverHomeScreen({super.key});
 
@@ -30,15 +48,18 @@ class CaregiverHomeScreen extends ConsumerWidget {
     final now = clock.now;
 
     final child = state.children.firstWhere((c) => c.id == selectedChildId);
-    final childIndex =
-        state.children.indexWhere((c) => c.id == selectedChildId);
+    final childIndex = state.children.indexWhere(
+      (c) => c.id == selectedChildId,
+    );
 
     final todayActivities = state.activities
-        .where((a) =>
-            a.childId == selectedChildId &&
-            a.date.year == now.year &&
-            a.date.month == now.month &&
-            a.date.day == now.day)
+        .where(
+          (a) =>
+              a.childId == selectedChildId &&
+              a.date.year == now.year &&
+              a.date.month == now.month &&
+              a.date.day == now.day,
+        )
         .toList();
 
     final sortedActivities = sortActivitiesByStartTime(todayActivities);
@@ -58,6 +79,15 @@ class CaregiverHomeScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.grid16),
                 children: [
+                  Text(caregiverGreeting(now), style: AppTypography.sapaan),
+                  const SizedBox(height: AppSpacing.grid4),
+                  Text(
+                    DateFormat('EEEE, d MMMM y', 'id_ID').format(now),
+                    style: AppTypography.isi.copyWith(
+                      color: AppColors.teksSekunder,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.grid20),
                   ChildSegmented(
                     children: state.children
                         .map((c) => ChildSegmentData(name: c.name, age: c.age))
@@ -81,6 +111,8 @@ class CaregiverHomeScreen extends ConsumerWidget {
                   if (suggestions.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.grid20),
                     SuggestionCard(
+                      label:
+                          'Saran untuk ${child.name} · 1 dari ${suggestions.length}',
                       content: suggestions.first.body,
                       actionLabel: 'Lihat semua saran',
                       onTap: () => context.push('/ortu/saran'),
@@ -101,10 +133,8 @@ class CaregiverHomeScreen extends ConsumerWidget {
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (ctx) => AddActivitySheet(
-              childId: selectedChildId,
-              initialDate: now,
-            ),
+            builder: (ctx) =>
+                AddActivitySheet(childId: selectedChildId, initialDate: now),
           );
         },
       ),
@@ -118,28 +148,19 @@ class CaregiverHomeScreen extends ConsumerWidget {
     List<Completion> completions,
     DateTime now,
   ) {
-    Activity? currentActivity;
+    // Maksimal satu "Sekarang": start paling akhir (§8.1).
+    final currentActivity = findCurrentActivity(
+      childId: child.id,
+      now: now,
+      activities: activities,
+      completions: completions,
+    );
+
     Activity? nextActivity;
-
-    for (final activity in activities) {
-      final statusResult = getActivityStatus(
-        activity: activity,
-        selectedDate: now,
-        now: now,
-        completions: completions,
-        notices: [],
-      );
-      if (statusResult.isNow) {
-        currentActivity = activity;
-        break;
-      }
-    }
-
     if (currentActivity == null) {
+      final nowMinutes = now.hour * 60 + now.minute;
       for (final activity in activities) {
-        final startMinutes = activity.start.toMinutes();
-        final nowMinutes = now.hour * 60 + now.minute;
-        if (startMinutes > nowMinutes) {
+        if (activity.start.toMinutes() > nowMinutes) {
           nextActivity = activity;
           break;
         }
@@ -170,16 +191,17 @@ class CaregiverHomeScreen extends ConsumerWidget {
     DateTime now,
   ) {
     final todayNotices = state.notices
-        .where((n) =>
-            n.childId == child.id &&
-            n.sentAt.year == now.year &&
-            n.sentAt.month == now.month &&
-            n.sentAt.day == now.day)
+        .where(
+          (n) =>
+              n.childId == child.id &&
+              n.sentAt.year == now.year &&
+              n.sentAt.month == now.month &&
+              n.sentAt.day == now.day,
+        )
         .toList();
 
-    todayNotices.sort((a, b) => b.sentAt.compareTo(a.sentAt));
-    final hasUnreadNotices = todayNotices.any((n) => n.seenAt == null);
-    final latestNotice = todayNotices.isNotEmpty ? todayNotices.first : null;
+    final summary = summarizeNotices(todayNotices);
+    final latestNotice = summary?.latest;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,12 +238,13 @@ class CaregiverHomeScreen extends ConsumerWidget {
         else
           ChangeNoticeCard(
             childName: child.name,
-            hasUnread: hasUnreadNotices,
-            seenAt: latestNotice?.seenAt,
+            hasUnread: latestNotice!.seenAt == null,
+            seenAt: latestNotice.seenAt,
+            changeLine: noticeChangeLine(latestNotice),
+            otherCount: summary!.otherCount,
             onTap: () => context.go('/ortu/jadwal'),
           ),
       ],
     );
   }
 }
-

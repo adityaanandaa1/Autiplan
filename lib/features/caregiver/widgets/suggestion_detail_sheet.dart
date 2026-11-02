@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/buttons.dart';
@@ -53,22 +54,13 @@ class _SuggestionDetailBody extends ConsumerWidget {
                 onClose: () => Navigator.of(context).pop(),
               ),
               const SizedBox(height: AppSpacing.grid16),
-              Text(suggestion.body, style: AppTypography.isi),
+              Text(
+                (suggestion.payload['detailBody'] as String?) ??
+                    suggestion.body,
+                style: AppTypography.isiDetail,
+              ),
               const SizedBox(height: AppSpacing.grid16),
-              const _SectionLabel('Kenapa (data)'),
-              Text(suggestion.reasonData, style: AppTypography.kecil),
-              const SizedBox(height: AppSpacing.grid12),
-              const _SectionLabel('Kenapa (dasar)'),
-              Text(suggestion.reasonBasis, style: AppTypography.kecil),
-              if (suggestion.type == SuggestionType.independence) ...[
-                const SizedBox(height: AppSpacing.grid12),
-                Text(
-                  'Bisa dikembalikan kapan saja.',
-                  style: AppTypography.meta.copyWith(
-                    color: AppColors.teksSekunder,
-                  ),
-                ),
-              ],
+              _WhyBox(suggestion: suggestion),
               const SizedBox(height: AppSpacing.grid24),
               PrimaryButton(
                 label: suggestion.actionLabel,
@@ -109,18 +101,16 @@ class _Header extends StatelessWidget {
             borderRadius: AppRadius.ubinIkon10,
           ),
           child: const Icon(
-            Icons.lightbulb_outline,
+            LucideIcons.lightbulb,
             size: AppSpacing.iconSize20,
             color: AppColors.saranTeks,
           ),
         ),
         const SizedBox(width: AppSpacing.grid12),
-        Expanded(
-          child: Text(title, style: AppTypography.judulSheet),
-        ),
+        Expanded(child: Text(title, style: AppTypography.judulSheet)),
         IconButton(
           tooltip: 'Tutup',
-          icon: const Icon(Icons.close, size: AppSpacing.iconSize24),
+          icon: const Icon(LucideIcons.x, size: AppSpacing.iconSize24),
           color: AppColors.teksSekunder,
           onPressed: onClose,
         ),
@@ -129,19 +119,55 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
+/// Kotak "Kenapa saran ini?" (OT-17): Data, Dasar, dan catatan tambahan.
+class _WhyBox extends StatelessWidget {
+  const _WhyBox({required this.suggestion});
 
-  final String text;
+  final Suggestion suggestion;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.grid6),
-      child: Text(
-        text,
-        style: AppTypography.meta,
+    final steps = suggestion.payload['originalSteps'];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.grid16),
+      decoration: const BoxDecoration(
+        color: AppColors.latar,
+        borderRadius: AppRadius.kolomIsian,
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Kenapa saran ini?', style: AppTypography.judulBaris),
+          const SizedBox(height: AppSpacing.grid8),
+          _labelled('Data: ', suggestion.reasonData),
+          const SizedBox(height: AppSpacing.grid8),
+          _labelled('Dasar: ', suggestion.reasonBasis),
+          if (suggestion.type == SuggestionType.independence &&
+              steps is int) ...[
+            const SizedBox(height: AppSpacing.grid8),
+            Text(
+              'Bisa dikembalikan ke $steps langkah kapan saja.',
+              style: AppTypography.meta,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _labelled(String label, String value) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: label,
+            style: AppTypography.kecil.copyWith(fontWeight: FontWeight.w600),
+          ),
+          TextSpan(text: value),
+        ],
+      ),
+      style: AppTypography.kecil,
     );
   }
 }
@@ -152,7 +178,9 @@ void dismissSuggestion(
   Suggestion suggestion,
 ) {
   final state = ref.read(appStateProvider);
-  ref.read(appStateProvider.notifier).updateState(
+  ref
+      .read(appStateProvider.notifier)
+      .updateState(
         state.copyWith(
           suggestionStatus: {
             ...state.suggestionStatus,

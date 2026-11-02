@@ -12,7 +12,7 @@ Future<ActivityIcon?> showIconPickerSheet(
 }) {
   return showModalBottomSheet<ActivityIcon>(
     context: context,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparan,
     isScrollControlled: true,
     builder: (ctx) => SheetScaffold(
       title: 'Pilih ikon',
@@ -47,9 +47,7 @@ class _IconGrid extends StatelessWidget {
             selected: isSelected,
             child: Container(
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.utamaLembut
-                    : AppColors.latar,
+                color: isSelected ? AppColors.utamaLembut : AppColors.latar,
                 borderRadius: AppRadius.ubinIkon10,
                 border: isSelected
                     ? Border.all(

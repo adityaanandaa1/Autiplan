@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/theme.dart';
 import '../../../core/widgets/calm_snackbar.dart';
 import '../../../data/models/models.dart';
 import '../../../data/providers.dart';
@@ -15,6 +16,10 @@ T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
 }
 
 /// Menjalankan aksi utama sebuah saran (§9).
+///
+/// Untuk quietTime, emptyDay, dan transitionGap, sheet form dibuka dengan
+/// [Suggestion.id]; status saran menjadi `applied` hanya setelah jadwal
+/// berhasil disimpan di sheet itu (§9.1).
 void applySuggestionAction(
   BuildContext context,
   WidgetRef ref,
@@ -54,49 +59,59 @@ void applySuggestionAction(
       );
       navigator.pop();
       CalmSnackbar.show(
-        context,
+        navigator.context,
         message: 'Mode mandiri aktif untuk ${activity.title}',
       );
     case SuggestionType.emptyDay:
     case SuggestionType.quietTime:
       navigator.pop();
-      _openAddSheet(context, ref, suggestion);
+      _openAddSheet(navigator.context, state, suggestion);
     case SuggestionType.transitionGap:
       navigator.pop();
-      _openEditSheet(context, ref, suggestion);
+      _openEditSheet(navigator.context, state, suggestion);
   }
 }
 
 void _openAddSheet(
   BuildContext context,
-  WidgetRef ref,
+  AppState state,
   Suggestion suggestion,
 ) {
-  final state = ref.read(appStateProvider);
   final payload = suggestion.payload;
 
   if (suggestion.type == SuggestionType.quietTime) {
+    // Detail dari form Ubah membawa jam selesai kegiatan layar hasil ubahan
+    // (belum tersimpan); tanpa itu, ambil dari kegiatan di state.
     final screenActivityId = payload['screenActivityId'] as String?;
     final screenActivity = _firstWhereOrNull(
       state.activities,
       (a) => a.id == screenActivityId,
     );
-    if (screenActivity == null || screenActivity.end == null) return;
+    final overrideEnd = payload['screenEnd'] == null
+        ? null
+        : TimeOfDayLite.fromJson(
+            Map<String, dynamic>.from(payload['screenEnd'] as Map),
+          );
+    final start = overrideEnd ?? screenActivity?.end;
+    if (start == null) return;
+    final date = payload['screenDate'] != null
+        ? DateTime.parse(payload['screenDate'] as String)
+        : screenActivity!.date;
     final duration = payload['suggestedDuration'] as int? ?? 30;
-    final start = screenActivity.end!;
     final endMin = start.toMinutes() + duration;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparan,
       builder: (ctx) => AddActivitySheet(
         childId: suggestion.childId,
-        initialDate: screenActivity.date,
+        initialDate: date,
         initialTitle: 'Waktu tenang',
         initialIcon: ActivityIcon.tidur,
         initialStart: start,
         initialEnd: TimeOfDayLite(endMin ~/ 60, endMin % 60),
+        suggestionId: suggestion.id,
       ),
     );
     return;
@@ -116,7 +131,7 @@ void _openAddSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparan,
     builder: (ctx) => AddActivitySheet(
       childId: suggestion.childId,
       initialDate: date,
@@ -124,47 +139,46 @@ void _openAddSheet(
       initialIcon: icon,
       initialStart: start,
       initialEnd: end,
+      suggestionId: suggestion.id,
     ),
   );
 }
 
 void _openEditSheet(
   BuildContext context,
-  WidgetRef ref,
+  AppState state,
   Suggestion suggestion,
 ) {
-  final state = ref.read(appStateProvider);
   final secondId = suggestion.payload['secondActivityId'] as String?;
   final requiredGap = suggestion.payload['requiredGap'] as int? ?? 10;
   final currentGap = suggestion.payload['currentGap'] as int? ?? 0;
-  final second = _firstWhereOrNull(
-    state.activities,
-    (a) => a.id == secondId,
-  );
+  final second = _firstWhereOrNull(state.activities, (a) => a.id == secondId);
   final child = _firstWhereOrNull(
     state.children,
     (c) => c.id == suggestion.childId,
   );
   if (second == null || child == null) return;
 
+  // Jam usulan digeser, tetapi sheet menerima kegiatan ASLI dari state
+  // sebagai dasar "sebelum". Dengan begitu pergeseran dihitung sebagai
+  // perubahan inti: pesan wajib dan ChangeNotice dibuat (§8.7).
   final shift = requiredGap - currentGap;
-  final shiftedStart = second.start.toMinutes() + shift;
-  final shiftedEnd = second.end != null
-      ? second.end!.toMinutes() + shift
-      : null;
-
-  final shifted = second.copyWith(
-    start: TimeOfDayLite(shiftedStart ~/ 60, shiftedStart % 60),
-    end: shiftedEnd != null
-        ? TimeOfDayLite(shiftedEnd ~/ 60, shiftedEnd % 60)
-        : null,
-    clearEnd: shiftedEnd == null,
-  );
+  const lastMinute = 23 * 60 + 59;
+  TimeOfDayLite shifted(TimeOfDayLite t) {
+    final minutes = (t.toMinutes() + shift).clamp(0, lastMinute);
+    return TimeOfDayLite(minutes ~/ 60, minutes % 60);
+  }
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => EditActivitySheet(activity: shifted, child: child),
+    backgroundColor: AppColors.transparan,
+    builder: (ctx) => EditActivitySheet(
+      activity: second,
+      child: child,
+      prefillStart: shifted(second.start),
+      prefillEnd: second.end == null ? null : shifted(second.end!),
+      suggestionId: suggestion.id,
+    ),
   );
 }

@@ -8,11 +8,7 @@ import '../../../data/models/models.dart';
 import 'suggestion_detail_sheet.dart';
 
 class ScheduleEmptyDay extends StatelessWidget {
-  const ScheduleEmptyDay({
-    super.key,
-    required this.childName,
-    this.suggestion,
-  });
+  const ScheduleEmptyDay({super.key, required this.childName, this.suggestion});
 
   final String childName;
   final Suggestion? suggestion;
@@ -54,6 +50,7 @@ class ScheduleEmptyDay extends StatelessWidget {
         if (suggestion != null) ...[
           const SizedBox(height: AppSpacing.grid12),
           SuggestionCard(
+            label: 'Saran untuk hari kosong',
             content: suggestion!.body,
             actionLabel: suggestion!.actionLabel,
             onTap: () =>
@@ -64,4 +61,3 @@ class ScheduleEmptyDay extends StatelessWidget {
     );
   }
 }
-

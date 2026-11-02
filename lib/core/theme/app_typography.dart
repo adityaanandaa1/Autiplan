@@ -77,6 +77,15 @@ abstract final class AppTypography {
     color: AppColors.teks,
   );
 
+  // Isi detail sheet saran: 15 / tinggi baris 22 (OT-17).
+  static const TextStyle isiDetail = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    height: 22 / 15,
+    color: AppColors.teks,
+  );
+
   static const TextStyle isiHint = TextStyle(
     fontFamily: fontParent,
     fontSize: 15,

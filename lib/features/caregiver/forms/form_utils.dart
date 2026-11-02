@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../../data/models/models.dart';
+import '../../../domain/schedule_rules.dart';
 
 String formatTimeLite(TimeOfDayLite time) => time.toString();
 
@@ -37,9 +38,11 @@ Activity buildActivity({
     id: id,
     childId: childId,
     title: title.trim(),
-    shortTitle: (shortTitle == null || shortTitle.trim().isEmpty)
-        ? shortTitleFromTitle(title)
-        : shortTitle.trim(),
+    // Maks 2 kata (§6): masukan manual yang lebih panjang dipotong; UI
+    // menolak simpan lewat [isValidShortTitle] sebelum sampai di sini.
+    shortTitle: shortTitleFromTitle(
+      (shortTitle == null || shortTitle.trim().isEmpty) ? title : shortTitle,
+    ),
     icon: icon,
     date: dateOnly(date),
     start: start,
@@ -60,3 +63,26 @@ String shortTitleFromTitle(String title) {
       .toList();
   return words.join(' ');
 }
+
+/// Nama singkat untuk anak: maksimal 2 kata (§6). Kosong dianggap sah
+/// (nanti diisi otomatis dari Nama).
+bool isValidShortTitle(String value) =>
+    value.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length <= 2;
+
+/// Jam selesai bawaan bila sebelumnya kosong (ikon Tidur diganti ke ikon
+/// lain): [preferred] bila masih setelah [start], jika tidak [start] + 30
+/// menit (dibatasi 23.59).
+TimeOfDayLite defaultEndFor(TimeOfDayLite start, {TimeOfDayLite? preferred}) {
+  if (preferred != null && preferred.toMinutes() > start.toMinutes()) {
+    return preferred;
+  }
+  final minutes = (start.toMinutes() + 30).clamp(0, 23 * 60 + 59);
+  return TimeOfDayLite(minutes ~/ 60, minutes % 60);
+}
+
+/// Pesan tenang untuk masalah rentang waktu (§8.6), bukan merah.
+String timeRangeIssueMessage(TimeRangeIssue issue) => switch (issue) {
+  TimeRangeIssue.endNotAfterStart => 'Jam selesai harus setelah jam mulai.',
+  TimeRangeIssue.endRequired =>
+    'Pilih jam selesai. Hanya kegiatan Tidur yang boleh tanpa jam selesai.',
+};

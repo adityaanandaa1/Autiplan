@@ -105,6 +105,40 @@ List<Activity> sortActivitiesByStartTime(List<Activity> activities) {
   return sorted;
 }
 
+/// Masalah pada rentang waktu kegiatan (§8.6).
+enum TimeRangeIssue {
+  /// Selesai kosong, padahal hanya ikon Tidur yang boleh tanpa Selesai.
+  endRequired,
+
+  /// Selesai tidak setelah Mulai.
+  endNotAfterStart,
+}
+
+/// Memeriksa Mulai/Selesai (§8.6): Selesai > Mulai; Selesai boleh kosong
+/// hanya untuk ikon Tidur. Mengembalikan null bila valid.
+TimeRangeIssue? validateTimeRange({
+  required ActivityIcon icon,
+  required TimeOfDayLite start,
+  TimeOfDayLite? end,
+}) {
+  if (end == null) {
+    return icon == ActivityIcon.tidur ? null : TimeRangeIssue.endRequired;
+  }
+  if (end.toMinutes() <= start.toMinutes()) {
+    return TimeRangeIssue.endNotAfterStart;
+  }
+  return null;
+}
+
+/// Menit selesai efektif untuk pemeriksaan bentrok. Tanpa selesai, atau
+/// selesai yang tidak setelah mulai (tidak valid), dianggap berdurasi
+/// [assumedDurationMinutes] supaya rentang tidak pernah terbalik.
+int _effectiveEndMinutes(Activity a, int assumedDurationMinutes) {
+  final start = a.start.toMinutes();
+  final end = a.end?.toMinutes();
+  return (end == null || end <= start) ? start + assumedDurationMinutes : end;
+}
+
 /// Cek apakah dua aktivitas bentrok (§8.4)
 bool hasConflict(Activity a, Activity b, {int assumedDurationMinutes = 30}) {
   if (a.childId != b.childId) return false;
@@ -116,10 +150,10 @@ bool hasConflict(Activity a, Activity b, {int assumedDurationMinutes = 30}) {
   if (a.id == b.id) return false;
 
   final aStart = a.start.toMinutes();
-  final aEnd = a.end?.toMinutes() ?? (aStart + assumedDurationMinutes);
+  final aEnd = _effectiveEndMinutes(a, assumedDurationMinutes);
 
   final bStart = b.start.toMinutes();
-  final bEnd = b.end?.toMinutes() ?? (bStart + assumedDurationMinutes);
+  final bEnd = _effectiveEndMinutes(b, assumedDurationMinutes);
 
   return aStart < bEnd && bStart < aEnd;
 }
@@ -198,6 +232,35 @@ int? calculateGapMinutes(Activity first, Activity second) {
 
   final secondStart = second.start.toMinutes();
   return secondStart - firstEnd;
+}
+
+/// Kegiatan sebelumnya yang jedanya ke [activity] kurang dari
+/// [minGapMinutes] (§8.5, teks bantu di form). Null bila jeda cukup, bentrok
+/// (jeda negatif; sudah ditangani peringatan bentrok), atau kegiatan
+/// sebelumnya tidak punya jam selesai.
+({Activity previous, int gap})? findShortGapBefore({
+  required Activity activity,
+  required List<Activity> allActivities,
+  required int minGapMinutes,
+}) {
+  Activity? previous;
+  for (final other in allActivities) {
+    if (other.id == activity.id || other.childId != activity.childId) continue;
+    if (other.date.year != activity.date.year ||
+        other.date.month != activity.date.month ||
+        other.date.day != activity.date.day) {
+      continue;
+    }
+    if (other.start.toMinutes() >= activity.start.toMinutes()) continue;
+    if (previous == null ||
+        other.start.toMinutes() > previous.start.toMinutes()) {
+      previous = other;
+    }
+  }
+  if (previous == null) return null;
+  final gap = calculateGapMinutes(previous, activity);
+  if (gap == null || gap < 0 || gap >= minGapMinutes) return null;
+  return (previous: previous, gap: gap);
 }
 
 /// Mencari aktivitas "Sekarang" untuk anak di hari ini (§8.1)
@@ -364,6 +427,19 @@ ActivityEditResult applyActivityEdit({
     orElse: () =>
         throw ArgumentError.value(updated.id, 'updated', 'kegiatan tidak ada'),
   );
+
+  final timeIssue = validateTimeRange(
+    icon: updated.icon,
+    start: updated.start,
+    end: updated.end,
+  );
+  if (timeIssue != null) {
+    throw ArgumentError.value(
+      updated.end,
+      'updated',
+      'waktu tidak valid: $timeIssue',
+    );
+  }
 
   final coreChanged =
       old.title != updated.title ||

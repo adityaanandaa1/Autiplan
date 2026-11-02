@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/theme.dart';
 
@@ -15,13 +16,15 @@ class FormLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.grid6),
       child: Row(
         children: [
-          Text(text, style: AppTypography.meta),
+          Flexible(child: Text(text, style: AppTypography.meta)),
           if (optional != null) ...[
             const SizedBox(width: AppSpacing.grid6),
-            Text(
-              optional!,
-              style: AppTypography.mikro.copyWith(
-                color: AppColors.teksSekunder,
+            Flexible(
+              child: Text(
+                optional!,
+                style: AppTypography.mikro.copyWith(
+                  color: AppColors.teksSekunder,
+                ),
               ),
             ),
           ],
@@ -65,6 +68,7 @@ class FormTextField extends StatelessWidget {
     this.maxLength,
     this.keyboardType,
     this.onChanged,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -73,9 +77,12 @@ class FormTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
 
+  /// Pesan validasi tenang di bawah kotak (bukan merah, mengikuti §8.4).
+  final String? errorText;
+
   @override
   Widget build(BuildContext context) {
-    return FormBox(
+    final field = FormBox(
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -91,6 +98,20 @@ class FormTextField extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
         ),
       ),
+    );
+    if (errorText == null) return field;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        field,
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.grid6),
+          child: Text(
+            errorText!,
+            style: AppTypography.meta.copyWith(color: AppColors.saranTeks),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -160,7 +181,12 @@ class FormTextLink extends StatelessWidget {
 
 /// Kotak info tenang (latar `saranLembut`, ikon info).
 class FormInfoBox extends StatelessWidget {
-  const FormInfoBox({super.key, required this.text, this.actionLabel, this.onAction});
+  const FormInfoBox({
+    super.key,
+    required this.text,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final String text;
   final String? actionLabel;
@@ -178,7 +204,7 @@ class FormInfoBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
-            Icons.info_outline,
+            LucideIcons.info,
             size: AppSpacing.iconSize20,
             color: AppColors.saranTeks,
           ),

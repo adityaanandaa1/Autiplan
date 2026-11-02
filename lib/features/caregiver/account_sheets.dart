@@ -52,9 +52,7 @@ void showProfileListSheet(
             TextField(
               textInputAction: TextInputAction.done,
               onSubmitted: addItem,
-              decoration: const InputDecoration(
-                hintText: 'Tambah item',
-              ),
+              decoration: const InputDecoration(hintText: 'Tambah item'),
             ),
             const SizedBox(height: AppSpacing.grid16),
             PrimaryButton(
@@ -65,7 +63,9 @@ void showProfileListSheet(
                   likes: isLikes ? items : child.likes,
                   avoids: isLikes ? child.avoids : items,
                 );
-                ref.read(appStateProvider.notifier).updateState(
+                ref
+                    .read(appStateProvider.notifier)
+                    .updateState(
                       state.copyWith(
                         children: [
                           for (final c in state.children)
@@ -113,7 +113,8 @@ void showReminderSheet(BuildContext context, WidgetRef ref) {
           _StepperRow(
             label: 'Sebelum kegiatan',
             value: '$value menit',
-            onMinus: () => setSheetState(() => value = (value - 5).clamp(5, 30)),
+            onMinus: () =>
+                setSheetState(() => value = (value - 5).clamp(5, 30)),
             onPlus: () => setSheetState(() => value = (value + 5).clamp(5, 30)),
           ),
           const SizedBox(height: AppSpacing.grid16),
@@ -121,10 +122,13 @@ void showReminderSheet(BuildContext context, WidgetRef ref) {
             label: 'Simpan',
             onPressed: () {
               final state = ref.read(appStateProvider);
-              ref.read(appStateProvider.notifier).updateState(
+              ref
+                  .read(appStateProvider.notifier)
+                  .updateState(
                     state.copyWith(
-                      settings:
-                          state.settings.copyWith(reminderMinutesBefore: value),
+                      settings: state.settings.copyWith(
+                        reminderMinutesBefore: value,
+                      ),
                     ),
                   );
               Navigator.of(ctx).pop();
@@ -187,7 +191,9 @@ void showLimitsSheet(BuildContext context, WidgetRef ref) {
             label: 'Simpan',
             onPressed: () {
               final state = ref.read(appStateProvider);
-              ref.read(appStateProvider.notifier).updateState(
+              ref
+                  .read(appStateProvider.notifier)
+                  .updateState(
                     state.copyWith(
                       settings: state.settings.copyWith(
                         minGapMinutes: gap,
@@ -242,7 +248,9 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
           label: 'Simpan',
           onPressed: () {
             final state = ref.read(appStateProvider);
-            ref.read(appStateProvider.notifier).updateState(
+            ref
+                .read(appStateProvider.notifier)
+                .updateState(
                   state.copyWith(
                     settings: state.settings.copyWith(
                       emergencyNumber: primary.text.trim().isEmpty
@@ -360,4 +368,3 @@ class _StepperRow extends StatelessWidget {
     );
   }
 }
-

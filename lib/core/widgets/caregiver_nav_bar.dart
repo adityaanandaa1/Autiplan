@@ -60,21 +60,28 @@ class CaregiverNavBar extends StatelessWidget {
     final fontWeight = isActive ? FontWeight.w600 : FontWeight.w500;
 
     return Expanded(
-      child: InkWell(
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: label,
+        excludeSemantics: true,
         onTap: () => onTabSelected(tab),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: AppSpacing.iconSize24, color: color),
-            const SizedBox(height: AppSpacing.grid4),
-            Text(
-              label,
-              style: AppTypography.mikro.copyWith(
-                fontWeight: fontWeight,
-                color: color,
+        child: InkWell(
+          onTap: () => onTabSelected(tab),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: AppSpacing.iconSize24, color: color),
+              const SizedBox(height: AppSpacing.grid4),
+              Text(
+                label,
+                style: AppTypography.mikro.copyWith(
+                  fontWeight: fontWeight,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

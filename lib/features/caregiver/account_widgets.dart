@@ -46,11 +46,7 @@ class AccountProfileCard extends StatelessWidget {
 }
 
 class AccountChildRow extends StatelessWidget {
-  const AccountChildRow({
-    super.key,
-    required this.child,
-    required this.isLast,
-  });
+  const AccountChildRow({super.key, required this.child, required this.isLast});
 
   final Child child;
   final bool isLast;

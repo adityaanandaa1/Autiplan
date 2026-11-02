@@ -18,6 +18,9 @@ class CaregiverHeader extends StatelessWidget {
     this.trailing,
   });
 
+  /// Kunci titik notifikasi di lonceng (untuk tes).
+  static const Key bellBadgeKey = ValueKey('caregiver-bell-badge');
+
   final String title;
   final CaregiverHeaderVariant variant;
   final VoidCallback? onBack;
@@ -34,11 +37,12 @@ class CaregiverHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: AppSpacing.headerHeight,
+      // Tinggi 64 = 8 + 48 (target sentuh minimal) + 8.
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.grid16,
-        AppSpacing.grid20,
+        AppSpacing.grid8,
         AppSpacing.grid12,
-        AppSpacing.grid12,
+        AppSpacing.grid8,
       ),
       child: Row(
         children: [
@@ -120,10 +124,11 @@ class CaregiverHeader extends StatelessWidget {
                     right: AppSpacing.badgeOffset,
                     top: AppSpacing.badgeOffset,
                     child: Container(
+                      key: bellBadgeKey,
                       width: AppSpacing.badgeDot,
                       height: AppSpacing.badgeDot,
                       decoration: const BoxDecoration(
-                        color: AppColors.bahaya,
+                        color: AppColors.utama,
                         shape: BoxShape.circle,
                       ),
                     ),

@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../data/models/models.dart';
+import '../../../domain/schedule_rules.dart';
 import 'form_field.dart';
 import 'form_utils.dart';
 import 'sheet_scaffold.dart';
@@ -25,7 +26,7 @@ Future<TimePickerResult?> showDateTimePickerSheet(
 }) {
   return showModalBottomSheet<TimePickerResult>(
     context: context,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparan,
     isScrollControlled: true,
     builder: (ctx) => _DateTimePickerBody(
       initialDate: initialDate,
@@ -89,9 +90,16 @@ class _DateTimePickerBodyState extends State<_DateTimePickerBody> {
 
   @override
   Widget build(BuildContext context) {
-    final monday =
-        _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
+    final monday = _selectedDate.subtract(
+      Duration(days: _selectedDate.weekday - 1),
+    );
     final weekDates = List.generate(7, (i) => monday.add(Duration(days: i)));
+    // Selesai > Mulai; kosong hanya boleh bila diizinkan (ikon Tidur, §8.6).
+    final issue = validateTimeRange(
+      icon: widget.allowClearEnd ? ActivityIcon.tidur : ActivityIcon.main,
+      start: _start,
+      end: _end,
+    );
 
     return SheetScaffold(
       title: 'Pilih waktu',
@@ -152,7 +160,9 @@ class _DateTimePickerBodyState extends State<_DateTimePickerBody> {
                       optional: widget.allowClearEnd ? '(opsional)' : null,
                     ),
                     FormLinkRow(
-                      text: _end != null ? formatTimeLite(_end!) : 'Pagi',
+                      text: _end != null
+                          ? formatTimeLite(_end!)
+                          : (widget.allowClearEnd ? 'Pagi' : 'Pilih jam'),
                       onTap: _pickEnd,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -166,7 +176,7 @@ class _DateTimePickerBodyState extends State<_DateTimePickerBody> {
                                 color: AppColors.teksSekunder,
                               ),
                             ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpacing.grid4),
                           const Icon(
                             LucideIcons.clock,
                             size: AppSpacing.iconSize18,
@@ -179,9 +189,14 @@ class _DateTimePickerBodyState extends State<_DateTimePickerBody> {
               ),
             ],
           ),
+          if (issue != null) ...[
+            const SizedBox(height: AppSpacing.grid12),
+            FormInfoBox(text: timeRangeIssueMessage(issue)),
+          ],
           const SizedBox(height: AppSpacing.grid24),
           PrimaryButton(
             label: 'Simpan waktu',
+            enabled: issue == null,
             onPressed: () {
               Navigator.of(context).pop(
                 TimePickerResult(date: _selectedDate, start: _start, end: _end),

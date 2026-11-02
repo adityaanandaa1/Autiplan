@@ -38,6 +38,7 @@ abstract final class AppSpacing {
   static const double segmentedHeight = 44.0;
   static const double activityTimeWidth = 44.0;
   static const double iconTile40 = 40.0;
+  static const double iconTile44 = 44.0;
   static const double iconTileChild = 80.0;
   static const double weekDateCircle = 36.0;
   static const double weekDot = 4.0;
