@@ -12,7 +12,8 @@ class ComponentGalleryScreen extends ConsumerStatefulWidget {
       _ComponentGalleryScreenState();
 }
 
-class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen> {
+class _ComponentGalleryScreenState
+    extends ConsumerState<ComponentGalleryScreen> {
   CaregiverTab _currentTab = CaregiverTab.home;
   int _segmentIndex = 0;
   DateTime _selectedDate = DateTime(2026, 5, 1);
@@ -27,7 +28,7 @@ class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen>
       backgroundColor: AppColors.latar,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.grid16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -122,7 +123,7 @@ class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen>
                   startTime: '20.00',
                   icon: ActivityIcon.nonton,
                   title: 'Nonton film bersama',
-                  subtitle: 'Pengganti Les dengan Pak Lana',
+                  replacedTitle: 'Les dengan Pak Lana',
                   status: ActivityRowStatus.changed,
                   onTap: () {},
                 ),
@@ -158,18 +159,18 @@ class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen>
                 Column(
                   children: [
                     PrimaryButton(label: 'Tombol Utama', onPressed: () {}),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.grid12),
                     SecondaryButton(label: 'Tombol Sekunder', onPressed: () {}),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.grid12),
                     DangerButton(label: 'Tombol Bahaya', onPressed: () {}),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.grid12),
                     DangerOutlineButton(
                       label: 'Tombol Bahaya Outline',
                       onPressed: () {},
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.grid12),
                     AppTextButton(label: 'Tombol Teks', onPressed: () {}),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.grid12),
                     PrimaryButton(
                       label: 'Tombol Nonaktif',
                       onPressed: () {},
@@ -179,54 +180,18 @@ class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen>
                 ),
               ),
               _buildSection(
-                'ChildActivityCard - Normal',
-                ChildActivityCard(
-                  icon: ActivityIcon.ngaji,
-                  title: 'Ngaji di Rumah',
-                  time: '18.00 – 19.00',
-                  status: ChildActivityStatus.normal,
-                  onTap: () {},
-                ),
+                'Sisi anak (Laut Tenang)',
+                _buildChildPreview(ChildPalette.lautTenang),
               ),
               _buildSection(
-                'ChildActivityCard - Now',
-                ChildActivityCard(
-                  icon: ActivityIcon.sepeda,
-                  title: 'Sepeda Santai',
-                  time: '16.00 – 17.00',
-                  status: ChildActivityStatus.now,
-                  onTap: () {},
-                ),
+                'Sisi anak (Padang Hijau)',
+                _buildChildPreview(ChildPalette.padangHijau),
               ),
               _buildSection(
-                'ChildActivityCard - Changed',
-                ChildActivityCard(
-                  icon: ActivityIcon.nonton,
-                  title: 'Nonton film bersama',
-                  time: '20.00 – 20.45',
-                  status: ChildActivityStatus.changed,
-                  onTap: () {},
-                ),
+                'Sisi anak (Pagi Hangat)',
+                _buildChildPreview(ChildPalette.pagiHangat),
               ),
-              _buildSection(
-                'ChildActivityCard - Completed',
-                ChildActivityCard(
-                  icon: ActivityIcon.sekolah,
-                  title: 'Sekolah',
-                  time: '07.00 – 08.00',
-                  status: ChildActivityStatus.completed,
-                  onTap: () {},
-                ),
-              ),
-              _buildSection(
-                'ChildHeader',
-                ChildHeader(
-                  greeting: 'Selamat sore',
-                  childName: 'Halo, Rafi!',
-                  onEmergencyPressed: () {},
-                ),
-              ),
-              const SizedBox(height: 80),
+              const SizedBox(height: AppSpacing.fabClearance),
             ],
           ),
         ),
@@ -250,24 +215,96 @@ class _ComponentGalleryScreenState extends ConsumerState<ComponentGalleryScreen>
     );
   }
 
+  Widget _buildChildPreview(ChildPalette palette) {
+    return Theme(
+      data: Theme.of(context).copyWith(extensions: [palette]),
+      child: Container(
+        color: palette.anakLatar,
+        padding: const EdgeInsets.all(AppSpacing.screenPaddingChild),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ChildHeader(
+              greeting: 'Jumat, 1 Mei',
+              childName: 'Halo, Rafi!',
+            ),
+            ChildBackHeader(title: 'Jadwal kamu berubah', onBack: () {}),
+            const SizedBox(height: AppSpacing.sectionGapChild),
+            ChildBackHeader(onBack: () {}),
+            const SizedBox(height: AppSpacing.sectionGapChild),
+            ChildActivityCard(
+              icon: ActivityIcon.ngaji,
+              title: 'Ngaji di Rumah',
+              time: '18.00',
+              status: ChildActivityStatus.normal,
+              onTap: () {},
+            ),
+            const SizedBox(height: AppSpacing.sectionGapChild),
+            ChildActivityCard(
+              icon: ActivityIcon.sepeda,
+              title: 'Sepeda Santai',
+              time: '16.00',
+              status: ChildActivityStatus.now,
+              onTap: () {},
+            ),
+            const SizedBox(height: AppSpacing.sectionGapChild),
+            ChildActivityCard(
+              icon: ActivityIcon.nonton,
+              title: 'Nonton film bersama',
+              time: '20.00',
+              status: ChildActivityStatus.changed,
+              onTap: () {},
+            ),
+            const SizedBox(height: AppSpacing.sectionGapChild),
+            ChildActivityCard(
+              icon: ActivityIcon.sekolah,
+              title: 'Sekolah',
+              time: '07.00',
+              status: ChildActivityStatus.completed,
+              onTap: () {},
+            ),
+            const SizedBox(height: AppSpacing.grid24),
+            ChildButton(label: 'Oke, aku mengerti', onPressed: () {}),
+            const SizedBox(height: AppSpacing.grid12),
+            ChildButton(
+              label: 'Telepon kontak cadangan',
+              variant: ChildButtonVariant.outline,
+              onPressed: () {},
+            ),
+            const SizedBox(height: AppSpacing.grid12),
+            ChildButton(
+              label: 'Tidak jadi',
+              variant: ChildButtonVariant.text,
+              onPressed: () {},
+            ),
+            const SizedBox(height: AppSpacing.grid12),
+            ChildButton(
+              label: 'Tombol nonaktif',
+              onPressed: null,
+              enabled: false,
+            ),
+            const SizedBox(height: AppSpacing.grid24),
+            const Center(child: Mascot()),
+            const SizedBox(height: AppSpacing.grid24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: EmergencyButton(onPressed: () {}),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSection(String title, Widget child) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
-        Text(
-          title,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.utama,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.grid24),
+        Text(title, style: AppTypography.judulBagian),
+        const SizedBox(height: AppSpacing.grid12),
         child,
       ],
     );
   }
 }
-

@@ -2,6 +2,7 @@ import 'package:autiplan/app.dart';
 import 'package:autiplan/data/local_repository.dart';
 import 'package:autiplan/data/providers.dart';
 import 'package:autiplan/data/seed.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +33,14 @@ void main() {
     (tester) async {
       await _pumpApp(tester);
       await tester.tap(find.text('Orang tua · Bu Sari'));
+      await tester.pumpAndSettle();
+
+      // Tombol di akhir ListView: gulir dulu supaya ter-build.
+      await tester.scrollUntilVisible(
+        find.text(switchLabel),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
 
       expect(find.text(switchLabel), findsOneWidget);

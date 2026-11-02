@@ -16,13 +16,13 @@ class ChildSegmented extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: AppSpacing.segmentedHeight,
       decoration: BoxDecoration(
         color: AppColors.permukaan,
         border: Border.all(color: AppColors.garis),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.segmen,
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.grid4),
       child: Row(
         children: List.generate(children.length, (index) {
           final child = children[index];
@@ -33,8 +33,10 @@ class ChildSegmented extends StatelessWidget {
               onTap: () => onSegmentSelected(index),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.utamaLembut : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected
+                      ? AppColors.utamaLembut
+                      : AppColors.transparan,
+                  borderRadius: AppRadius.segmenTerpilih,
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -54,10 +56,7 @@ class ChildSegmented extends StatelessWidget {
 }
 
 class ChildSegmentData {
-  const ChildSegmentData({
-    required this.name,
-    required this.age,
-  });
+  const ChildSegmentData({required this.name, required this.age});
 
   final String name;
   final int age;

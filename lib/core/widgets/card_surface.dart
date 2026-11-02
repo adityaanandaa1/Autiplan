@@ -5,7 +5,7 @@ class CardSurface extends StatelessWidget {
   const CardSurface({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.grid16),
   });
 
   final Widget child;

@@ -17,11 +17,11 @@ class CaregiverNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
+      height: AppSpacing.navBarHeight,
       decoration: const BoxDecoration(
         color: AppColors.permukaan,
         border: Border(
-          top: BorderSide(color: AppColors.garis, width: 1),
+          top: BorderSide(color: AppColors.garis, width: AppSpacing.strokeThin),
         ),
       ),
       child: Row(
@@ -65,13 +65,11 @@ class CaregiverNavBar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 24, color: color),
-            const SizedBox(height: 4),
+            Icon(icon, size: AppSpacing.iconSize24, color: color),
+            const SizedBox(height: AppSpacing.grid4),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: AppTypography.fontParent,
-                fontSize: 12,
+              style: AppTypography.mikro.copyWith(
                 fontWeight: fontWeight,
                 color: color,
               ),

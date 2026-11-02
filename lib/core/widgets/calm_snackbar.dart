@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme/theme.dart';
 
 class CalmSnackbar {
@@ -8,31 +9,56 @@ class CalmSnackbar {
     String? actionLabel,
     VoidCallback? onActionPressed,
   }) {
+    final messenger = ScaffoldMessenger.of(context);
+    final hasAction = actionLabel != null;
+
     final snackBar = SnackBar(
-      content: Text(
-        message,
-        style: const TextStyle(
-          fontFamily: AppTypography.fontParent,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
+      padding: const EdgeInsets.only(left: AppSpacing.grid16),
+      content: SizedBox(
+        height: AppSpacing.snackbarHeight,
+        child: Row(
+          children: [
+            const Icon(
+              LucideIcons.check,
+              size: AppSpacing.iconSize20,
+              color: AppColors.teksDiAtasUtama,
+            ),
+            const SizedBox(width: AppSpacing.grid12),
+            Expanded(child: Text(message, style: AppTypography.pesanSnackbar)),
+            if (hasAction)
+              TextButton(
+                onPressed: () {
+                  messenger.hideCurrentSnackBar();
+                  onActionPressed?.call();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.anakLembut,
+                  minimumSize: const Size(
+                    AppSpacing.minTouchTarget,
+                    AppSpacing.snackbarHeight,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.grid16,
+                  ),
+                ),
+                child: Text(
+                  actionLabel,
+                  style: AppTypography.tautanAksi.copyWith(
+                    color: AppColors.anakLembut,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
       backgroundColor: AppColors.teks,
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      action: actionLabel != null
-          ? SnackBarAction(
-              label: actionLabel,
-              textColor: AppColors.anakAksen,
-              onPressed: onActionPressed ?? () {},
-            )
-          : null,
+      duration: hasAction
+          ? AppDurations.snackbarDenganAksi
+          : AppDurations.snackbar,
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.snackbar),
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    messenger.showSnackBar(snackBar);
   }
 }

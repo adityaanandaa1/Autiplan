@@ -20,9 +20,11 @@ List<Suggestion> generateSuggestions(
   suggestions.addAll(_generateEmptyDaySuggestions(state, now, child));
 
   return suggestions
-      .where((s) =>
-          (state.suggestionStatus[s.id] ?? SuggestionStatus.active) ==
-          SuggestionStatus.active)
+      .where(
+        (s) =>
+            (state.suggestionStatus[s.id] ?? SuggestionStatus.active) ==
+            SuggestionStatus.active,
+      )
       .toList();
 }
 
@@ -35,21 +37,24 @@ List<Suggestion> _generateIndependenceSuggestions(
   final today = DateTime(now.year, now.month, now.day);
   final suggestions = <Suggestion>[];
 
-  final candidateActivities = state.activities.where((a) =>
-      a.childId == child.id &&
-      a.steps.length >= 2 &&
-      !a.independentMode &&
-      a.date.year == today.year &&
-      a.date.month == today.month &&
-      a.date.day == today.day);
+  final candidateActivities = state.activities.where(
+    (a) =>
+        a.childId == child.id &&
+        a.steps.length >= 2 &&
+        !a.independentMode &&
+        a.date.year == today.year &&
+        a.date.month == today.month &&
+        a.date.day == today.day,
+  );
 
   for (final activity in candidateActivities) {
-    final streak = countConsecutiveOnTimeCompletions(
+    final streakDates = consecutiveOnTimeDates(
       activity: activity,
       referenceDate: now,
       allActivities: state.activities,
       completions: state.completions,
     );
+    final streak = streakDates.length;
 
     if (streak >= state.settings.independenceStreakDays) {
       final suggestionId = 'independence:${activity.id}';
@@ -66,7 +71,7 @@ List<Suggestion> _generateIndependenceSuggestions(
             body:
                 '${activity.title} selesai tepat waktu $streak hari berturut-turut. Kurangi langkah instruksi dari ${activity.steps.length} jadi 1?',
             reasonData:
-                '${activity.title} selesai tepat waktu dalam $streak kemunculan berturut-turut minggu ini.',
+                '${activity.title} selesai tepat waktu ${formatDateRange(streakDates.last, streakDates.first)} minggu ini.',
             reasonBasis:
                 'Anak autis dapat berpindah kegiatan secara mandiri bila bantuan dikurangi bertahap (MacDuff dkk., 1993).',
             actionLabel: 'Kurangi langkah',
@@ -94,19 +99,20 @@ List<Suggestion> _generateQuietTimeSuggestions(
   final suggestions = <Suggestion>[];
 
   final todayActivities = state.activities
-      .where((a) =>
-          a.childId == child.id &&
-          a.date.year == today.year &&
-          a.date.month == today.month &&
-          a.date.day == today.day)
+      .where(
+        (a) =>
+            a.childId == child.id &&
+            a.date.year == today.year &&
+            a.date.month == today.month &&
+            a.date.day == today.day,
+      )
       .toList();
 
-  final sleepActivity = todayActivities.firstWhere(
+  final sleepIndex = todayActivities.indexWhere(
     (a) => a.icon == ActivityIcon.tidur,
-    orElse: () => todayActivities.first,
   );
-
-  if (sleepActivity.icon != ActivityIcon.tidur) return suggestions;
+  if (sleepIndex == -1) return suggestions;
+  final sleepActivity = todayActivities[sleepIndex];
 
   for (final activity in todayActivities) {
     if (!activity.usesScreen) continue;
@@ -121,11 +127,13 @@ List<Suggestion> _generateQuietTimeSuggestions(
           state.suggestionStatus[suggestionId] ?? SuggestionStatus.active;
 
       if (status == SuggestionStatus.active) {
-        final hasNoticeToday = state.notices.any((n) =>
-            n.activityId == activity.id &&
-            n.sentAt.year == today.year &&
-            n.sentAt.month == today.month &&
-            n.sentAt.day == today.day);
+        final hasNoticeToday = state.notices.any(
+          (n) =>
+              n.activityId == activity.id &&
+              n.sentAt.year == today.year &&
+              n.sentAt.month == today.month &&
+              n.sentAt.day == today.day,
+        );
 
         final bodyText = hasNoticeToday
             ? 'Jadwal hari ini berubah dan ${activity.title} selesai $gapMinutes menit sebelum tidur. Tambahkan waktu tenang tanpa layar?'
@@ -158,7 +166,6 @@ List<Suggestion> _generateQuietTimeSuggestions(
   return suggestions;
 }
 
-
 /// §9.2 Transition Gap
 List<Suggestion> _generateTransitionGapSuggestions(
   AppState state,
@@ -168,14 +175,20 @@ List<Suggestion> _generateTransitionGapSuggestions(
   final suggestions = <Suggestion>[];
 
   for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-    final checkDate = DateTime(now.year, now.month, now.day).add(Duration(days: dayOffset));
+    final checkDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: dayOffset));
 
     final dayActivities = state.activities
-        .where((a) =>
-            a.childId == child.id &&
-            a.date.year == checkDate.year &&
-            a.date.month == checkDate.month &&
-            a.date.day == checkDate.day)
+        .where(
+          (a) =>
+              a.childId == child.id &&
+              a.date.year == checkDate.year &&
+              a.date.month == checkDate.month &&
+              a.date.day == checkDate.day,
+        )
         .toList();
 
     final sorted = sortActivitiesByStartTime(dayActivities);
@@ -232,17 +245,26 @@ List<Suggestion> _generateEmptyDaySuggestions(
 
   if (child.likes.isEmpty) return suggestions;
 
-  for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-    final checkDate = DateTime(now.year, now.month, now.day).add(Duration(days: dayOffset));
+  // Hanya hari ini sampai Minggu pada minggu yang ditampilkan (§9.4)
+  final daysUntilSunday = DateTime.sunday - now.weekday;
+  for (int dayOffset = 0; dayOffset <= daysUntilSunday; dayOffset++) {
+    final checkDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: dayOffset));
 
-    final dayActivities = state.activities.where((a) =>
-        a.childId == child.id &&
-        a.date.year == checkDate.year &&
-        a.date.month == checkDate.month &&
-        a.date.day == checkDate.day);
+    final dayActivities = state.activities.where(
+      (a) =>
+          a.childId == child.id &&
+          a.date.year == checkDate.year &&
+          a.date.month == checkDate.month &&
+          a.date.day == checkDate.day,
+    );
 
     if (dayActivities.isEmpty) {
-      final suggestionId = 'emptyDay:${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
+      final suggestionId =
+          'emptyDay:${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
       final status =
           state.suggestionStatus[suggestionId] ?? SuggestionStatus.active;
 
@@ -266,8 +288,9 @@ List<Suggestion> _generateEmptyDaySuggestions(
 
         if (proposalText != null) {
           final dayName = _getDayName(checkDate.weekday);
-          final avoidText =
-              child.avoids.isNotEmpty ? child.avoids.first.toLowerCase() : '';
+          final avoidText = child.avoids.isNotEmpty
+              ? child.avoids.first.toLowerCase()
+              : '';
 
           suggestions.add(
             Suggestion(
@@ -321,4 +344,3 @@ String _getDayName(int weekday) {
       return '';
   }
 }
-

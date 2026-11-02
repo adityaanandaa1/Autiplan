@@ -21,8 +21,8 @@ class ChangeNoticeCard extends StatelessWidget {
     final statusText = hasUnread
         ? 'Belum dibuka $childName'
         : seenAt != null
-            ? 'Dilihat $childName pukul ${_formatTime(seenAt!)}'
-            : '';
+        ? 'Dilihat $childName pukul ${_formatTime(seenAt!)}'
+        : '';
 
     return InkWell(
       onTap: onTap,
@@ -32,23 +32,23 @@ class ChangeNoticeCard extends StatelessWidget {
           color: AppColors.anakLembut,
           borderRadius: AppRadius.kartuOrangTua,
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.grid16),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: AppSpacing.iconTile40,
+              height: AppSpacing.iconTile40,
               decoration: BoxDecoration(
                 color: AppColors.anakAksen,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: AppRadius.ubinIkon10,
               ),
               child: const Icon(
                 LucideIcons.messageSquare,
-                size: 20,
-                color: Colors.white,
+                size: AppSpacing.iconSize20,
+                color: AppColors.teksDiAtasUtama,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.grid12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,19 +58,16 @@ class ChangeNoticeCard extends StatelessWidget {
                     style: AppTypography.judulBaris,
                   ),
                   if (statusText.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      statusText,
-                      style: AppTypography.meta,
-                    ),
+                    const SizedBox(height: AppSpacing.grid2),
+                    Text(statusText, style: AppTypography.meta),
                   ],
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.grid8),
             const Icon(
               LucideIcons.chevronRight,
-              size: 20,
+              size: AppSpacing.iconSize20,
               color: AppColors.teksSekunder,
             ),
           ],

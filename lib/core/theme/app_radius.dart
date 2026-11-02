@@ -11,6 +11,13 @@ abstract final class AppRadius {
   static const double barisLangkahAnakValue = 16.0;
   static const double tombolAnakValue = 28.0;
   static const double tombolOrangTuaValue = 12.0;
+  static const double kartuSaranValue = 14.0;
+  static const double segmenValue = 12.0;
+  static const double segmenTerpilihValue = 8.0;
+  static const double ubinIkonAnakValue = 20.0;
+  static const double ubinIkonKartuAnakValue = 14.0;
+  static const double barProgresValue = 3.0;
+  static const double snackbarValue = 12.0;
 
   static const BorderRadius kartuOrangTua = BorderRadius.all(
     Radius.circular(kartuOrangTuaValue),
@@ -39,5 +46,26 @@ abstract final class AppRadius {
   );
   static const BorderRadius tombolOrangTua = BorderRadius.all(
     Radius.circular(tombolOrangTuaValue),
+  );
+  static const BorderRadius kartuSaran = BorderRadius.all(
+    Radius.circular(kartuSaranValue),
+  );
+  static const BorderRadius segmen = BorderRadius.all(
+    Radius.circular(segmenValue),
+  );
+  static const BorderRadius segmenTerpilih = BorderRadius.all(
+    Radius.circular(segmenTerpilihValue),
+  );
+  static const BorderRadius ubinIkonAnak = BorderRadius.all(
+    Radius.circular(ubinIkonAnakValue),
+  );
+  static const BorderRadius ubinIkonKartuAnak = BorderRadius.all(
+    Radius.circular(ubinIkonKartuAnakValue),
+  );
+  static const BorderRadius barProgres = BorderRadius.all(
+    Radius.circular(barProgresValue),
+  );
+  static const BorderRadius snackbar = BorderRadius.all(
+    Radius.circular(snackbarValue),
   );
 }

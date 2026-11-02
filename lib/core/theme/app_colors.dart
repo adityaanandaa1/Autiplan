@@ -17,4 +17,14 @@ abstract final class AppColors {
   static const Color saranTeks = Color(0xFF8A5A3C);
   static const Color anakLembut = Color(0xFFDCEDF0);
   static const Color anakAksen = Color(0xFF6FA3B0);
+
+  // Semantik: teks/ikon di atas isian berwarna (tombol utama, pil, FAB, dll.)
+  static const Color teksDiAtasUtama = Color(0xFFFFFFFF);
+  static const Color transparan = Color(0x00000000);
+
+  // Opasitas
+  static const double alphaNonaktif = 0.4;
+  static const double alphaSelesai = 0.6;
+  static const double alphaPenuh = 1.0;
+  static const double alphaBayangan = 0.25;
 }

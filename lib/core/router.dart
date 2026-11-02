@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/placeholder_screen.dart';
+import '../features/caregiver/account_screen.dart';
 import '../features/caregiver/caregiver_shell.dart';
+import '../features/caregiver/home_screen.dart';
+import '../features/caregiver/notifications_screen.dart';
+import '../features/caregiver/schedule_screen.dart';
+import '../features/caregiver/suggestions_screen.dart';
 import '../features/dev/component_gallery_screen.dart';
 import '../features/role_picker/role_picker_screen.dart';
 
@@ -41,11 +46,7 @@ GoRouter createRouter() {
               GoRoute(
                 path: '/ortu/beranda',
                 name: 'caregiverHome',
-                builder: (context, state) => const PlaceholderScreen(
-                  title: 'Beranda',
-                  showBackButton: false,
-                  showRoleSwitch: true,
-                ),
+                builder: (context, state) => const CaregiverHomeScreen(),
               ),
             ],
           ),
@@ -54,10 +55,7 @@ GoRouter createRouter() {
               GoRoute(
                 path: '/ortu/jadwal',
                 name: 'caregiverSchedule',
-                builder: (context, state) => const PlaceholderScreen(
-                  title: 'Jadwal',
-                  showBackButton: false,
-                ),
+                builder: (context, state) => const CaregiverScheduleScreen(),
               ),
             ],
           ),
@@ -66,10 +64,7 @@ GoRouter createRouter() {
               GoRoute(
                 path: '/ortu/akun',
                 name: 'caregiverAccount',
-                builder: (context, state) => const PlaceholderScreen(
-                  title: 'Akun',
-                  showBackButton: false,
-                ),
+                builder: (context, state) => const CaregiverAccountScreen(),
               ),
             ],
           ),
@@ -81,19 +76,13 @@ GoRouter createRouter() {
         path: '/ortu/notifikasi',
         name: 'caregiverNotifications',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Notifikasi',
-          fallbackRoute: '/ortu/beranda',
-        ),
+        builder: (context, state) => const CaregiverNotificationsScreen(),
       ),
       GoRoute(
         path: '/ortu/saran',
         name: 'caregiverSuggestions',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Saran',
-          fallbackRoute: '/ortu/beranda',
-        ),
+        builder: (context, state) => const CaregiverSuggestionsScreen(),
       ),
 
       // ── Child routes ──────────────────────────────────────────────
@@ -170,3 +159,4 @@ GoRouter createRouter() {
     ],
   );
 }
+

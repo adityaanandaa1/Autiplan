@@ -34,7 +34,7 @@ class PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparan,
         elevation: 0,
         leading: showBackButton
             ? IconButton(

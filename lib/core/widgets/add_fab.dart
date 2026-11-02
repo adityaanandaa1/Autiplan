@@ -3,10 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme/theme.dart';
 
 class AddFab extends StatelessWidget {
-  const AddFab({
-    super.key,
-    required this.onPressed,
-  });
+  const AddFab({super.key, required this.onPressed});
 
   final VoidCallback onPressed;
 
@@ -15,11 +12,11 @@ class AddFab extends StatelessWidget {
     return FloatingActionButton(
       onPressed: onPressed,
       backgroundColor: AppColors.utama,
-      elevation: 2,
+      elevation: AppSpacing.fabElevation,
       child: const Icon(
         LucideIcons.plus,
-        color: Colors.white,
-        size: 24,
+        color: AppColors.teksDiAtasUtama,
+        size: AppSpacing.iconSize24,
       ),
     );
   }

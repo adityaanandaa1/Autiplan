@@ -77,7 +77,83 @@ abstract final class AppTypography {
     color: AppColors.teks,
   );
 
+  static const TextStyle isiHint = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: AppColors.teksSekunder,
+  );
+
+  static const TextStyle labelTabAktif = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle labelTab = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+  );
+
+  // Label tombol: tanpa warna, supaya foregroundColor tombol yang berlaku.
+  static const TextStyle tombol = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle tautanAksi = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.utama,
+  );
+
+  static const TextStyle pesanSnackbar = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.teksDiAtasUtama,
+  );
+
+  static const TextStyle jamBaris = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.teks,
+  );
+
+  static const TextStyle angkaTanggal = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.teks,
+  );
+
+  static const TextStyle judulBagian = TextStyle(
+    fontFamily: fontParent,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.utama,
+  );
+
   // ── Anak (Lexend, line-height 140%) ─────────────────────────────
+  // Label tombol anak: tanpa warna, supaya foregroundColor tombol yang berlaku.
+  static const TextStyle tombolAnak = TextStyle(
+    fontFamily: fontChild,
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
+
+  static const TextStyle tombolAnakTeks = TextStyle(
+    fontFamily: fontChild,
+    fontSize: 17,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+
   static const TextStyle sapaanAnak = TextStyle(
     fontFamily: fontChild,
     fontSize: 26,

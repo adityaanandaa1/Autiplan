@@ -22,22 +22,19 @@ class PrimaryButton extends StatelessWidget {
         onPressed: enabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.utama,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.utama.withValues(alpha: 0.4),
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.4),
+          foregroundColor: AppColors.teksDiAtasUtama,
+          disabledBackgroundColor: AppColors.utama.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
+          disabledForegroundColor: AppColors.teksDiAtasUtama.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.tombolOrangTua,
           ),
           elevation: 0,
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(label, style: AppTypography.tombol),
       ),
     );
   }
@@ -63,22 +60,17 @@ class SecondaryButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: enabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.permukaan,
           foregroundColor: AppColors.teks,
           side: const BorderSide(color: AppColors.garis),
-          disabledForegroundColor: AppColors.teks.withValues(alpha: 0.4),
+          disabledForegroundColor: AppColors.teks.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.tombolOrangTua,
           ),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(label, style: AppTypography.tombol),
       ),
     );
   }
@@ -105,22 +97,19 @@ class DangerButton extends StatelessWidget {
         onPressed: enabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.bahaya,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.bahaya.withValues(alpha: 0.4),
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.4),
+          foregroundColor: AppColors.teksDiAtasUtama,
+          disabledBackgroundColor: AppColors.bahaya.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
+          disabledForegroundColor: AppColors.teksDiAtasUtama.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.tombolOrangTua,
           ),
           elevation: 0,
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(label, style: AppTypography.tombol),
       ),
     );
   }
@@ -146,22 +135,17 @@ class DangerOutlineButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: enabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.permukaan,
           foregroundColor: AppColors.bahaya,
           side: const BorderSide(color: AppColors.bahaya),
-          disabledForegroundColor: AppColors.bahaya.withValues(alpha: 0.4),
+          disabledForegroundColor: AppColors.bahaya.withValues(
+            alpha: AppColors.alphaNonaktif,
+          ),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.tombolOrangTua,
           ),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: Text(label, style: AppTypography.tombol),
       ),
     );
   }
@@ -185,18 +169,19 @@ class AppTextButton extends StatelessWidget {
       onPressed: enabled ? onPressed : null,
       style: TextButton.styleFrom(
         foregroundColor: AppColors.utama,
-        disabledForegroundColor: AppColors.utama.withValues(alpha: 0.4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        minimumSize: const Size(AppSpacing.minTouchTarget, AppSpacing.minTouchTarget),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: AppTypography.fontParent,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
+        disabledForegroundColor: AppColors.utama.withValues(
+          alpha: AppColors.alphaNonaktif,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.grid16,
+          vertical: AppSpacing.grid12,
+        ),
+        minimumSize: const Size(
+          AppSpacing.minTouchTarget,
+          AppSpacing.minTouchTarget,
         ),
       ),
+      child: Text(label, style: AppTypography.tombol),
     );
   }
 }

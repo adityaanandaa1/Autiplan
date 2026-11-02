@@ -26,10 +26,7 @@ class DaySummary extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              dateText,
-              style: AppTypography.judulBaris,
-            ),
+            Text(dateText, style: AppTypography.judulBaris),
             Text(
               hasActivities
                   ? '$completedCount/$totalCount selesai'
@@ -39,12 +36,12 @@ class DaySummary extends StatelessWidget {
           ],
         ),
         if (hasActivities) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.grid8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: AppRadius.barProgres,
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 6,
+              minHeight: AppSpacing.progressBarHeight,
               backgroundColor: AppColors.garis,
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.sukses),
             ),

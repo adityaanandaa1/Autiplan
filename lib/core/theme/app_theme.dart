@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
+import 'app_spacing.dart';
 import 'app_typography.dart';
 import 'child_palette.dart';
 
@@ -14,24 +15,24 @@ ThemeData buildParentTheme({
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.utama,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.teksDiAtasUtama,
       primaryContainer: AppColors.utamaLembut,
       onPrimaryContainer: AppColors.utama,
       secondary: AppColors.anakAksen,
-      onSecondary: Colors.white,
+      onSecondary: AppColors.teksDiAtasUtama,
       secondaryContainer: AppColors.anakLembut,
       onSecondaryContainer: AppColors.teks,
       surface: AppColors.permukaan,
       onSurface: AppColors.teks,
       error: AppColors.bahaya,
-      onError: Colors.white,
+      onError: AppColors.teksDiAtasUtama,
       errorContainer: AppColors.bahayaLembut,
       onErrorContainer: AppColors.bahaya,
       outline: AppColors.garis,
     ),
     extensions: [childPalette],
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparan,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
@@ -47,7 +48,10 @@ ThemeData buildParentTheme({
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
       fillColor: AppColors.latar,
-      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.grid14,
+        vertical: AppSpacing.grid13,
+      ),
       border: OutlineInputBorder(
         borderRadius: AppRadius.kolomIsian,
         borderSide: BorderSide(color: AppColors.garis),
@@ -58,28 +62,23 @@ ThemeData buildParentTheme({
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: AppRadius.kolomIsian,
-        borderSide: BorderSide(color: AppColors.utama, width: 1.5),
+        borderSide: BorderSide(
+          color: AppColors.utama,
+          width: AppSpacing.strokeFocus,
+        ),
       ),
-      hintStyle: TextStyle(
-        fontFamily: AppTypography.fontParent,
-        fontSize: 15,
-        color: AppColors.teksSekunder,
-      ),
+      hintStyle: AppTypography.isiHint,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 0,
         backgroundColor: AppColors.utama,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 48),
+        foregroundColor: AppColors.teksDiAtasUtama,
+        minimumSize: const Size(double.infinity, AppSpacing.buttonHeightParent),
         shape: const RoundedRectangleBorder(
           borderRadius: AppRadius.tombolOrangTua,
         ),
-        textStyle: const TextStyle(
-          fontFamily: AppTypography.fontParent,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: AppTypography.tombol,
       ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -87,22 +86,14 @@ ThemeData buildParentTheme({
       elevation: 0,
       selectedItemColor: AppColors.utama,
       unselectedItemColor: AppColors.teksSekunder,
-      selectedLabelStyle: TextStyle(
-        fontFamily: AppTypography.fontParent,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedLabelStyle: TextStyle(
-        fontFamily: AppTypography.fontParent,
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-      ),
+      selectedLabelStyle: AppTypography.labelTabAktif,
+      unselectedLabelStyle: AppTypography.labelTab,
       type: BottomNavigationBarType.fixed,
     ),
     dividerTheme: const DividerThemeData(
       color: AppColors.garis,
-      thickness: 1,
-      space: 1,
+      thickness: AppSpacing.strokeThin,
+      space: AppSpacing.strokeThin,
     ),
   );
 }

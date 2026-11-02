@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../data/models/activity_icon.dart';
 import '../theme/theme.dart';
+import 'activity_icon_data.dart';
 
 enum ActivityRowStatus { normal, completed, now, changed }
 
@@ -12,6 +13,7 @@ class ActivityRow extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
+    this.replacedTitle,
     required this.status,
     this.onTap,
   });
@@ -20,6 +22,10 @@ class ActivityRow extends StatelessWidget {
   final ActivityIcon icon;
   final String title;
   final String? subtitle;
+
+  /// Judul kegiatan lama. Status "Diubah" memakainya untuk keterangan
+  /// "Pengganti {judul lama}" bila [subtitle] tidak diisi.
+  final String? replacedTitle;
   final ActivityRowStatus status;
   final VoidCallback? onTap;
 
@@ -28,13 +34,18 @@ class ActivityRow extends StatelessWidget {
     final isCompleted = status == ActivityRowStatus.completed;
     final isNow = status == ActivityRowStatus.now;
     final isChanged = status == ActivityRowStatus.changed;
+    final caption =
+        subtitle ??
+        (isChanged && replacedTitle != null
+            ? 'Pengganti $replacedTitle'
+            : null);
 
     final timeColor = isNow ? AppColors.utama : AppColors.teks;
     final timeWeight = isNow ? FontWeight.w600 : FontWeight.w400;
     final tileBgColor = isNow
         ? AppColors.utamaLembut
         : AppColors.anakLembut.withValues(
-            alpha: isCompleted ? 0.6 : 1.0,
+            alpha: isCompleted ? AppColors.alphaSelesai : AppColors.alphaPenuh,
           );
     final iconColor = isNow ? AppColors.utama : AppColors.teks;
     final titleColor = isCompleted ? AppColors.teksSekunder : AppColors.teks;
@@ -42,41 +53,42 @@ class ActivityRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid14),
         decoration: const BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: AppColors.garis, width: 1),
+            bottom: BorderSide(
+              color: AppColors.garis,
+              width: AppSpacing.strokeThin,
+            ),
           ),
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 44,
+              width: AppSpacing.activityTimeWidth,
               child: Text(
                 startTime,
-                style: TextStyle(
-                  fontFamily: AppTypography.fontParent,
-                  fontSize: 14,
+                style: AppTypography.jamBaris.copyWith(
                   fontWeight: timeWeight,
                   color: timeColor,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.grid12),
             Container(
-              width: 40,
-              height: 40,
+              width: AppSpacing.iconTile40,
+              height: AppSpacing.iconTile40,
               decoration: BoxDecoration(
                 color: tileBgColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: AppRadius.ubinIkon10,
               ),
               child: Icon(
-                _getIconData(icon),
-                size: 22,
+                lucideIconFor(icon),
+                size: AppSpacing.iconSize22,
                 color: iconColor,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.grid12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,10 +99,10 @@ class ActivityRow extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.visible,
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
+                  if (caption != null) ...[
+                    const SizedBox(height: AppSpacing.grid2),
                     Text(
-                      subtitle!,
+                      caption,
                       style: AppTypography.meta,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -99,7 +111,7 @@ class ActivityRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.grid12),
             _buildStatusWidget(isNow, isCompleted, isChanged),
           ],
         ),
@@ -110,19 +122,17 @@ class ActivityRow extends StatelessWidget {
   Widget _buildStatusWidget(bool isNow, bool isCompleted, bool isChanged) {
     if (isNow) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.grid10,
+          vertical: AppSpacing.grid4,
+        ),
         decoration: BoxDecoration(
           color: AppColors.utama,
           borderRadius: AppRadius.pil,
         ),
-        child: const Text(
+        child: Text(
           'Sekarang',
-          style: TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+          style: AppTypography.mikro.copyWith(color: AppColors.teksDiAtasUtama),
         ),
       );
     }
@@ -130,57 +140,32 @@ class ActivityRow extends StatelessWidget {
     if (isCompleted) {
       return const Icon(
         LucideIcons.circleCheckBig,
-        size: 22,
+        size: AppSpacing.iconSize22,
         color: AppColors.sukses,
       );
     }
 
     if (isChanged) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.grid10,
+          vertical: AppSpacing.grid4,
+        ),
         decoration: BoxDecoration(
           color: AppColors.utamaLembut,
           borderRadius: AppRadius.pil,
         ),
-        child: const Text(
+        child: Text(
           'Diubah',
-          style: TextStyle(
-            fontFamily: AppTypography.fontParent,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.utama,
-          ),
+          style: AppTypography.mikro.copyWith(color: AppColors.utama),
         ),
       );
     }
 
     return const Icon(
       LucideIcons.chevronRight,
-      size: 20,
+      size: AppSpacing.iconSize20,
       color: AppColors.teksSekunder,
     );
-  }
-
-  IconData _getIconData(ActivityIcon icon) {
-    switch (icon) {
-      case ActivityIcon.sekolah:
-        return LucideIcons.school;
-      case ActivityIcon.les:
-        return LucideIcons.bookOpen;
-      case ActivityIcon.ngaji:
-        return LucideIcons.book;
-      case ActivityIcon.mandi:
-        return LucideIcons.bath;
-      case ActivityIcon.makan:
-        return LucideIcons.utensils;
-      case ActivityIcon.tidur:
-        return LucideIcons.moon;
-      case ActivityIcon.main:
-        return LucideIcons.gamepad2;
-      case ActivityIcon.sepeda:
-        return LucideIcons.bike;
-      case ActivityIcon.nonton:
-        return LucideIcons.tv;
-    }
   }
 }

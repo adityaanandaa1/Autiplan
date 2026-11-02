@@ -18,13 +18,16 @@ class SuggestionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AppRadius.kartuSaran,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.saranLembut,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: AppRadius.kartuSaran,
         ),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.grid16,
+          vertical: AppSpacing.grid14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,42 +35,28 @@ class SuggestionCard extends StatelessWidget {
               children: [
                 const Icon(
                   LucideIcons.lightbulb,
-                  size: 18,
+                  size: AppSpacing.iconSize18,
                   color: AppColors.saranTeks,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.grid6),
                 Text(
                   'SARAN',
-                  style: const TextStyle(
-                    fontFamily: AppTypography.fontParent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.mikro.copyWith(
                     color: AppColors.saranTeks,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              content,
-              style: AppTypography.kecil,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.grid8),
+            Text(content, style: AppTypography.kecil),
+            const SizedBox(height: AppSpacing.grid8),
             Row(
               children: [
-                Text(
-                  actionLabel,
-                  style: const TextStyle(
-                    fontFamily: AppTypography.fontParent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.utama,
-                  ),
-                ),
-                const SizedBox(width: 4),
+                Text(actionLabel, style: AppTypography.tautanAksi),
+                const SizedBox(width: AppSpacing.grid4),
                 const Icon(
                   LucideIcons.chevronRight,
-                  size: 16,
+                  size: AppSpacing.iconSize16,
                   color: AppColors.utama,
                 ),
               ],

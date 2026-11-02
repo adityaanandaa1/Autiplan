@@ -15,6 +15,7 @@ class CaregiverHeader extends StatelessWidget {
     this.showBell = false,
     this.onBellTap,
     this.bellHasBadge = false,
+    this.trailing,
   });
 
   final String title;
@@ -26,22 +27,36 @@ class CaregiverHeader extends StatelessWidget {
   final VoidCallback? onBellTap;
   final bool bellHasBadge;
 
+  /// Widget tambahan di kanan header (mis. tombol bulan di layar Jadwal).
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.fromLTRB(16, 20, 12, 12),
+      height: AppSpacing.headerHeight,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.grid16,
+        AppSpacing.grid20,
+        AppSpacing.grid12,
+        AppSpacing.grid12,
+      ),
       child: Row(
         children: [
           if (variant == CaregiverHeaderVariant.back) ...[
             IconButton(
-              icon: const Icon(LucideIcons.arrowLeft, size: 24),
+              icon: const Icon(
+                LucideIcons.arrowLeft,
+                size: AppSpacing.iconSize24,
+              ),
               onPressed: onBack,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              constraints: const BoxConstraints(
+                minWidth: AppSpacing.minTouchTarget,
+                minHeight: AppSpacing.minTouchTarget,
+              ),
               color: AppColors.teks,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.grid4),
           ],
           Expanded(
             child: Text(
@@ -52,10 +67,13 @@ class CaregiverHeader extends StatelessWidget {
             ),
           ),
           if (showMonthPicker) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.grid8),
             TextButton.icon(
               onPressed: onMonthPickerTap,
-              icon: const Icon(LucideIcons.chevronDown, size: 18),
+              icon: const Icon(
+                LucideIcons.chevronDown,
+                size: AppSpacing.iconSize18,
+              ),
               label: Text(
                 title,
                 style: AppTypography.isi.copyWith(
@@ -64,30 +82,46 @@ class CaregiverHeader extends StatelessWidget {
                 ),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.grid12,
+                  vertical: AppSpacing.grid8,
+                ),
+                minimumSize: const Size(
+                  AppSpacing.minTouchTarget,
+                  AppSpacing.minTouchTarget,
+                ),
               ),
             ),
           ],
+          if (trailing != null) ...[
+            const SizedBox(width: AppSpacing.grid4),
+            trailing!,
+          ],
           if (showBell) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.grid4),
             Stack(
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(LucideIcons.bell, size: 24),
+                  icon: const Icon(
+                    LucideIcons.bell,
+                    size: AppSpacing.iconSize24,
+                  ),
                   onPressed: onBellTap,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  constraints: const BoxConstraints(
+                    minWidth: AppSpacing.minTouchTarget,
+                    minHeight: AppSpacing.minTouchTarget,
+                  ),
                   color: AppColors.teks,
                 ),
                 if (bellHasBadge)
                   Positioned(
-                    right: 10,
-                    top: 10,
+                    right: AppSpacing.badgeOffset,
+                    top: AppSpacing.badgeOffset,
                     child: Container(
-                      width: 8,
-                      height: 8,
+                      width: AppSpacing.badgeDot,
+                      height: AppSpacing.badgeDot,
                       decoration: const BoxDecoration(
                         color: AppColors.bahaya,
                         shape: BoxShape.circle,

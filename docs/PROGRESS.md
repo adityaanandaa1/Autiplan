@@ -15,22 +15,14 @@ Format tiap tahap: status, file utama, hasil `flutter analyze` / `flutter test`,
 
 ## Tahap 2 — Aturan
 
-- **Status:** sebagian. Fungsi dasar dan tes ada, tapi hasil inspeksi (2 November 2026) menemukan bug dan tes yang belum menguji kode asli.
-- **File utama:** `lib/domain/schedule_rules.dart`, `lib/domain/suggestion_engine.dart`, tes di `test/` (`schedule_rules_*`, `suggestion_engine_test`, `change_notice_test`, `completion_logic_test`).
-- **Hasil:** `flutter analyze` bersih, 55 tes lulus.
-
-### Utang yang diketahui (belum diperbaiki)
-1. **emptyDay terlalu banyak:** `_generateEmptyDaySuggestions` memeriksa 7 hari ke depan, padahal HANDOFF §9.4 hanya minggu yang ditampilkan (Jum 1 – Min 3 Mei). Kegiatan berulang juga tidak diperluas ke tanggal depan.
-2. **Bisa crash:** `_generateQuietTimeSuggestions` memakai `todayActivities.first` di `orElse`; melempar `StateError` bila anak tidak punya kegiatan hari itu.
-3. **Teks "Kenapa (data)" independence** tidak sama dengan §9.3 ("{judul} selesai tepat waktu {rentang hari} minggu ini").
-4. **Tes 5, 7, 8 tidak menguji kode asli:** hanya memakai `copyWith` dan objek manual. Belum ada fungsi murni untuk ubah kegiatan (dengan/tanpa ChangeNotice), hapus + urungkan, dan acknowledge.
-5. **Tes 12 tidak menguji kode asli:** memakai `List<bool>.every` lokal. Belum ada fungsi seperti `canComplete(activity, checkedSteps)` (§8.10).
-6. **Tes saran terlalu longgar:** Tes 9 dan 11 memakai `orElse: () => ...first`; Tes 9c memakai `activityId.contains('sepeda')`.
-7. Kecil: `findNearestFreeSlot` memakai `+ 10` tetap (seharusnya `Settings.minGapMinutes`); "Sekarang" tanpa `end` memakai durasi 30 jam (spesifikasi: `start ≤ now`).
-8. Isi detail saran independence dan catatan "Bisa dikembalikan ke N langkah" belum ada di model `Suggestion` (mungkin urusan Tahap 4–5).
-
-### Langkah berikutnya
-Perbaiki butir 1–3 dan 7, buat fungsi murni untuk butir 4–5 di `schedule_rules.dart`, tulis ulang tesnya agar memanggil fungsi itu, lalu perbarui bagian ini.
+- **Status:** selesai (diperbaiki 2 November 2026 setelah inspeksi dengan systematic-debugging).
+- **File utama:** `lib/domain/schedule_rules.dart`, `lib/domain/suggestion_engine.dart`, tes di `test/`.
+- **Hasil:** `flutter analyze` bersih, 62 tes lulus.
+- **Diperbaiki:** emptyDay dibatasi minggu berjalan; crash quietTime saat tanpa kegiatan; teks independence memakai rentang tanggal; `findNearestFreeSlot` memakai `minGapMinutes`; "Sekarang" tanpa `end`; fungsi murni baru (`applyActivityEdit`, `deleteActivity`, `undoDeleteActivity`, `acknowledgeNotice`, `canComplete`, `formatDateRange`, `consecutiveOnTimeDates`) dan tes 5, 7, 8, 12 ditulis ulang agar memanggil kode asli; tes saran diperketat. Keputusan tercatat di DECISIONS.md.
+- **Utang yang tersisa:**
+  - `generateSuggestions` memakai `children.firstWhere(... orElse: first)`: diam-diam memakai anak pertama bila id tidak ada, melempar bila `children` kosong (belum terbukti bug).
+  - Kegiatan berulang belum diperluas ke tanggal depan, jadi emptyDay/transitionGap hanya melihat kegiatan yang benar-benar ada di data.
+  - Isi detail saran independence dan catatan "Bisa dikembalikan ke N langkah" belum ada di model `Suggestion` (urusan Tahap 4–5).
 
 ## Tahap 3 — Komponen
 
@@ -40,20 +32,51 @@ Perbaiki butir 1–3 dan 7, buat fungsi murni untuk butir 4–5 di `schedule_rul
   - **Anak:** `ChildHeader`, `ChildActivityCard`.
   - Galeri komponen di `/dev/komponen` (debug only) menampilkan semua widget dengan data contoh.
 - **File utama:** `lib/core/widgets/*.dart`, `lib/features/dev/component_gallery_screen.dart`, `lib/core/router.dart`.
-- **Hasil:** `flutter analyze` bersih, `flutter test` 55 tes lulus (komponen UI tidak dites unit, hanya tampil di galeri).
+- **Hasil:** `flutter analyze` bersih, `flutter test` 62 tes lulus (komponen UI tidak dites unit, hanya tampil di galeri).
+- **Diperbaiki 2 November 2026:** semua nilai mentah (warna, ukuran huruf, jarak, radius) di widget dan galeri diganti token baru (daftar di DECISIONS.md, bagian 4 Token).
+- **Disamakan dengan HANDOFF §5 (2 November 2026):** `ChildActivityCard` (baris, ubin 48, tepi aksen pada "Sekarang"), `EmergencyButton` terpisah (mengambang kanan-bawah, ditempatkan di Tahap 6), `ChildButton`, `ChildBackHeader`, `Mascot` (versi sederhana `CustomPaint`), `CalmSnackbar` (ikon check, tinggi 48, 4/5 detik), `ActivityRow` "Pengganti {judul lama}" lewat `replacedTitle`. Tes widget di `test/child_widgets_test.dart`. 70 tes lulus.
+- **Utang yang tersisa:** (1) `design/screens/` KOSONG, tampilan belum pernah dibandingkan dengan gambar desain. (2) `Mascot` bukan aset resmi; cocokkan dengan komponen "Maskot AutiPlan" di Figma. (3) `DaySummary` overflow 196 px pada lebar 360 dp / skala 1.3x di uji layout (font tes Ahem lebih lebar; perlu dicek di perangkat). (4) Keterangan "Pengganti ..." di `ActivityRow` `maxLines: 1` dengan ellipsis. (5) Gaya label "SEKARANG"/"BARU BERUBAH" (teks polos atau pil), warna ikon "Selesai" (`sukses`), dan bayangan `EmergencyButton` adalah pilihan sendiri. (6) Token lama tak terpakai: `iconTileChild`, `iconSize40`, `ubinIkonAnak`.
 - **Catatan:**
   - Ikon `mandi` memakai `LucideIcons.bath` (bukan `shower` yang tidak ada di lucide_icons_flutter v4).
   - Deprecated `withOpacity` diganti `withValues(alpha:)` untuk kompatibilitas Flutter 3.44.
   - Rute `/dev/komponen` hanya ada di `kDebugMode`.
 
 ### Langkah berikutnya
-Tahap 4: buat layar Beranda, Jadwal, Akun, Notifikasi, Saran, Detail saran (tanpa form). Pakai komponen yang sudah ada.
+Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak yang asli dan `EmergencyButton` di kanan-bawah sesuai DECISIONS.md.
 
 ## Tahap 4 — Orang tua: lihat
-- **Status:** belum dimulai.
+- **Status:** selesai untuk seluruh layar lihat (Beranda, Jadwal, Akun, Notifikasi, Saran, Detail saran).
+- **File utama:**
+  - `lib/features/caregiver/home_screen.dart` (Beranda OT-01/02/03) ✅
+  - `lib/features/caregiver/notifications_screen.dart` (Notifikasi OT-15) ✅
+  - `lib/features/caregiver/suggestions_screen.dart` (Saran OT-16) ✅ — baris saran membuka **sheet Detail Saran OT-17** (`widgets/suggestion_detail_sheet.dart` + `widgets/suggestion_actions.dart`).
+  - `lib/features/caregiver/schedule_screen.dart` (Jadwal OT-04/05/06/07) ✅ + `schedule_providers.dart` (selectedDateProvider, selectedWeekStartProvider) + `widgets/schedule_activity_rows.dart` + `widgets/schedule_empty_day.dart`
+  - `lib/features/caregiver/account_screen.dart` (Akun OT-14) ✅ + `account_widgets.dart` + `account_sheets.dart` (chip Suka/Hindari maks 5, stepper pengingat, batas saran 3 stepper, nomor darurat, reset demo)
+  - `lib/core/router.dart`: Jadwal dan Akun pakai layar asli.
+- **Hasil:** `flutter analyze` — 75 issue; SEMUA 50 error hanya di **satu file rusak** `lib/features/caregiver/widgets/edit_activity_sheet.dart` (milik Tahap 5, lihat di bawah). File lain bersih. `flutter test` belum dijalankan ulang setelah perubahan UI (sebelumnya 70 lulus).
+- **Catatan:** Home menampilkan kegiatan sekarang/berikutnya, progres, kartu perhatian, saran. Notifikasi mark all as read. Saran menampilkan semua saran aktif. Jadwal: geser kiri/kanan pada strip = pindah minggu; tekan tanggal = ganti hari; baris kegiatan → sheet Ubah; hari kosong (OT-07) + kartu saran emptyDay; FAB → sheet Tambah.
 
 ## Tahap 5 — Orang tua: form
-- **Status:** belum dimulai.
+- **Status:** selesai (2 November 2026).
+- **Selesai dan bersih (analyze aman):**
+  - `lib/features/caregiver/forms/sheet_scaffold.dart` — kerangka bottom sheet (pegangan, judul, subjudul, tombol X).
+  - `lib/features/caregiver/forms/form_field.dart` — FormLabel, FormBox, FormTextField, FormLinkRow, FormTextLink, FormInfoBox.
+  - `lib/features/caregiver/forms/form_utils.dart` — format tanggal/jam id, `buildActivity`, `shortTitleFromTitle`, `generateId`.
+  - `lib/features/caregiver/forms/icon_picker_sheet.dart` — pemilih ikon grid 3×3 ("9 ikon tersedia").
+  - `lib/features/caregiver/forms/time_picker_sheet.dart` — pemilih tanggal (strip 7 hari) + Mulai/Selesai via `showTimePicker`; "Selesai" bisa dikosongkan hanya untuk ikon Tidur.
+  - `lib/features/caregiver/widgets/add_activity_sheet.dart` — **LENGKAP**: ChildSegmented "Untuk", nama, ikon, waktu, cek bentrok + tautan "Pakai {slot kosong}", Opsi lanjutan (`add_activity_advanced.dart`: langkah 0–5, chip ulangi Sen–Min, nama singkat, mode mandiri), "Simpan jadwal" + snackbar "Jadwal tersimpan dan dikirim ke HP {anak}". Mendukung prefill dari saran (payload quietTime/emptyDay).
+  - `lib/features/caregiver/widgets/suggestion_detail_sheet.dart` + `suggestion_actions.dart` — OT-17 lengkap: isi, "Kenapa (data)/(dasar)", tombol aksi utama (independence → `independentMode` + steps diringkas + status applied + snackbar; quietTime/emptyDay → sheet Tambah terisi; transitionGap → sheet Ubah dengan jam digeser), "Nanti saja", "Abaikan saran ini" (status dismissed).
+  - `lib/features/caregiver/widgets/change_preview_sheet.dart` — pratinjau Dulu → Sekarang (dua ubin + pesan).
+  - `lib/features/caregiver/widgets/delete_activity_dialog.dart` — dialog konfirmasi hapus OT-12.
+  - `lib/core/widgets/caregiver_header.dart` — parameter `trailing` baru (bulan "Mei 2026 ▾" di header Jadwal).
+- **Ditulis ulang utuh:** `lib/features/caregiver/widgets/edit_activity_sheet.dart` (sheet Ubah OT-10/11). File lama rusak (teks parsial, duplikasi extension, import setelah deklarasi) dihapus dan ditulis ulang dengan anchor; `build` ada di dalam kelas State, bukan extension (extension tidak bisa meng-override `build`).
+- **Hasil:** `flutter analyze` 0 issue; `flutter test` 70 tes lulus.
+- **Diperbaiki selain sheet Ubah:** FAB Beranda membuka sheet Tambah (OT-01, sebelumnya TODO); import ganda di `suggestions_screen.dart`; lint `use_null_aware_elements` di `form_field.dart` (`?leading`, `?trailing`, Dart 3.12); `activeColor` deprecated → `activeThumbColor` di `add_activity_advanced.dart`; `role_switch_test.dart` diberi `scrollUntilVisible` (tombol "Ganti peran" di ujung ListView Beranda tidak ter-build di luar viewport; sebelumnya placeholder). Detail di DECISIONS.md.
+- **Alur dicek lewat bacaan kode (belum dijalankan di perangkat):** 13.1 langkah 1–3 (seed: Les 20.00–20.45, Tidur 21.00 → gap 15 < 30 → kartu waktu tenang muncul di sheet Ubah), 13.2, 13.3, 13.5.
+- **Utang yang tersisa:**
+  - Langkah asli tidak disimpan saat saran independence diterapkan, jadi "Bisa dikembalikan ke N langkah" (§9.3) belum bisa di form Ubah.
+  - Status `applied` untuk quietTime/emptyDay/transitionGap belum diatur setelah sheet Tambah/Ubah dari saran berhasil disimpan.
+  - Tes widget untuk form Tambah/Ubah belum ada (yang dites hanya fungsi murni dan komponen anak).
 
 ## Tahap 6 — Anak
 - **Status:** belum dimulai. Ingat catatan di DECISIONS.md: pasang `RoleSwitchButton` di Jadwal anak yang asli.

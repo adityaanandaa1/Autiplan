@@ -30,50 +30,49 @@ class WeekStrip extends StatelessWidget {
           child: GestureDetector(
             onTap: () => onDateSelected(date),
             child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              color: AppColors.transparan,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid8),
               child: Column(
                 children: [
                   Text(
                     dayName,
-                    style: const TextStyle(
-                      fontFamily: AppTypography.fontParent,
-                      fontSize: 12,
+                    style: AppTypography.mikro.copyWith(
                       fontWeight: FontWeight.w500,
                       color: AppColors.teksSekunder,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.grid6),
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: AppSpacing.weekDateCircle,
+                    height: AppSpacing.weekDateCircle,
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.utama : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.utama
+                          : AppColors.transparan,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '${date.day}',
-                      style: TextStyle(
-                        fontFamily: AppTypography.fontParent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : AppColors.teks,
+                      style: AppTypography.angkaTanggal.copyWith(
+                        color: isSelected
+                            ? AppColors.teksDiAtasUtama
+                            : AppColors.teks,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.grid6),
                   if (hasActivities)
                     Container(
-                      width: 4,
-                      height: 4,
+                      width: AppSpacing.weekDot,
+                      height: AppSpacing.weekDot,
                       decoration: const BoxDecoration(
                         color: AppColors.anakAksen,
                         shape: BoxShape.circle,
                       ),
                     )
                   else
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.weekDot),
                 ],
               ),
             ),
