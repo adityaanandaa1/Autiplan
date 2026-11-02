@@ -1,0 +1,17 @@
+# Catatan keputusan
+
+Tulis setiap keputusan yang tidak tertulis di HANDOFF.md, atau setiap perbedaan antara desain dan HANDOFF.md, dengan format:
+
+- **Tanggal** · **Bagian** · Apa yang diputuskan dan alasannya.
+
+---
+
+- **1 November 2026** · **3.1 Paket** · Menggunakan `lucide_icons_flutter: ^4.0.1` menggantikan versi 1.x karena pada Flutter 3.44 / Dart 3.12 class `IconData` dideklarasikan sebagai `base class`/`final class` sehingga versi 1.x mengalami error kompilasi (`The class 'IconData' can't be extended outside of its library`). Versi 4.0.1 kompatibel dengan Dart 3.12 dan mempertahankan seluruh ikon Lucide sesuai desain.
+- **1 November 2026** · **3.1 Paket & 10.1 Rute** · Menambahkan dependensi bawaan SDK `flutter_localizations` (`sdk: flutter`) dan mendaftarkan `GlobalMaterialLocalizations.delegate`, `GlobalWidgetsLocalizations.delegate`, serta `GlobalCupertinoLocalizations.delegate` pada `MaterialApp.router` di `lib/app.dart` agar locale Bahasa Indonesia (`id_ID`) didukung penuh oleh widget Material.
+- **1 November 2026** · **3.1 Aset Font** · Font Inter dan Lexend diunduh langsung dari repository resmi Google Fonts ke `assets/fonts/` dengan varian `Regular`, `Medium`, dan `SemiBold` sesuai arahan prompt.
+- **1 November 2026** · **10.1 Navigasi** · Rute orang tua dengan nav bawah diimplementasikan menggunakan `StatefulShellRoute.indexedStack` (`CaregiverShell`) untuk menjaga state navigasi antar-tab Beranda, Jadwal, dan Akun.
+- **2 November 2026** · **3.1 Aset Font (koreksi)** · File `Inter-*.ttf` dan `Lexend-*.ttf` di `assets/fonts/` ternyata masing-masing satu *variable font* yang disalin dengan tiga nama (MD5 sama), bukan tiga file statis. Diverifikasi dengan tes ukur teks: `FontWeight.w600` memakai sumbu `wght` secara otomatis di Flutter 3.44, jadi tampilannya tetap benar. Dibiarkan; konsekuensinya hanya ukuran aset sedikit lebih besar.
+- **2 November 2026** · **3.3 Repository** · Data lokal yang tidak bisa dibaca (JSON rusak atau tidak cocok dengan model setelah model berubah) dibuang, lalu aplikasi memakai data seed. `LocalRepository.load()` mengembalikan `null` untuk kasus ini. Alasannya: tanpa ini aplikasi crash saat dibuka di perangkat yang masih menyimpan data versi lama. Cocok untuk prototipe yang punya tombol "Reset data demo".
+- **2 November 2026** · **7.1 Jam demo** · `clockProvider` kini diturunkan dari `Settings.demoClockEnabled` (bukan state terpisah), supaya hanya ada satu sumber kebenaran untuk mode demo.
+- **2 November 2026** · **4 Token** · Nilai mentah di layar Tahap 1 (Pilih peran, shell orang tua, placeholder) dipindah ke token di `lib/core/theme/`. Token baru yang tidak ada di tabel bagian 4 (mis. gaya teks logo "AutiPlan" 32 px, tinggi nav bawah) ditambahkan karena layar Pilih peran (10.2) tidak punya spesifikasi ukuran.
+- **2 November 2026** · **10.3 Ganti peran** · Atas permintaan pengguna, ada satu tombol "Ganti peran" (widget `RoleSwitchButton`, `lib/core/widgets/`) di pojok kanan atas **Beranda orang tua** dan **Jadwal anak** yang kembali ke Pilih peran, supaya demo mudah. Ini pengecualian dari 10.3 (sisi anak: tanpa tombol terlihat, hanya tekan lama 2 detik "Halo, Rafi!"). Karena layar sungguhan belum ada, tombol dipasang lewat `PlaceholderScreen(showRoleSwitch: true)`. **Tahap 4 dan 6 wajib memasang `RoleSwitchButton` di Beranda dan Jadwal anak yang asli.** Tekan lama tetap boleh dibuat sebagai cadangan. Tombol ini khusus mode demo dan sebaiknya dihapus kalau aplikasi dipakai sungguhan oleh anak.

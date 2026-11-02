@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../theme/theme.dart';
+
+enum CaregiverTab { home, schedule, account }
+
+class CaregiverNavBar extends StatelessWidget {
+  const CaregiverNavBar({
+    super.key,
+    required this.currentTab,
+    required this.onTabSelected,
+  });
+
+  final CaregiverTab currentTab;
+  final ValueChanged<CaregiverTab> onTabSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      decoration: const BoxDecoration(
+        color: AppColors.permukaan,
+        border: Border(
+          top: BorderSide(color: AppColors.garis, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildTab(
+            context,
+            tab: CaregiverTab.home,
+            icon: LucideIcons.house,
+            label: 'Beranda',
+          ),
+          _buildTab(
+            context,
+            tab: CaregiverTab.schedule,
+            icon: LucideIcons.calendarDays,
+            label: 'Jadwal',
+          ),
+          _buildTab(
+            context,
+            tab: CaregiverTab.account,
+            icon: LucideIcons.user,
+            label: 'Akun',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(
+    BuildContext context, {
+    required CaregiverTab tab,
+    required IconData icon,
+    required String label,
+  }) {
+    final isActive = currentTab == tab;
+    final color = isActive ? AppColors.utama : AppColors.teksSekunder;
+    final fontWeight = isActive ? FontWeight.w600 : FontWeight.w500;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () => onTabSelected(tab),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.fontParent,
+                fontSize: 12,
+                fontWeight: fontWeight,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
