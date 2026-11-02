@@ -2,13 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/widgets/placeholder_screen.dart';
 import '../features/caregiver/account_screen.dart';
 import '../features/caregiver/caregiver_shell.dart';
 import '../features/caregiver/home_screen.dart';
 import '../features/caregiver/notifications_screen.dart';
 import '../features/caregiver/schedule_screen.dart';
 import '../features/caregiver/suggestions_screen.dart';
+import '../features/child/child_activity_screen.dart';
+import '../features/child/child_calling_screen.dart';
+import '../features/child/child_change_screen.dart';
+import '../features/child/child_emergency_screen.dart';
+import '../features/child/child_home_screen.dart';
+import '../features/child/child_success_screen.dart';
+import '../features/child/child_theme_screen.dart';
 import '../features/dev/component_gallery_screen.dart';
 import '../features/role_picker/role_picker_screen.dart';
 
@@ -89,32 +95,19 @@ GoRouter createRouter() {
       GoRoute(
         path: '/anak',
         name: 'childHome',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Jadwal Hari Ini',
-          showBackButton: false,
-          isChild: true,
-          showRoleSwitch: true,
-        ),
+        builder: (context, state) => const ChildHomeScreen(),
       ),
       GoRoute(
         path: '/anak/perubahan',
         name: 'childChanges',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Perubahan Jadwal',
-          fallbackRoute: '/anak',
-          isChild: true,
-        ),
+        builder: (context, state) => const ChildChangeScreen(),
       ),
       GoRoute(
         path: '/anak/aktivitas/:id',
         name: 'childActivityDetail',
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
-          return PlaceholderScreen(
-            title: 'Detail Aktivitas ($id)',
-            fallbackRoute: '/anak',
-            isChild: true,
-          );
+          return ChildActivityScreen(activityId: id);
         },
       ),
       GoRoute(
@@ -122,39 +115,23 @@ GoRouter createRouter() {
         name: 'childSuccess',
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
-          return PlaceholderScreen(
-            title: 'Berhasil ($id)',
-            fallbackRoute: '/anak',
-            isChild: true,
-          );
+          return ChildSuccessScreen(activityId: id);
         },
       ),
       GoRoute(
         path: '/anak/darurat',
         name: 'childEmergency',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Butuh Bantuan?',
-          fallbackRoute: '/anak',
-          isChild: true,
-        ),
+        builder: (context, state) => const ChildEmergencyScreen(),
       ),
       GoRoute(
         path: '/anak/menelepon',
         name: 'childCalling',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Menelepon Pengasuh',
-          fallbackRoute: '/anak',
-          isChild: true,
-        ),
+        builder: (context, state) => const ChildCallingScreen(),
       ),
       GoRoute(
         path: '/anak/tema',
         name: 'childTheme',
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Pilih Tema',
-          fallbackRoute: '/anak',
-          isChild: true,
-        ),
+        builder: (context, state) => const ChildThemeScreen(),
       ),
     ],
   );

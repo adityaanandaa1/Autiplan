@@ -47,6 +47,7 @@ void applySuggestionAction(
               a.id == activity.id
                   ? a.copyWith(
                       independentMode: true,
+                      originalSteps: activity.steps,
                       steps: [activity.steps.first],
                     )
                   : a,

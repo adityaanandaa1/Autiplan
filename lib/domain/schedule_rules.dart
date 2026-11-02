@@ -585,3 +585,56 @@ bool canComplete(Activity activity, int checkedStepCount) =>
     activity.steps.isEmpty ||
     activity.independentMode ||
     checkedStepCount >= activity.steps.length;
+
+/// Menyelesaikan kegiatan: membuat Completion dan notifikasi activityDone
+/// (§8.10). stepsChecked adalah daftar bool untuk setiap langkah (kosong jika
+/// tanpa langkah).
+class CompleteActivityResult {
+  const CompleteActivityResult(this.state, this.completion);
+  final AppState state;
+  final Completion completion;
+}
+
+CompleteActivityResult completeActivity({
+  required AppState state,
+  required Activity activity,
+  required List<bool> stepsChecked,
+  required DateTime now,
+  required String completionId,
+  required String notificationId,
+}) {
+  final child = state.children.firstWhere((c) => c.id == activity.childId);
+  final onTime = activity.end == null || now.isBefore(
+    DateTime(
+      activity.date.year,
+      activity.date.month,
+      activity.date.day,
+      activity.end!.hour,
+      activity.end!.minute,
+    ).add(const Duration(minutes: 1)),
+  );
+
+  final completion = Completion(
+    activityId: activity.id,
+    date: activity.date,
+    completedAt: now,
+    onTime: onTime,
+    stepsChecked: stepsChecked,
+  );
+
+  final notification = CaregiverNotification(
+    id: notificationId,
+    type: NotificationType.activityDone,
+    text: '${child.name} menyelesaikan ${activity.title}',
+    at: now,
+    read: false,
+  );
+
+  return CompleteActivityResult(
+    state.copyWith(
+      completions: [...state.completions, completion],
+      notifications: [...state.notifications, notification],
+    ),
+    completion,
+  );
+}

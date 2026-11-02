@@ -17,6 +17,7 @@ class Activity {
     bool? usesScreen,
     this.independentMode = false,
     this.replacedTitle,
+    this.originalSteps,
   }) : usesScreen = usesScreen ?? (icon == ActivityIcon.nonton);
 
   final String id;
@@ -32,6 +33,7 @@ class Activity {
   final bool usesScreen;
   final bool independentMode;
   final String? replacedTitle;
+  final List<String>? originalSteps;
 
   Activity copyWith({
     String? id,
@@ -49,6 +51,8 @@ class Activity {
     bool? independentMode,
     String? replacedTitle,
     bool clearReplacedTitle = false,
+    List<String>? originalSteps,
+    bool clearOriginalSteps = false,
   }) {
     return Activity(
       id: id ?? this.id,
@@ -66,6 +70,9 @@ class Activity {
       replacedTitle: clearReplacedTitle
           ? null
           : (replacedTitle ?? this.replacedTitle),
+      originalSteps: clearOriginalSteps
+          ? null
+          : (originalSteps ?? this.originalSteps),
     );
   }
 
@@ -84,6 +91,7 @@ class Activity {
     'usesScreen': usesScreen,
     'independentMode': independentMode,
     if (replacedTitle != null) 'replacedTitle': replacedTitle,
+    if (originalSteps != null) 'originalSteps': originalSteps,
   };
 
   factory Activity.fromJson(Map<String, dynamic> json) {
@@ -109,6 +117,9 @@ class Activity {
       usesScreen: json['usesScreen'] as bool?,
       independentMode: (json['independentMode'] as bool?) ?? false,
       replacedTitle: json['replacedTitle'] as String?,
+      originalSteps: json['originalSteps'] != null
+          ? (json['originalSteps'] as List).map((e) => e as String).toList()
+          : null,
     );
   }
 
@@ -131,7 +142,11 @@ class Activity {
           setEq(repeatWeekdays, other.repeatWeekdays) &&
           usesScreen == other.usesScreen &&
           independentMode == other.independentMode &&
-          replacedTitle == other.replacedTitle;
+          replacedTitle == other.replacedTitle &&
+          (originalSteps == null && other.originalSteps == null ||
+              originalSteps != null &&
+                  other.originalSteps != null &&
+                  listEq(originalSteps!, other.originalSteps!));
 
   @override
   int get hashCode =>

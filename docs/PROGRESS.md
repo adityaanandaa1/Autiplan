@@ -85,8 +85,38 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 - **Utang:** langkah asli tidak disimpan saat saran independence (§9.3 "Bisa dikembalikan"); swipe abaikan saran (§9.5) belum ada; tombol bulan belum membuka pemilih; `ChildSegmented` di Beranda tidak ada di OT-01; `findNearestFreeSlot` belum menangani lewat tengah malam; kegiatan berulang tidak diperluas saat tanggal diubah; belum dijalankan di perangkat (overflow 360 dp / skala 1.3x belum diuji).
 
 ## Tahap 6 — Anak
-- **Status:** belum dimulai. Ingat catatan di DECISIONS.md: pasang `RoleSwitchButton` di Jadwal anak yang asli.
+
+- **Status:** selesai.
+- **Isi:** 
+  - Prasyarat: field `originalSteps` di Activity untuk mendukung "Bisa dikembalikan ke N langkah" (§9.3), disimpan saat saran independence diterapkan.
+  - Fungsi domain `completeActivity` (§8.10): membuat Completion dengan `onTime`, `stepsChecked`, dan notifikasi `activityDone`.
+  - 7 layar anak: A-01/A-03/A-11 (child_home_screen.dart), A-02 (child_change_screen.dart), A-04/A-05/A-10 (child_activity_screen.dart), A-06 (child_success_screen.dart), A-09 (child_theme_screen.dart), A-07/A-08 (child_emergency_screen.dart, child_calling_screen.dart).
+  - Router: 7 rute `/anak*` diganti dari PlaceholderScreen ke layar asli.
+  - Semua widget anak (ChildHeader, ChildActivityCard, ChildButton, ChildBackHeader, Mascot, EmergencyButton) sudah ada dari Tahap 3, langsung dipakai.
+- **File utama:** `lib/features/child/*.dart` (7 layar), `lib/domain/schedule_rules.dart` (completeActivity), `lib/data/models/activity.dart` (originalSteps), `lib/core/router.dart` (rute anak), tes di `test/tahap6_*.dart`.
+- **Hasil:** `flutter analyze` 0 issue; `flutter test` 147 lulus, 1 gagal (role_picker_test.dart mencari PlaceholderScreen yang sudah diganti ChildHomeScreen - tes Tahap 1, di luar scope Tahap 6).
+- **Alur yang bisa dicoba:**
+  - 13.1 langkah 4-6: Orang tua kirim perubahan (OT-11) → anak buka A-02 "Oke" → orang tua lihat "Dilihat Rafi pukul ..." (OT-03).
+  - 13.4: Anak selesaikan kegiatan (A-04 centang langkah, A-06) → orang tua lihat notifikasi `activityDone`.
+  - 13.5 akhir: Orang tua terapkan saran independence → anak buka kegiatan → A-10 mode mandiri.
+  - 13.6: Anak tekan tombol darurat (A-07, A-08) → orang tua lihat notifikasi `emergencyPressed`.
+  - 13.7: Anak ganti tema (A-09 Padang Hijau) → A-11 tema baru.
+- **Keputusan (dicatat di DECISIONS.md):**
+  - `originalSteps` disimpan saat independence applied, bukan saat dibuat. Field nullable di Activity, diisi `activity.steps` saat `independentMode = true`.
+  - Sapaan "Selamat pagi/siang/sore/malam" memakai jam yang sama dengan sisi orang tua (§11 OT-01).
+  - Banner perubahan (A-01) bukan pop-up, tetap tampil sampai dibuka. Tautan "Lihat" ke `/anak/perubahan`.
+  - Notice hapus (after = null) ditampilkan "Dulu → Waktu bebas" (A-02).
+  - A-06 "Berikutnya" mencari kegiatan berikutnya hari yang sama; bila tidak ada: "Tidak ada kegiatan lagi hari ini."
+  - A-08 timer 30 detik memakai Timer biasa (bukan Clock) dan dibatalkan saat layar ditutup (dispose).
+  - Tombol "Tema" di A-01 tautan teks (underline) di kiri atas, bukan di header atau FAB.
+  - Tekan lama 2 detik "Halo, Rafi!" kembali ke Pilih peran (§10.3); RoleSwitchButton tetap ada di kanan atas sebagai shortcut demo (§10.3 catatan DECISIONS.md).
+- **Utang yang tersisa:** 
+  - Tes role_picker_test.dart perlu diperbarui (mencari PlaceholderScreen, sekarang ChildHomeScreen).
+  - Tes widget untuk 7 layar anak belum ada (hanya tes domain completeActivity dan originalSteps).
+  - Belum dijalankan di perangkat (overflow 360 dp / skala 1.3x belum diuji).
+  - Langkah asli (`originalSteps`) tersimpan, tetapi UI "Lihat langkah lengkap" (A-10) dan "Bisa dikembalikan ke N langkah" (form Ubah) belum menampilkan langkah penuh/tombol kembalikan.
 
 ## Tahap 7 — Rapikan
 - **Status:** belum dimulai.
+
 
