@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A clock abstraction that can be replaced in tests.
@@ -15,13 +13,7 @@ class Clock {
 
 /// Emits every 30 seconds so widgets that show "Sekarang" refresh when the
 /// hour or day changes while the app stays open.
-///
-/// Under `flutter test` (`FLUTTER_TEST` set), returns an empty stream so
-/// widget tests do not leave a pending periodic timer.
 final minuteTickProvider = StreamProvider.autoDispose<int>((ref) {
-  if (Platform.environment.containsKey('FLUTTER_TEST')) {
-    return const Stream<int>.empty();
-  }
   return Stream<int>.periodic(const Duration(seconds: 30), (i) => i);
 });
 
@@ -30,5 +22,13 @@ final minuteTickProvider = StreamProvider.autoDispose<int>((ref) {
 /// Watches [minuteTickProvider] so dependents rebuild on each tick.
 final clockProvider = Provider<Clock>((ref) {
   ref.watch(minuteTickProvider);
-  return const Clock();
+  // Harus instance baru: Riverpod tidak memberi tahu pendengar bila nilainya
+  // identik, jadi `const Clock()` membuat layar tidak pernah diperbarui.
+  return Clock(() => DateTime.now());
+});
+
+/// Today's date without the time. Only notifies when the day changes.
+final currentDayProvider = Provider<DateTime>((ref) {
+  final now = ref.watch(clockProvider).now;
+  return DateTime(now.year, now.month, now.day);
 });

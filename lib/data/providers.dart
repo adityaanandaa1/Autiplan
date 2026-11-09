@@ -46,7 +46,7 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   return AppStateNotifier(repository, AppState.empty());
 });
 
-/// Provider for the currently active role in demo ('caregiver' or 'child').
+/// Provider for the currently active role ('caregiver' or 'child').
 final activeRoleProvider = StateProvider<String?>((ref) => null);
 
 /// Provider for the currently selected child ID in caregiver view.

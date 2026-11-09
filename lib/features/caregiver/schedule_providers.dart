@@ -2,16 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/clock.dart';
 
+/// Monday of the week containing [date], without the time.
+DateTime mondayOf(DateTime date) {
+  final monday = date.subtract(Duration(days: date.weekday - 1));
+  return DateTime(monday.year, monday.month, monday.day);
+}
+
+// Pakai `read`, bukan `watch`: StateProvider dibuat ulang saat dependensinya
+// berubah, sehingga pilihan pengguna akan hilang pada setiap tick jam.
+
 /// Provider tanggal terpilih di layar Jadwal
 final selectedDateProvider = StateProvider<DateTime>((ref) {
-  final clock = ref.watch(clockProvider);
-  return DateTime(clock.now.year, clock.now.month, clock.now.day);
+  return ref.read(currentDayProvider);
 });
 
 /// Provider awal minggu (Senin)
 final selectedWeekStartProvider = StateProvider<DateTime>((ref) {
-  final clock = ref.watch(clockProvider);
-  final today = clock.now;
-  final monday = today.subtract(Duration(days: today.weekday - 1));
-  return DateTime(monday.year, monday.month, monday.day);
+  return mondayOf(ref.read(currentDayProvider));
 });

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../core/theme/theme.dart';
 import '../../core/widgets/buttons.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../domain/phone_number.dart';
 import '../caregiver/forms/form_field.dart';
+import '../caregiver/forms/form_utils.dart';
 
 /// `/profil-awal`: isi profil pengasuh dan anak pertama (akun baru).
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -26,9 +27,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _emergencyNumber = TextEditingController();
   final _backupNumber = TextEditingController();
 
-  String? _phoneError;
+  String? _emergencyError;
+  String? _backupError;
 
-  static final _phonePattern = RegExp(r'^08\d{8,11}$');
+  static const _phoneErrorText = 'Nomor belum sesuai. Contoh: 081234567890.';
+  static const _maxNameLength = 40;
+  static const _minAge = 1;
+  static const _maxAge = 18;
 
   @override
   void dispose() {
@@ -45,25 +50,36 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       _caregiverName.text.trim().isNotEmpty &&
       _childFullName.text.trim().isNotEmpty &&
       _childNickname.text.trim().isNotEmpty &&
-      int.tryParse(_childAge.text.trim()) != null &&
+      _age != null &&
       _emergencyNumber.text.trim().isNotEmpty;
 
-  void _save() {
-    final emergency = _emergencyNumber.text.trim();
-    final backup = _backupNumber.text.trim();
-    if (!_phonePattern.hasMatch(emergency) ||
-        (backup.isNotEmpty && !_phonePattern.hasMatch(backup))) {
-      setState(() => _phoneError = 'Nomor belum sesuai. Contoh: 081234567890.');
-      return;
-    }
-    setState(() => _phoneError = null);
+  /// Umur yang sah, atau null. Hanya digit, karena `int.tryParse` menerima
+  /// tanda dan heksadesimal.
+  int? get _age {
+    final raw = _childAge.text.trim();
+    if (!RegExp(r'^\d+$').hasMatch(raw)) return null;
+    final age = int.tryParse(raw);
+    if (age == null || age < _minAge || age > _maxAge) return null;
+    return age;
+  }
 
-    final childId = 'child-${const Uuid().v4()}';
+  void _save() {
+    final emergency = normalizePhoneNumber(_emergencyNumber.text);
+    final backup = normalizePhoneNumber(_backupNumber.text);
+    final emergencyValid = isValidPhoneNumber(emergency);
+    final backupValid = backup.isEmpty || isValidPhoneNumber(backup);
+    setState(() {
+      _emergencyError = emergencyValid ? null : _phoneErrorText;
+      _backupError = backupValid ? null : _phoneErrorText;
+    });
+    if (!emergencyValid || !backupValid) return;
+
+    final childId = generateId('child');
     final child = Child(
       id: childId,
       name: _childNickname.text.trim(),
       fullName: _childFullName.text.trim(),
-      age: int.parse(_childAge.text.trim()),
+      age: _age!,
       theme: ChildTheme.lautTenang,
       likes: const [],
       avoids: const [],
@@ -100,18 +116,21 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   FormTextField(
                     controller: _caregiverName,
                     hint: 'Bu Sari',
+                    maxLength: _maxNameLength,
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
                   const FormLabel('Nama lengkap anak'),
                   FormTextField(
                     controller: _childFullName,
+                    maxLength: _maxNameLength,
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
                   const FormLabel('Nama panggilan anak'),
                   FormTextField(
                     controller: _childNickname,
+                    maxLength: _maxNameLength,
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
@@ -126,7 +145,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   FormTextField(
                     controller: _emergencyNumber,
                     keyboardType: TextInputType.phone,
-                    errorText: _phoneError,
+                    errorText: _emergencyError,
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
@@ -134,6 +153,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   FormTextField(
                     controller: _backupNumber,
                     keyboardType: TextInputType.phone,
+                    errorText: _backupError,
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.grid24),

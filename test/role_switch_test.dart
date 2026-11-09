@@ -1,4 +1,5 @@
 import 'package:autiplan/app.dart';
+import 'package:autiplan/core/clock.dart';
 import 'package:autiplan/data/local_repository.dart';
 import 'package:autiplan/data/providers.dart';
 import 'support/fixture_state.dart';
@@ -14,6 +15,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        clockProvider.overrideWithValue(Clock(() => fixtureNow)),
         appStateProvider.overrideWith(
           (ref) =>
               AppStateNotifier(LocalRepository(prefs), buildFixtureState()),

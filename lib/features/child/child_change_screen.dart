@@ -42,7 +42,9 @@ class ChildChangeScreen extends ConsumerWidget {
           ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
     if (unseen.isEmpty) {
-      context.go('/anak');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/anak');
+      });
       return const SizedBox.shrink();
     }
 

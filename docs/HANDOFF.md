@@ -678,6 +678,12 @@ keputusan teknisnya ada di `docs/superpowers/plans/2026-11-09-autiplan-siap-paka
 - HP anak dihubungkan lewat kode 6 digit yang diperiksa Cloudflare Worker.
 - Push hanya ke HP orang tua, untuk `emergencyPressed` dan `changeSeen`.
 - Pengingat memakai notifikasi lokal di HP orang tua.
+
+**Penyesuaian bagian lain:**
+- §6: `Settings.demoClockEnabled` dihapus, `caregiverName` ditambah, nomor bawaan kosong.
+- §3.3 dan §11 (OT-14): grup "Demo" dan "Reset data demo" dihapus.
+- §12 (A-07, A-08) dan §13: "Bu Sari"/"Ibu Sari"/"IS" diganti nama pengasuh dan inisialnya; nama contoh di §7 hanya dipakai sebagai data tes.
+- §8.11 (A-08): bila kontak cadangan kosong, kartu info dan tombol cadangan tidak ditampilkan.
 - Kegiatan berulang dibuat sebagai salinan per tanggal sampai 28 hari ke depan.
 
 **Tetap berlaku:** seluruh aturan bisnis §8, mesin saran §9, spesifikasi layar

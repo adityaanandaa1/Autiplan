@@ -41,6 +41,13 @@ class CaregiverScheduleScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Hari berganti: ikut pindah hanya bila pengguna sedang melihat "hari ini".
+    ref.listen<DateTime>(currentDayProvider, (previous, today) {
+      if (ref.read(selectedDateProvider) != previous) return;
+      ref.read(selectedDateProvider.notifier).state = today;
+      ref.read(selectedWeekStartProvider.notifier).state = mondayOf(today);
+    });
+
     final state = ref.watch(appStateProvider);
     final child = ref.watch(currentChildProvider);
     if (child == null) return const CalmEmptyScreen();

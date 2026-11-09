@@ -77,7 +77,7 @@ class AccountChildRow extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  child.name.substring(0, 1),
+                  initialsOf(child.name),
                   style: AppTypography.judulBaris,
                 ),
               ),

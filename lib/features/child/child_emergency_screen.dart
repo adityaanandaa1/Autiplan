@@ -119,7 +119,8 @@ class ChildEmergencyScreen extends ConsumerWidget {
 
     final uri = Uri(scheme: 'tel', path: state.settings.emergencyNumber);
     try {
-      if (await canLaunchUrl(uri)) {
+      if (state.settings.emergencyNumber.isNotEmpty &&
+          await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
         if (context.mounted) {

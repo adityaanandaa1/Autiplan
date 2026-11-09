@@ -1,5 +1,4 @@
-﻿// Tahap 7: Bersihkan demo dan siap data kosong
-import 'package:autiplan/core/clock.dart';
+﻿import 'package:autiplan/core/clock.dart';
 import 'package:autiplan/core/widgets/initials.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
@@ -70,6 +69,7 @@ void main() {
   group('Widget dengan AppState.empty', () {
     Widget wrap(Widget child) => ProviderScope(
       overrides: [
+        clockProvider.overrideWithValue(Clock(() => fixtureNow)),
         appStateProvider.overrideWith(
           (ref) => AppStateNotifier(_NoopRepository(), AppState.empty()),
         ),
@@ -142,6 +142,4 @@ class _NoopRepository implements AutiPlanRepository {
   Future<AppState?> load() async => null;
   @override
   Future<void> save(AppState state) async {}
-  @override
-  Future<void> reset() async {}
 }

@@ -42,6 +42,12 @@ class _ChildCallingScreenState extends ConsumerState<ChildCallingScreen> {
       appStateProvider.select((s) => s.settings.caregiverName),
     );
     final caregiverLabel = caregiverName.isEmpty ? 'pengasuh' : caregiverName;
+    final caregiverSentenceStart = caregiverName.isEmpty
+        ? 'Pengasuh'
+        : caregiverName;
+    final hasBackup = ref.watch(
+      appStateProvider.select((s) => s.settings.backupNumber.isNotEmpty),
+    );
 
     return Scaffold(
       backgroundColor: palette.anakLatar,
@@ -80,41 +86,43 @@ class _ChildCallingScreenState extends ConsumerState<ChildCallingScreen> {
                       ),
                       const SizedBox(height: AppSpacing.grid12),
                       Text(
-                        'Tarik napas pelan-pelan. $caregiverLabel akan segera menjawab.',
+                        'Tarik napas pelan-pelan. $caregiverSentenceStart akan segera menjawab.',
                         style: AppTypography.isiAnak,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppSpacing.grid24),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.grid16),
-                        decoration: BoxDecoration(
-                          color: AppColors.permukaan,
-                          borderRadius: AppRadius.kartuAnak,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.info,
-                              size: AppSpacing.iconSize20,
-                              color: palette.anakAksenKuat,
-                            ),
-                            const SizedBox(width: AppSpacing.grid12),
-                            Expanded(
-                              child: Text(
-                                'Kalau $caregiverLabel belum menjawab, HP akan menelepon kontak cadangan.',
-                                style: AppTypography.isiAnak.copyWith(
-                                  fontSize: 15,
+                      if (hasBackup) ...[
+                        const SizedBox(height: AppSpacing.grid24),
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.grid16),
+                          decoration: BoxDecoration(
+                            color: AppColors.permukaan,
+                            borderRadius: AppRadius.kartuAnak,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.info,
+                                size: AppSpacing.iconSize20,
+                                color: palette.anakAksenKuat,
+                              ),
+                              const SizedBox(width: AppSpacing.grid12),
+                              Expanded(
+                                child: Text(
+                                  'Kalau $caregiverLabel belum menjawab, HP akan menelepon kontak cadangan.',
+                                  style: AppTypography.isiAnak.copyWith(
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               ),
-              if (_showBackup) ...[
+              if (_showBackup && hasBackup) ...[
                 ChildButton(
                   label: 'Telepon kontak cadangan',
                   variant: ChildButtonVariant.outline,

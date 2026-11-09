@@ -11,7 +11,7 @@ class SuggestionCard extends StatelessWidget {
     this.onTap,
   });
 
-  /// Label di baris atas, mis. "Saran untuk Rafi · 1 dari 3".
+  /// Label di baris atas, mis. "Saran untuk {anak} · 1 dari 3".
   final String label;
 
   final String content;

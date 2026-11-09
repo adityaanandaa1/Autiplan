@@ -63,8 +63,6 @@ class _FakeRepo implements AutiPlanRepository {
   Future<AppState?> load() async => null;
   @override
   Future<void> save(AppState state) async {}
-  @override
-  Future<void> reset() async {}
 }
 
 ChangeNotice _notice(

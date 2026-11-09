@@ -27,9 +27,9 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
   @override
   Widget build(BuildContext context) {
     // Tema anak mengikuti anak yang sedang dipakai; tanpa anak, tema bawaan.
-    final child = ref.watch(currentChildProvider);
+    final childTheme = ref.watch(currentChildProvider.select((c) => c?.theme));
     final childPalette = ChildPalette.fromTheme(
-      child?.theme ?? ChildTheme.lautTenang,
+      childTheme ?? ChildTheme.lautTenang,
     );
 
     return MaterialApp.router(

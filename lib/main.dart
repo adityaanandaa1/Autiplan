@@ -13,8 +13,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final repo = LocalRepository(prefs);
 
-  // Akun baru mulai dari data kosong; pengguna mengisi profil lewat
-  // /profil-awal. Data lama yang tersimpan tetap dipakai bila ada.
+  // Tanpa data tersimpan, pengguna mengisi profil lewat /profil-awal.
   final existingState = await repo.load();
   final initialState = existingState ?? AppState.empty();
 

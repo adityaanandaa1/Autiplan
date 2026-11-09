@@ -6,6 +6,7 @@ import '../../core/widgets/buttons.dart';
 import '../../core/widgets/calm_snackbar.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../domain/phone_number.dart';
 
 /// Sheet daftar chip (Suka / Hindari), teks bebas maks 5 (§OT-14).
 void showProfileListSheet(
@@ -217,56 +218,75 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
   final settings = ref.read(appStateProvider).settings;
   final primary = TextEditingController(text: settings.emergencyNumber);
   final backup = TextEditingController(text: settings.backupNumber);
+  const invalidNumberText = 'Nomor belum sesuai. Contoh: 081234567890.';
+  String? primaryError;
+  String? backupError;
 
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (ctx) => _SheetFrame(
-      title: 'Nomor darurat',
-      children: [
-        const Text('Nomor utama', style: AppTypography.meta),
-        TextField(
-          controller: primary,
-          keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(hintText: '081234567890'),
-        ),
-        const SizedBox(height: AppSpacing.grid12),
-        const Text('Kontak cadangan', style: AppTypography.meta),
-        TextField(
-          controller: backup,
-          keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(hintText: '081298765432'),
-        ),
-        const SizedBox(height: AppSpacing.grid16),
-        PrimaryButton(
-          label: 'Simpan',
-          onPressed: () {
-            final state = ref.read(appStateProvider);
-            ref
-                .read(appStateProvider.notifier)
-                .updateState(
-                  state.copyWith(
-                    settings: state.settings.copyWith(
-                      emergencyNumber: primary.text.trim().isEmpty
-                          ? settings.emergencyNumber
-                          : primary.text.trim(),
-                      backupNumber: backup.text.trim().isEmpty
-                          ? settings.backupNumber
-                          : backup.text.trim(),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSheetState) => _SheetFrame(
+        title: 'Nomor darurat',
+        children: [
+          const Text('Nomor utama', style: AppTypography.meta),
+          TextField(
+            controller: primary,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: '081234567890',
+              errorText: primaryError,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.grid12),
+          const Text('Kontak cadangan', style: AppTypography.meta),
+          TextField(
+            controller: backup,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: '081298765432',
+              errorText: backupError,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.grid16),
+          PrimaryButton(
+            label: 'Simpan',
+            onPressed: () {
+              final primaryNumber = normalizePhoneNumber(primary.text);
+              final backupNumber = normalizePhoneNumber(backup.text);
+              final primaryValid = isValidPhoneNumber(primaryNumber);
+              final backupValid =
+                  backupNumber.isEmpty || isValidPhoneNumber(backupNumber);
+              if (!primaryValid || !backupValid) {
+                setSheetState(() {
+                  primaryError = primaryValid ? null : invalidNumberText;
+                  backupError = backupValid ? null : invalidNumberText;
+                });
+                return;
+              }
+              final state = ref.read(appStateProvider);
+              ref
+                  .read(appStateProvider.notifier)
+                  .updateState(
+                    state.copyWith(
+                      settings: state.settings.copyWith(
+                        emergencyNumber: primaryNumber,
+                        backupNumber: backupNumber,
+                      ),
                     ),
-                  ),
-                );
-            Navigator.of(ctx).pop();
-            CalmSnackbar.show(context, message: 'Nomor darurat disimpan');
-          },
-        ),
-        const SizedBox(height: AppSpacing.grid8),
-        SecondaryButton(
-          label: 'Batal',
-          onPressed: () => Navigator.of(ctx).pop(),
-        ),
-      ],
+                  );
+              Navigator.of(ctx).pop();
+              CalmSnackbar.show(context, message: 'Nomor darurat disimpan');
+            },
+          ),
+          const SizedBox(height: AppSpacing.grid8),
+          SecondaryButton(
+            label: 'Batal',
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ],
+      ),
     ),
   );
 }

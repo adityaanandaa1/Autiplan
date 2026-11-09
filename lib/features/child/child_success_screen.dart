@@ -36,7 +36,9 @@ class ChildSuccessScreen extends ConsumerWidget {
     );
 
     if (activity.id.isEmpty) {
-      context.go('/anak');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/anak');
+      });
       return const SizedBox.shrink();
     }
 

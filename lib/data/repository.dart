@@ -11,7 +11,4 @@ abstract class AutiPlanRepository {
 
   /// Save the full application state.
   Future<void> save(AppState state);
-
-  /// Reset state to the initial seed data.
-  Future<void> reset();
 }

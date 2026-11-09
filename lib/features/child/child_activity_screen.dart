@@ -53,7 +53,9 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
     );
 
     if (activity.id.isEmpty) {
-      context.go('/anak');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/anak');
+      });
       return const SizedBox.shrink();
     }
 
@@ -113,7 +115,7 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
                 child: ChildButton(
                   label: 'Aku sudah selesai',
                   enabled: canCompleteNow,
-                  onPressed: () => _complete(activity, now),
+                  onPressed: () => _complete(activity),
                 ),
               ),
           ],
@@ -268,7 +270,8 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
     );
   }
 
-  void _complete(Activity activity, DateTime now) {
+  void _complete(Activity activity) {
+    final now = ref.read(clockProvider).now;
     final state = ref.read(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
     final result = completeActivity(

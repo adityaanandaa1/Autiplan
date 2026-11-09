@@ -46,7 +46,6 @@ abstract final class AppSpacing {
   static const double badgeOffset = 10.0;
   static const double emergencyButtonSize = 56.0;
   static const double progressBarHeight = 6.0;
-  static const double fabClearance = 80.0;
   static const double snackbarHeight = 48.0;
   static const double mascotSize = 120.0;
   static const double emergencyClearance = 88.0;
