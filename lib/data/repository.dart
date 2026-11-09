@@ -1,14 +1,16 @@
-import 'package:autiplan/data/models/app_state.dart';
+import 'models/app_state.dart';
 
-/// Interface for reading and writing the entire application state.
+/// Sumber dan tujuan data aplikasi.
 ///
-/// The repository manages a single [AppState] object.
-/// Implementations can use any storage mechanism.
+/// Layar tidak memanggil ini langsung: perubahan lewat
+/// `appStateProvider.notifier.updateState`, yang meneruskannya ke [apply].
 abstract class AutiPlanRepository {
-  /// Load the full application state.
-  /// Returns `null` if no state has been saved yet.
-  Future<AppState?> load();
+  /// State terbaru. Beremisi pertama kali setelah semua koleksi memberi
+  /// snapshot pertama, lalu setiap ada perubahan (dari HP ini maupun HP lain).
+  Stream<AppState> watch();
 
-  /// Save the full application state.
-  Future<void> save(AppState state);
+  /// Menulis selisih [before] -> [after]. Future-nya bisa tidak pernah selesai
+  /// selama HP tanpa internet, jadi pemanggil di jalur UI tidak boleh
+  /// menunggunya.
+  Future<void> apply(AppState before, AppState after);
 }

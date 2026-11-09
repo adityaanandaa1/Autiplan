@@ -1,9 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/clock.dart';
 import '../domain/recurrence.dart';
-import 'local_repository.dart';
 import 'models/models.dart';
 import 'repository.dart';
 
@@ -12,10 +14,9 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden');
 });
 
-/// Provider for AutiPlanRepository.
+/// Sumber data aplikasi. Harus di-override di main() (atau di tes).
 final repositoryProvider = Provider<AutiPlanRepository>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return LocalRepository(prefs);
+  throw UnimplementedError('repositoryProvider must be overridden');
 });
 
 /// StateNotifier for managing the global AppState.
@@ -32,11 +33,46 @@ class AppStateNotifier extends StateNotifier<AppState> {
   /// Dipakai pada setiap perubahan, mis. memperluas kegiatan berulang.
   final AppState Function(AppState)? _normalize;
 
-  /// Update the state and persist to repository asynchronously.
+  StreamSubscription<AppState>? _subscription;
+  Completer<void>? _ready;
+
+  /// Selesai setelah emisi pertama [AutiPlanRepository.watch] (atau galat
+  /// pertamanya, supaya layar tidak menggantung). Langsung selesai bila
+  /// [start] tidak pernah dipanggil.
+  Future<void> get ready => _ready?.future ?? Future<void>.value();
+
+  /// Mulai mengikuti repositori. Aman dipanggil lebih dari sekali.
+  void start() {
+    if (_subscription != null) return;
+    final ready = _ready = Completer<void>();
+    _subscription = _repository.watch().listen(
+      (remote) {
+        if (!mounted) return;
+        state = remote;
+        renormalize();
+        if (!ready.isCompleted) ready.complete();
+      },
+      onError: (Object error, StackTrace stack) {
+        debugPrint('Data tidak bisa dimuat: $error');
+        if (!ready.isCompleted) ready.complete();
+      },
+    );
+  }
+
+  /// Ubah state seketika, lalu tulis selisihnya ke repositori tanpa
+  /// menunggu: tanpa internet, penulisan baru selesai saat HP online lagi.
   void updateState(AppState newState) {
     final next = _normalize == null ? newState : _normalize(newState);
+    final before = state;
     state = next;
-    _repository.save(next);
+    unawaited(
+      Future<void>.sync(() => _repository.apply(before, next)).catchError((
+        Object error,
+        StackTrace stack,
+      ) {
+        debugPrint('Perubahan belum tersimpan: $error');
+      }),
+    );
   }
 
   /// Menormalkan ulang state sekarang, mis. saat hari berganti.
@@ -48,26 +84,20 @@ class AppStateNotifier extends StateNotifier<AppState> {
     updateState(next);
   }
 
-  /// Reload state from repository.
-  Future<void> reload() async {
-    final loaded = await _repository.load();
-    if (loaded != null) {
-      state = loaded;
-    }
+  @override
+  void dispose() {
+    unawaited(_subscription?.cancel());
+    super.dispose();
   }
 }
-
-/// State awal yang dimuat di main(); kosong bila belum ada data.
-final initialAppStateProvider = Provider<AppState>((ref) => AppState.empty());
 
 /// Provider for AppStateNotifier.
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   ref,
 ) {
-  final repository = ref.watch(repositoryProvider);
   final notifier = AppStateNotifier(
-    repository,
-    ref.read(initialAppStateProvider),
+    ref.watch(repositoryProvider),
+    AppState.empty(),
     normalize: (s) => s.copyWith(
       activities: materializeRecurring(
         s.activities,
@@ -77,7 +107,13 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   );
   // Hari berganti: perluas seri berulang tanpa menunggu perubahan lain.
   ref.listen<DateTime>(currentDayProvider, (_, _) => notifier.renormalize());
+  notifier.start();
   return notifier;
+});
+
+/// Selesai setelah data pertama dimuat dari repositori.
+final repositoryReadyProvider = FutureProvider<void>((ref) {
+  return ref.watch(appStateProvider.notifier).ready;
 });
 
 /// Provider for the currently active role ('caregiver' or 'child').

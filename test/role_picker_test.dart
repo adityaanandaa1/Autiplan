@@ -1,6 +1,6 @@
-﻿import 'package:autiplan/app.dart';
+import 'package:autiplan/app.dart';
 import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/local_repository.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/data/providers.dart';
 import 'support/fixture_state.dart';
 import 'package:autiplan/features/caregiver/caregiver_shell.dart';
@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<SharedPreferences> _pumpApp(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final repo = LocalRepository(prefs);
+  final repo = InMemoryRepository();
   final seedState = buildFixtureState();
 
   await tester.pumpWidget(

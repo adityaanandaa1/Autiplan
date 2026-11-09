@@ -1,9 +1,8 @@
 import 'dart:async';
+import 'support/in_memory_repository.dart';
 
 import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/repository.dart';
 import 'package:autiplan/features/caregiver/home_screen.dart';
 import 'package:autiplan/features/caregiver/schedule_providers.dart';
 import 'package:autiplan/features/caregiver/schedule_screen.dart';
@@ -13,13 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'support/fixture_state.dart';
-
-class _NoopRepository implements AutiPlanRepository {
-  @override
-  Future<AppState?> load() async => null;
-  @override
-  Future<void> save(AppState state) async {}
-}
 
 /// Menyusun aplikasi dengan tick terkendali dan `clockProvider` yang meniru
 /// produksi (instance baru tiap tick), sambil membaca jam dari [readNow].
@@ -39,7 +31,7 @@ Future<({ProviderContainer container, StreamController<int> ticks})> _pump(
         return Clock(readNow);
       }),
       appStateProvider.overrideWith(
-        (ref) => AppStateNotifier(_NoopRepository(), buildFixtureState()),
+        (ref) => AppStateNotifier(InMemoryRepository(), buildFixtureState()),
       ),
     ],
   );

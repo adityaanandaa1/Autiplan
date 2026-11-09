@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:autiplan/data/local_repository.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
 import 'package:autiplan/domain/recurrence.dart';
@@ -218,12 +217,9 @@ void main() {
   });
 
   group('AppStateNotifier normalize', () {
-    late LocalRepository repo;
+    late InMemoryRepository repo;
 
-    setUp(() async {
-      SharedPreferences.setMockInitialValues({});
-      repo = LocalRepository(await SharedPreferences.getInstance());
-    });
+    setUp(() => repo = InMemoryRepository());
 
     AppState stateWith(List<Activity> activities) =>
         AppState.empty().copyWith(activities: activities);

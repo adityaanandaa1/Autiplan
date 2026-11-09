@@ -127,8 +127,15 @@ class _AddActivitySheetState extends ConsumerState<AddActivitySheet> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
-    final child = state.children.firstWhere((c) => c.id == _childId);
     final childIndex = state.children.indexWhere((c) => c.id == _childId);
+    if (childIndex == -1) {
+      // Anak dihapus dari HP lain saat form terbuka: tutup dengan tenang.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).maybePop();
+      });
+      return const SizedBox.shrink();
+    }
+    final child = state.children[childIndex];
 
     final titleText = _titleController.text.trim();
     final candidate = buildActivity(

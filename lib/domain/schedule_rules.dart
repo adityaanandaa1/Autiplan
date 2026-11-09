@@ -547,20 +547,20 @@ AppState undoDeleteActivity(AppState current, ActivityDeleteResult deleted) {
 
 /// Anak menekan "Oke, aku mengerti" (§8.9): seenAt = now dan tambah
 /// notifikasi changeSeen. Notice yang sudah dilihat tidak diubah lagi.
+///
+/// Data bisa berubah dari HP lain: notice yang sudah dihapus membuat state
+/// tidak berubah, dan anak yang sudah dihapus hanya berarti tidak ada
+/// notifikasi (namanya tidak diketahui).
 AppState acknowledgeNotice({
   required AppState state,
   required String noticeId,
   required DateTime now,
   required String notificationId,
 }) {
-  final notice = state.notices.firstWhere(
-    (n) => n.id == noticeId,
-    orElse: () =>
-        throw ArgumentError.value(noticeId, 'noticeId', 'notice tidak ada'),
-  );
-  if (notice.seenAt != null) return state;
+  final notice = _firstOrNull(state.notices, (n) => n.id == noticeId);
+  if (notice == null || notice.seenAt != null) return state;
 
-  final child = state.children.firstWhere((c) => c.id == notice.childId);
+  final child = _firstOrNull(state.children, (c) => c.id == notice.childId);
   final title = (notice.after ?? notice.before).title;
   return state.copyWith(
     notices: [
@@ -569,15 +569,23 @@ AppState acknowledgeNotice({
     ],
     notifications: [
       ...state.notifications,
-      CaregiverNotification(
-        id: notificationId,
-        type: NotificationType.changeSeen,
-        text: '${child.name} melihat perubahan jadwal $title',
-        at: now,
-        read: false,
-      ),
+      if (child != null)
+        CaregiverNotification(
+          id: notificationId,
+          type: NotificationType.changeSeen,
+          text: '${child.name} melihat perubahan jadwal $title',
+          at: now,
+          read: false,
+        ),
     ],
   );
+}
+
+T? _firstOrNull<T>(Iterable<T> items, bool Function(T) test) {
+  for (final item in items) {
+    if (test(item)) return item;
+  }
+  return null;
 }
 
 /// Tombol "Aku sudah selesai" aktif? (§8.10)
@@ -603,7 +611,7 @@ CompleteActivityResult completeActivity({
   required String completionId,
   required String notificationId,
 }) {
-  final child = state.children.firstWhere((c) => c.id == activity.childId);
+  final child = _firstOrNull(state.children, (c) => c.id == activity.childId);
   final onTime =
       activity.end == null ||
       now.isBefore(
@@ -624,18 +632,22 @@ CompleteActivityResult completeActivity({
     stepsChecked: stepsChecked,
   );
 
-  final notification = CaregiverNotification(
-    id: notificationId,
-    type: NotificationType.activityDone,
-    text: '${child.name} menyelesaikan ${activity.title}',
-    at: now,
-    read: false,
-  );
+  // Anak yang sudah dihapus dari HP lain: completion tetap dicatat, tetapi
+  // tidak ada nama untuk notifikasinya.
+  final notification = child == null
+      ? null
+      : CaregiverNotification(
+          id: notificationId,
+          type: NotificationType.activityDone,
+          text: '${child.name} menyelesaikan ${activity.title}',
+          at: now,
+          read: false,
+        );
 
   return CompleteActivityResult(
     state.copyWith(
       completions: [...state.completions, completion],
-      notifications: [...state.notifications, notification],
+      notifications: [...state.notifications, ?notification],
     ),
     completion,
   );

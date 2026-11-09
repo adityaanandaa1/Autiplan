@@ -174,3 +174,28 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Belum dijalankan di perangkat (overflow 360 dp / skala 1.3x, telepon `tel:` Android 11+ belum diuji).
   - Utang Tahap 7 lainnya tetap (lihat di atas), termasuk `firstWhere` tanpa `orElse` yang wajib ditutup di Tahap 9.
 - **Langkah berikutnya:** Tahap 9 — sinkronisasi Firestore (perlu persetujuan sebelum `flutterfire configure`).
+
+## Tahap 9 — Sinkronisasi Firestore
+
+- **Status:** selesai di kode dan tes otomatis (9 November 2026). **Belum teruji dengan data sungguhan di Firestore**: aturan keamanan baru dibuat di Tahap 10 (produksi menolak semua akses), jadi di HP aplikasi belum bisa membaca atau menulis data. Yang terbukti hanya tes otomatis (pakai `fake_cloud_firestore`) dan APK debug yang berhasil dibangun.
+- **Isi:**
+  - `AutiPlanRepository` kini `watch()` + `apply(before, after)`. `LocalRepository` dan tes lamanya dihapus.
+  - `lib/data/state_diff.dart`: `diffAppState` (penulisan per dokumen dan per field, hanya kunci yang berubah), `DocWrite` (+`deletedFields`), `DocOp`, `completionDocId`.
+  - `lib/data/firestore_repository.dart`: `watch()` baru beremisi setelah 7 sumber (dokumen keluarga + 6 subkoleksi) memberi snapshot pertama; `apply` memecah batch per 450 operasi dan mengirim semuanya tanpa menunggu satu per satu. Impor `cloud_firestore as fs`.
+  - `AppStateNotifier`: `start()` berlangganan `watch()`, `ready`, `updateState` mengubah state dulu lalu memanggil `apply` tanpa `await` (galat dicatat dengan `debugPrint`), `dispose` membatalkan langganan. `repositoryReadyProvider`.
+  - `app.dart`: teks statis "Memuat jadwal" (`LoadingScheduleScreen`, tanpa animasi, tanpa spinner) sampai data pertama masuk; router baru dibuat sesudahnya.
+  - `lib/data/firebase_bootstrap.dart` + `main.dart`: `Firebase.initializeApp`, `persistenceEnabled: true`, `familyId` sementara `belum-masuk`.
+  - Proyek: aplikasi Android `com.adit.autiplan` didaftarkan di `autiplan-bd927` lewat `flutterfire configure` (disetujui pengguna). `lib/firebase_options.dart`, `android/app/google-services.json`, `firebase.json` dibuat. `minSdk` minimal 23.
+  - Utang `firstWhere` ditutup: `acknowledgeNotice` (notice atau anak hilang), `completeActivity` (anak hilang), form Tambah (anak hilang menutup form). Pemakaian di layar anak (`child_activity_screen`, `child_success_screen`, `child_change_screen`, `child_home_screen`) sudah memakai `orElse`; kini ada tes untuk dua layar pertama.
+- **File utama:** `lib/data/repository.dart`, `state_diff.dart`, `firestore_repository.dart`, `providers.dart`, `firebase_bootstrap.dart`, `lib/main.dart`, `lib/app.dart`, `lib/core/widgets/loading_schedule_screen.dart`, `lib/domain/schedule_rules.dart`; tes: `test/state_diff_test.dart`, `firestore_repository_test.dart`, `app_state_notifier_test.dart`, `missing_data_test.dart`, `loading_schedule_test.dart`, `test/support/in_memory_repository.dart`.
+- **Hasil:** `dart format .` bersih, `flutter analyze` 0 issue, `flutter test` 225 lulus. `flutter build apk --debug` berhasil.
+- **Review Focus:** (2) HP tanpa sinyal: tes `updateState` tidak menunggu `apply`; tes batch Firestore sungguhan offline belum bisa (butuh perangkat). (5) Dua HP menulis bersamaan: tes dua HP dengan `fake_cloud_firestore` (perubahan `title` dan `steps`+Completion keduanya tetap).
+- **Utang yang tersisa:**
+  - Belum diuji dengan Firestore sungguhan (menunggu aturan Tahap 10) dan belum diuji offline di perangkat (buat kegiatan, matikan internet, buka ulang).
+  - `update` pada dokumen yang sudah dihapus HP lain membuat seluruh batch itu gagal (dicatat di log, perubahan lain di batch yang sama ikut hilang).
+  - Emisi snapshot lama bisa sesaat mengembalikan tampilan ke state sebelumnya saat dua perubahan beruntun.
+  - Router belum punya `refreshListenable` (catatan untuk Tahap 10): setelah data berubah dari HP lain, rute tidak dievaluasi ulang.
+  - `normalize` (perluasan seri berulang) berjalan di HP mana pun; pembatasan ke HP orang tua menunggu sesi di Tahap 10. Dua HP yang sama-sama memperluas seri menulis dokumen berID sama (aman, idempoten).
+  - `firestore.rules` belum ada (Tahap 10); `flutterfire configure` hanya didaftarkan untuk Android.
+  - Utang Tahap 7 dan 8 lainnya tetap.
+- **Langkah berikutnya:** Tahap 10 — akun, sesi, dan aturan keamanan (`firebase deploy --only firestore:rules` perlu persetujuan).

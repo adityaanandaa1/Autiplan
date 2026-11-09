@@ -1,10 +1,10 @@
 import 'package:autiplan/app.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/clock.dart';
 import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/core/widgets/initials.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/repository.dart';
 import 'package:autiplan/domain/phone_number.dart';
 import 'package:autiplan/features/child/child_calling_screen.dart';
 import 'package:flutter/material.dart';
@@ -14,13 +14,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fixture_state.dart';
-
-class _NoopRepository implements AutiPlanRepository {
-  @override
-  Future<AppState?> load() async => null;
-  @override
-  Future<void> save(AppState state) async {}
-}
 
 Future<ProviderContainer> _pumpEmptyApp(WidgetTester tester) async {
   await initializeDateFormatting('id_ID');
@@ -35,7 +28,7 @@ Future<ProviderContainer> _pumpEmptyApp(WidgetTester tester) async {
       sharedPreferencesProvider.overrideWithValue(prefs),
       clockProvider.overrideWithValue(Clock(() => fixtureNow)),
       appStateProvider.overrideWith(
-        (ref) => AppStateNotifier(_NoopRepository(), AppState.empty()),
+        (ref) => AppStateNotifier(InMemoryRepository(), AppState.empty()),
       ),
     ],
   );
@@ -128,7 +121,7 @@ void main() {
       overrides: [
         appStateProvider.overrideWith(
           (ref) => AppStateNotifier(
-            _NoopRepository(),
+            InMemoryRepository(),
             AppState.empty().copyWith(
               settings: Settings(
                 caregiverName: 'Ibu',

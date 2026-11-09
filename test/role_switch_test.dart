@@ -1,6 +1,6 @@
 import 'package:autiplan/app.dart';
 import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/local_repository.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/data/providers.dart';
 import 'support/fixture_state.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +17,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
         sharedPreferencesProvider.overrideWithValue(prefs),
         clockProvider.overrideWithValue(Clock(() => fixtureNow)),
         appStateProvider.overrideWith(
-          (ref) =>
-              AppStateNotifier(LocalRepository(prefs), buildFixtureState()),
+          (ref) => AppStateNotifier(InMemoryRepository(), buildFixtureState()),
         ),
       ],
       child: const AutiPlanApp(),

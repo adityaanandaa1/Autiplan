@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "500381335457",
+    "project_id": "autiplan-bd927",
+    "storage_bucket": "autiplan-bd927.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:500381335457:android:0b388860f4a8fe806715e0",
+        "android_client_info": {
+          "package_name": "com.adit.autiplan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzaOE6DyMEmlGv1yeVkbAq8XebBctf4CE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

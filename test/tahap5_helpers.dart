@@ -1,8 +1,8 @@
-﻿// Pembantu bersama tes widget Tahap 5 (bukan tes; main kosong supaya
+// Pembantu bersama tes widget Tahap 5 (bukan tes; main kosong supaya
 // `flutter test test/tahap5_*` tidak gagal).
 import 'package:autiplan/core/clock.dart';
 import 'package:autiplan/core/theme/theme.dart';
-import 'package:autiplan/data/local_repository.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
 import 'support/fixture_state.dart';
@@ -69,7 +69,7 @@ Future<SheetHost> pumpOpener(
       clockProvider.overrideWithValue(Clock(() => fixtureNow)),
       appStateProvider.overrideWith(
         (ref) => AppStateNotifier(
-          LocalRepository(prefs),
+          InMemoryRepository(),
           initial ?? buildFixtureState(),
         ),
       ),

@@ -1,4 +1,5 @@
-﻿import 'package:autiplan/core/clock.dart';
+import 'package:autiplan/core/clock.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/core/widgets/activity_icon_data.dart';
 import 'package:autiplan/core/widgets/caregiver_header.dart';
@@ -8,7 +9,6 @@ import 'package:autiplan/core/widgets/suggestion_card.dart';
 import 'package:autiplan/core/widgets/week_strip.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/repository.dart';
 import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/caregiver_shell.dart';
@@ -45,7 +45,7 @@ Future<ProviderContainer> _pump(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         appStateProvider.overrideWith(
-          (ref) => AppStateNotifier(_FakeRepo(), s),
+          (ref) => AppStateNotifier(InMemoryRepository(), s),
         ),
         clockProvider.overrideWithValue(Clock(() => fixtureNow)),
       ],
@@ -56,13 +56,6 @@ Future<ProviderContainer> _pump(
     tester.element(find.byWidget(screen)),
   );
   return container;
-}
-
-class _FakeRepo implements AutiPlanRepository {
-  @override
-  Future<AppState?> load() async => null;
-  @override
-  Future<void> save(AppState state) async {}
 }
 
 ChangeNotice _notice(

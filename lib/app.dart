@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/router.dart';
 import 'core/theme/theme.dart';
+import 'core/widgets/loading_schedule_screen.dart';
 import 'data/models/models.dart';
 import 'data/providers.dart';
 
@@ -16,13 +17,7 @@ class AutiPlanApp extends ConsumerStatefulWidget {
 }
 
 class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
-  late final GoRouter _router;
-
-  @override
-  void initState() {
-    super.initState();
-    _router = createRouter(ref);
-  }
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +27,25 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
       childTheme ?? ChildTheme.lautTenang,
     );
 
+    final theme = buildParentTheme(childPalette: childPalette);
+
+    // Router baru dibuat setelah data pertama masuk: redirect awalnya
+    // bergantung pada ada-tidaknya anak, dan state kosong sebelum itu bukan
+    // berarti akun baru.
+    if (ref.watch(repositoryReadyProvider).isLoading) {
+      return MaterialApp(
+        title: 'AutiPlan',
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        home: const LoadingScheduleScreen(),
+      );
+    }
+    final router = _router ??= createRouter(ref);
+
     return MaterialApp.router(
       title: 'AutiPlan',
       debugShowCheckedModeBanner: false,
-      theme: buildParentTheme(childPalette: childPalette),
+      theme: theme,
       locale: const Locale('id', 'ID'),
       supportedLocales: const [Locale('id', 'ID'), Locale('en', 'US')],
       localizationsDelegates: const [
@@ -43,7 +53,7 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      routerConfig: _router,
+      routerConfig: router,
     );
   }
 }

@@ -1,8 +1,8 @@
-﻿import 'package:autiplan/core/clock.dart';
+import 'package:autiplan/core/clock.dart';
+import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/widgets/initials.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/repository.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/account_screen.dart';
 import 'package:autiplan/features/caregiver/home_screen.dart';
@@ -71,7 +71,7 @@ void main() {
       overrides: [
         clockProvider.overrideWithValue(Clock(() => fixtureNow)),
         appStateProvider.overrideWith(
-          (ref) => AppStateNotifier(_NoopRepository(), AppState.empty()),
+          (ref) => AppStateNotifier(InMemoryRepository(), AppState.empty()),
         ),
       ],
       child: MaterialApp(home: child),
@@ -110,7 +110,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             appStateProvider.overrideWith(
-              (ref) => AppStateNotifier(_NoopRepository(), state),
+              (ref) => AppStateNotifier(InMemoryRepository(), state),
             ),
             clockProvider.overrideWithValue(Clock(() => now)),
           ],
@@ -135,11 +135,4 @@ void main() {
       expect(find.textContaining('SEKARANG'), findsWidgets);
     });
   });
-}
-
-class _NoopRepository implements AutiPlanRepository {
-  @override
-  Future<AppState?> load() async => null;
-  @override
-  Future<void> save(AppState state) async {}
 }
