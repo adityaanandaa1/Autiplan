@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/providers.dart';
 import '../features/caregiver/account_screen.dart';
 import '../features/caregiver/caregiver_shell.dart';
 import '../features/caregiver/home_screen.dart';
@@ -15,17 +16,25 @@ import '../features/child/child_emergency_screen.dart';
 import '../features/child/child_home_screen.dart';
 import '../features/child/child_success_screen.dart';
 import '../features/child/child_theme_screen.dart';
-import '../features/dev/component_gallery_screen.dart';
+import '../features/onboarding/profile_setup_screen.dart';
 import '../features/role_picker/role_picker_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
-GoRouter createRouter() {
+GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    redirect: (context, state) {
+      // Akun baru tanpa anak diarahkan mengisi profil dulu.
+      final hasChildren = ref.read(appStateProvider).children.isNotEmpty;
+      final atProfileSetup = state.matchedLocation == '/profil-awal';
+      if (!hasChildren && !atProfileSetup) return '/profil-awal';
+      if (hasChildren && atProfileSetup) return '/ortu/beranda';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/',
@@ -33,13 +42,11 @@ GoRouter createRouter() {
         builder: (context, state) => const RolePickerScreen(),
       ),
 
-      // ── Dev only ───────────────────────────────────────────────────
-      if (kDebugMode)
-        GoRoute(
-          path: '/dev/komponen',
-          name: 'componentGallery',
-          builder: (context, state) => const ComponentGalleryScreen(),
-        ),
+      GoRoute(
+        path: '/profil-awal',
+        name: 'profileSetup',
+        builder: (context, state) => const ProfileSetupScreen(),
+      ),
 
       // ── Caregiver shell with bottom nav ───────────────────────────
       StatefulShellRoute.indexedStack(

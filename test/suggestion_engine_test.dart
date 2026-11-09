@@ -1,6 +1,5 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,8 +9,8 @@ void main() {
     late DateTime now;
 
     setUp(() {
-      state = buildSeedState();
-      now = Clock.demoTime;
+      state = buildFixtureState();
+      now = fixtureNow;
     });
 
     test('Test 9: Independence muncul dari seed', () {
@@ -154,9 +153,9 @@ void main() {
     test(
       'Bug A: emptyDay hanya sampai Minggu pada minggu yang ditampilkan',
       () {
-        final state = buildSeedState();
+        final state = buildFixtureState();
         final rafi = state.children.firstWhere((c) => c.name == 'Rafi');
-        final ids = generateSuggestions(state, Clock.demoTime, rafi.id)
+        final ids = generateSuggestions(state, fixtureNow, rafi.id)
             .where((s) => s.type == SuggestionType.emptyDay)
             .map((s) => s.id)
             .toSet();
@@ -165,7 +164,7 @@ void main() {
     );
 
     test('Bug B: tanpa kegiatan sama sekali tidak melempar', () {
-      final state = buildSeedState();
+      final state = buildFixtureState();
       final rafi = state.children.firstWhere((c) => c.name == 'Rafi');
       final empty = state.copyWith(
         activities: state.activities
@@ -173,7 +172,7 @@ void main() {
             .toList(),
       );
       expect(
-        () => generateSuggestions(empty, Clock.demoTime, rafi.id),
+        () => generateSuggestions(empty, fixtureNow, rafi.id),
         returnsNormally,
       );
     });

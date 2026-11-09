@@ -655,6 +655,36 @@ Di `test/`:
 
 Kalau ada permintaan di luar daftar ini, tanyakan dulu ke pengguna.
 
+## 18. Perubahan menuju aplikasi sungguhan
+
+Bagian ini mencabut beberapa batasan prototipe di atas. Rencana kerja dan
+keputusan teknisnya ada di `docs/superpowers/plans/2026-11-09-autiplan-siap-pakai.md`.
+
+**Dicabut:**
+- §2 "Tidak termasuk": login, server, sinkronisasi antar-perangkat, notifikasi
+  push, dan pengingat terjadwal **sekarang termasuk**. AI tetap tidak termasuk.
+- §7 (data seed dan jam demo): data awal tidak lagi diisi otomatis. Aplikasi
+  mulai dari data kosong dan pengguna mengisi profil lewat `/profil-awal`.
+  Jam demo dihapus; aplikasi memakai jam perangkat.
+- §10.2 (layar Pilih peran): diganti alur akun sungguhan (`/mulai`, `/masuk`,
+  `/daftar`, `/hubungkan`).
+- §10.3 (tombol ganti peran demo): dihapus. Peran ditentukan oleh sesi
+  perangkat, bukan tombol.
+- §17 baris pertama (sinkronisasi antar-perangkat, akun, server) dan baris
+  kedua (notifikasi pengingat sungguhan): keduanya sekarang dibuat.
+
+**Ditambah:**
+- Data disimpan di Firestore (paket Spark) dengan `familyId` = `uid` orang tua.
+- HP anak dihubungkan lewat kode 6 digit yang diperiksa Cloudflare Worker.
+- Push hanya ke HP orang tua, untuk `emergencyPressed` dan `changeSeen`.
+- Pengingat memakai notifikasi lokal di HP orang tua.
+- Kegiatan berulang dibuat sebagai salinan per tanggal sampai 28 hari ke depan.
+
+**Tetap berlaku:** seluruh aturan bisnis §8, mesin saran §9, spesifikasi layar
+§11 dan §12, alur §13, aksesibilitas §14, dan tes §16.
+
+---
+
 ## Lampiran: sumber dasar saran
 - Mazurek dkk. (2016). Bedtime Electronic Media Use and Sleep in Children with Autism Spectrum Disorder. https://doi.org/10.1097/DBP.0000000000000314
 - León dkk. (2023). Assessment and treatment of problem behavior occasioned by variable-sequence transitions for children with autism. Behavioral Interventions.

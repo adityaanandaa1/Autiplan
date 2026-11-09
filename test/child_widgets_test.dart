@@ -1,4 +1,4 @@
-import 'package:autiplan/core/theme/theme.dart';
+﻿import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/core/widgets/widgets.dart';
 import 'package:autiplan/data/models/activity_icon.dart';
 import 'package:flutter/material.dart';

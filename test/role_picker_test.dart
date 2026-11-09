@@ -1,7 +1,7 @@
-import 'package:autiplan/app.dart';
+﻿import 'package:autiplan/app.dart';
 import 'package:autiplan/data/local_repository.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/features/caregiver/caregiver_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +11,7 @@ Future<SharedPreferences> _pumpApp(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final repo = LocalRepository(prefs);
-  final seedState = buildSeedState();
+  final seedState = buildFixtureState();
 
   await tester.pumpWidget(
     ProviderScope(
@@ -59,7 +59,8 @@ void main() {
     await tester.tap(find.text('Anak · Rafi'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Jadwal Hari Ini'), findsWidgets);
+    // Layar anak punya sapaan (Selamat pagi/siang/sore/malam) dan nama Halo, Rafi!
+    expect(find.textContaining('Halo, Rafi!'), findsOneWidget);
     expect(find.byType(CaregiverShell), findsNothing);
     expect(find.text('Pilih peran untuk demo'), findsNothing);
     expect(prefs.getString('last_selected_role'), 'child');

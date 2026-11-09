@@ -1,9 +1,9 @@
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final seed = buildSeedState();
+  final seed = buildFixtureState();
 
   group('Activity ==', () {
     final a = seed.activities.first;
@@ -77,7 +77,7 @@ void main() {
 
   group('AppState ==', () {
     test('salinan identik sama dan hash sama', () {
-      final other = buildSeedState();
+      final other = buildFixtureState();
       expect(other, seed);
       expect(other.hashCode, seed.hashCode);
     });

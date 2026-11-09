@@ -116,7 +116,29 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Belum dijalankan di perangkat (overflow 360 dp / skala 1.3x belum diuji).
   - Langkah asli (`originalSteps`) tersimpan, tetapi UI "Lihat langkah lengkap" (A-10) dan "Bisa dikembalikan ke N langkah" (form Ubah) belum menampilkan langkah penuh/tombol kembalikan.
 
-## Tahap 7 — Rapikan
-- **Status:** belum dimulai.
+## Tahap 7 — Bersihkan demo dan siap data kosong
+
+- **Status:** selesai (9 November 2026).
+- **Isi:**
+  - Data seed dipindah ke `test/support/fixture_state.dart` (`buildFixtureState`, `fixtureNow`). `lib/data/seed.dart` dihapus.
+  - `Clock` sekarang menerima callback `DateTime Function()`; `minuteTickProvider` (30 detik, autoDispose) membuat status "Sekarang" ikut bergeser saat jam berganti. Di lingkungan `flutter test` stream kosong supaya tidak ada timer menggantung.
+  - `Settings`: `demoClockEnabled` dihapus, tambah `caregiverName` (bawaan `''`), `emergencyNumber`/`backupNumber` bawaan `''`.
+  - `AppState.empty()`; `main.dart` mulai dari state kosong.
+  - `currentChildProvider` menggantikan semua pencarian anak berdasarkan nama (`app.dart`, `child_home_screen`, `child_change_screen`, `child_theme_screen`, `child_emergency_screen`, `account_screen`, `home_screen`, `schedule_screen`, `suggestions_screen`). Bila tidak ada anak, tampil `CalmEmptyScreen` yang tenang.
+  - `generateSuggestions` mengembalikan `[]` bila anak tidak ada.
+  - `initialsOf` (`lib/core/widgets/initials.dart`) dan token `AppTypography.inisialBesar`; teks "Bu Sari"/"Ibu Sari"/"IS" diganti `settings.caregiverName` + inisial.
+  - `form_utils.generateId` memakai `uuid`.
+  - Grup "Demo", `resetToSeed`, `confirmResetDemo`, teks "Di prototipe", galeri komponen, dan `PlaceholderScreen` dihapus.
+  - Layar baru `/profil-awal` (`lib/features/onboarding/profile_setup_screen.dart`) membuat `Child` + `Settings`; router mengarah ke sana bila `children` kosong.
+  - Dokumen: `docs/DECISIONS.md` diubah ke UTF-8 (baris mojibake/UTF-16 dibuang), keputusan perencana dicatat; HANDOFF mendapat §18 yang mencabut §2, §7, §10.2, §10.3, §17 baris 1–2.
+- **File utama:** `lib/core/clock.dart`, `lib/core/widgets/initials.dart`, `lib/core/widgets/calm_empty_screen.dart`, `lib/data/models/settings.dart`, `lib/data/models/app_state.dart`, `lib/data/providers.dart`, `lib/core/router.dart`, `lib/features/onboarding/profile_setup_screen.dart`, `test/support/fixture_state.dart`, `test/tahap7_cleanup_test.dart`.
+- **Hasil:** `dart format .` (13 file diformat), `flutter analyze` 0 issue, `flutter test` 160 tes lulus.
+- **Utang yang tersisa:**
+  - `role_picker_screen.dart` dan `role_switch_button.dart` masih memuat nama demo; dihapus di Tahap 10.
+  - `AccountProfileCard` selalu menampilkan "Belum terhubung ke HP anak" karena penghubungan perangkat baru dibuat di Tahap 10–11.
+  - `createRouter` memakai `WidgetRef` (bukan `Ref` seperti di rencana) karena dipanggil dari `ConsumerState`; akan disesuaikan di Tahap 10.
+  - Belum dijalankan di perangkat (overflow 360 dp / skala 1.3x belum diuji).
+  - Utang Tahap 5–6 tetap: UI "Lihat langkah lengkap" dan "Bisa dikembalikan ke N langkah", swipe abaikan saran, pemilih bulan.
+- **Langkah berikutnya:** Tahap 8 — kegiatan berulang (`lib/domain/recurrence.dart`).
 
 

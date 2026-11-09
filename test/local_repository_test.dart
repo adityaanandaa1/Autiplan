@@ -1,7 +1,7 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:autiplan/data/local_repository.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,7 +30,7 @@ void main() {
     });
 
     test('state valid -> kembali identik', () async {
-      final seed = buildSeedState();
+      final seed = buildFixtureState();
       final repo = await _repoWith({
         'autiplan_state': jsonEncode(seed.toJson()),
       });
@@ -39,7 +39,7 @@ void main() {
 
     test('save lalu load -> identik', () async {
       final repo = await _repoWith({});
-      final seed = buildSeedState();
+      final seed = buildFixtureState();
       await repo.save(seed);
       expect(await repo.load(), seed);
     });

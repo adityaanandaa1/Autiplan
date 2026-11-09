@@ -211,6 +211,15 @@ abstract final class AppTypography {
     color: AppColors.teksSekunder,
   );
 
+  // Inisial besar di lingkaran avatar (A-07, A-08).
+  static const TextStyle inisialBesar = TextStyle(
+    fontFamily: fontChild,
+    fontSize: 32,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+    color: AppColors.teks,
+  );
+
   static const TextStyle labelAnak = TextStyle(
     fontFamily: fontChild,
     fontSize: 12,

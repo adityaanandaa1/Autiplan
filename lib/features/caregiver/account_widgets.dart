@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/theme.dart';
 import '../../core/widgets/card_surface.dart';
+import '../../core/widgets/initials.dart';
 import '../../data/models/models.dart';
+import '../../data/providers.dart';
 
-class AccountProfileCard extends StatelessWidget {
+class AccountProfileCard extends ConsumerWidget {
   const AccountProfileCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final caregiverName = ref.watch(
+      appStateProvider.select((s) => s.settings.caregiverName),
+    );
+    final displayName = caregiverName.isEmpty ? 'Pengasuh' : caregiverName;
+
     return CardSurface(
       padding: const EdgeInsets.all(AppSpacing.grid16),
       child: Row(
@@ -21,19 +29,22 @@ class AccountProfileCard extends StatelessWidget {
               color: AppColors.utamaLembut,
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: Text('IS', style: AppTypography.judulBaris),
+            child: Center(
+              child: Text(
+                initialsOf(caregiverName),
+                style: AppTypography.judulBaris,
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.grid12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Bu Sari', style: AppTypography.judulBaris),
-                SizedBox(height: AppSpacing.grid2),
-                Text(
-                  'Pengasuh utama · Terhubung ke HP Rafi',
+                Text(displayName, style: AppTypography.judulBaris),
+                const SizedBox(height: AppSpacing.grid2),
+                const Text(
+                  'Pengasuh utama · Belum terhubung ke HP anak',
                   style: AppTypography.meta,
                 ),
               ],

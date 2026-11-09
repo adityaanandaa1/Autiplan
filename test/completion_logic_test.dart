@@ -1,5 +1,5 @@
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/schedule_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,7 +8,7 @@ void main() {
     late AppState state;
 
     setUp(() {
-      state = buildSeedState();
+      state = buildFixtureState();
     });
 
     Activity sepedaHariIni() {

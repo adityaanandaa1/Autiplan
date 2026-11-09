@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/add_fab.dart';
+import '../../core/widgets/calm_empty_screen.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../core/widgets/child_segmented.dart';
 import '../../core/widgets/day_summary.dart';
@@ -41,22 +42,20 @@ class CaregiverScheduleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
-    final selectedChildId = ref.watch(selectedChildIdProvider);
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen();
     final selectedDate = ref.watch(selectedDateProvider);
     final weekStart = ref.watch(selectedWeekStartProvider);
     final clock = ref.watch(clockProvider);
     final now = clock.now;
 
-    final child = state.children.firstWhere((c) => c.id == selectedChildId);
-    final childIndex = state.children.indexWhere(
-      (c) => c.id == selectedChildId,
-    );
+    final childIndex = state.children.indexWhere((c) => c.id == child.id);
     final weekDates = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
     final selectedDayActivities = state.activities
         .where(
           (a) =>
-              a.childId == selectedChildId &&
+              a.childId == child.id &&
               a.date.year == selectedDate.year &&
               a.date.month == selectedDate.month &&
               a.date.day == selectedDate.day,
@@ -66,22 +65,20 @@ class CaregiverScheduleScreen extends ConsumerWidget {
     final sortedActivities = sortActivitiesByStartTime(selectedDayActivities);
 
     final (completedCount, totalCount) = calculateProgress(
-      childId: selectedChildId,
+      childId: child.id,
       date: selectedDate,
       activities: selectedDayActivities,
       completions: state.completions,
     );
 
     final datesWithActivities = <DateTime>{};
-    for (final a in state.activities.where(
-      (a) => a.childId == selectedChildId,
-    )) {
+    for (final a in state.activities.where((a) => a.childId == child.id)) {
       datesWithActivities.add(DateTime(a.date.year, a.date.month, a.date.day));
     }
 
     final emptyDaySuggestion = sortedActivities.isEmpty
         ? emptyDaySuggestionForDate(
-            generateSuggestions(state, now, selectedChildId),
+            generateSuggestions(state, now, child.id),
             selectedDate,
           )
         : null;
@@ -165,10 +162,8 @@ class CaregiverScheduleScreen extends ConsumerWidget {
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (ctx) => AddActivitySheet(
-              childId: selectedChildId,
-              initialDate: selectedDate,
-            ),
+            builder: (ctx) =>
+                AddActivitySheet(childId: child.id, initialDate: selectedDate),
           );
         },
       ),

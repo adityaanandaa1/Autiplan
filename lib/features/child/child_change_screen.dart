@@ -23,24 +23,23 @@ class ChildChangeScreen extends ConsumerWidget {
     final now = clock.now;
     final palette = Theme.of(context).extension<ChildPalette>()!;
 
-    final child = state.children.firstWhere(
-      (c) => c.name == 'Rafi',
-      orElse: () => state.children.first,
-    );
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen(isChild: true);
 
     final today = DateTime(now.year, now.month, now.day);
 
-    final unseen = state.notices
-        .where(
-          (n) =>
-              n.childId == child.id &&
-              n.sentAt.year == today.year &&
-              n.sentAt.month == today.month &&
-              n.sentAt.day == today.day &&
-              n.seenAt == null,
-        )
-        .toList()
-      ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    final unseen =
+        state.notices
+            .where(
+              (n) =>
+                  n.childId == child.id &&
+                  n.sentAt.year == today.year &&
+                  n.sentAt.month == today.month &&
+                  n.sentAt.day == today.day &&
+                  n.seenAt == null,
+            )
+            .toList()
+          ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
     if (unseen.isEmpty) {
       context.go('/anak');
@@ -158,7 +157,11 @@ class ChildChangeScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.grid8),
-            Text(snap.title, style: AppTypography.isiAnak, textAlign: TextAlign.center),
+            Text(
+              snap.title,
+              style: AppTypography.isiAnak,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.grid4),
             Text(formatTimeLite(snap.start), style: AppTypography.sekunderAnak),
           ],
@@ -169,9 +172,12 @@ class ChildChangeScreen extends ConsumerWidget {
 
   IconData _iconFor(ActivityIcon icon) {
     switch (icon) {
-      case ActivityIcon.nonton: return LucideIcons.tv;
-      case ActivityIcon.tidur: return LucideIcons.moon;
-      default: return LucideIcons.sun;
+      case ActivityIcon.nonton:
+        return LucideIcons.tv;
+      case ActivityIcon.tidur:
+        return LucideIcons.moon;
+      default:
+        return LucideIcons.sun;
     }
   }
 

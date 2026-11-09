@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/theme.dart';
+import '../../core/widgets/calm_empty_screen.dart';
 import '../../core/widgets/card_surface.dart';
 import '../../core/widgets/caregiver_header.dart';
-import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import 'account_sheets.dart';
 import 'account_widgets.dart';
@@ -17,7 +16,8 @@ class CaregiverAccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
-    final rafi = _firstChild(state, 'Rafi');
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen();
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -45,7 +45,9 @@ class CaregiverAccountScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
-                  _buildGroupLabel('Profil Rafi · dipakai untuk saran'),
+                  _buildGroupLabel(
+                    'Profil ${child.name} · dipakai untuk saran',
+                  ),
                   CardSurface(
                     padding: const EdgeInsets.all(AppSpacing.grid16),
                     child: Column(
@@ -53,19 +55,19 @@ class CaregiverAccountScreen extends ConsumerWidget {
                         AccountListRow(
                           icon: LucideIcons.heart,
                           label: 'Suka',
-                          value: rafi.likes.join(', '),
+                          value: child.likes.join(', '),
                           onTap: () =>
-                              showProfileListSheet(context, ref, rafi, 'Suka'),
+                              showProfileListSheet(context, ref, child, 'Suka'),
                         ),
                         const AccountListDivider(),
                         AccountListRow(
                           icon: LucideIcons.sun,
                           label: 'Hindari',
-                          value: rafi.avoids.join(', '),
+                          value: child.avoids.join(', '),
                           onTap: () => showProfileListSheet(
                             context,
                             ref,
-                            rafi,
+                            child,
                             'Hindari',
                           ),
                         ),
@@ -103,28 +105,6 @@ class CaregiverAccountScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.grid16),
-                  _buildGroupLabel('Demo'),
-                  CardSurface(
-                    padding: const EdgeInsets.all(AppSpacing.grid16),
-                    child: Column(
-                      children: [
-                        AccountListRow(
-                          icon: LucideIcons.user,
-                          label: 'Ganti ke tampilan anak',
-                          value: '',
-                          onTap: () => context.go('/'),
-                        ),
-                        const AccountListDivider(),
-                        AccountListRow(
-                          icon: LucideIcons.refreshCw,
-                          label: 'Reset data demo',
-                          value: '',
-                          onTap: () => confirmResetDemo(context, ref),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -132,13 +112,6 @@ class CaregiverAccountScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Child _firstChild(AppState state, String name) {
-    for (final child in state.children) {
-      if (child.name == name) return child;
-    }
-    return state.children.first;
   }
 
   Widget _buildGroupLabel(String text) {

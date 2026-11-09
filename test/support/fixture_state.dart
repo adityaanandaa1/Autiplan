@@ -1,8 +1,10 @@
 import 'package:autiplan/data/models/models.dart';
 
-/// Builds the initial seed state as specified in HANDOFF.md §7.
-AppState buildSeedState() {
-  // ── 7.2 Children ────────────────────────────────────────────────
+/// Jam demo untuk tes: Jumat, 1 Mei 2026, 16.00 WIB
+final fixtureNow = DateTime(2026, 5, 1, 16, 0);
+
+/// Builds the fixture state for tests, previously buildSeedState().
+AppState buildFixtureState() {
   const rafi = Child(
     id: 'child-rafi',
     name: 'Rafi',
@@ -23,10 +25,8 @@ AppState buildSeedState() {
     avoids: ['Suara keras'],
   );
 
-  // ── 7.3 Rafi's activities, Friday 1 May 2026 ───────────────────
   final friday = DateTime(2026, 5, 1);
 
-  // Template activities for Rafi on May 1
   final rafiSekolah1Mei = Activity(
     id: 'rafi-sekolah-20260501',
     childId: rafi.id,
@@ -42,7 +42,7 @@ AppState buildSeedState() {
       'Pakai seragam',
       'Berangkat sekolah',
     ],
-    repeatWeekdays: const {1, 2, 3, 4, 5}, // Mon-Fri
+    repeatWeekdays: const {1, 2, 3, 4, 5},
   );
 
   final rafiSepeda1Mei = Activity(
@@ -93,7 +93,7 @@ AppState buildSeedState() {
       'Belajar bersama Pak Lana',
       'Rapikan buku setelah selesai',
     ],
-    repeatWeekdays: const {5}, // Friday only
+    repeatWeekdays: const {5},
   );
 
   final rafiTidur1Mei = Activity(
@@ -104,37 +104,85 @@ AppState buildSeedState() {
     icon: ActivityIcon.tidur,
     date: friday,
     start: const TimeOfDayLite(21, 0),
-    end: null, // no end — shows "Pagi"
+    end: null,
     steps: const ['Sikat gigi dan cuci muka', 'Ganti baju tidur', 'Tidur'],
-    repeatWeekdays: const {1, 2, 3, 4, 5, 6, 7}, // Every day
+    repeatWeekdays: const {1, 2, 3, 4, 5, 6, 7},
   );
 
-  // ── Rafi's activities for 24 Apr, 27–30 Apr (repeated ones) ─────
-  // Repeating activities: Sekolah (Mon-Fri), Sepeda Santai (Mon-Fri),
-  // Ngaji di Rumah (Mon-Fri), Tidur (Every day)
-  // Apr 24 = Friday, Apr 27 = Monday, Apr 28 = Tuesday,
-  // Apr 29 = Wednesday, Apr 30 = Thursday
-
   final historicalDates = [
-    DateTime(2026, 4, 24), // Friday
-    DateTime(2026, 4, 27), // Monday
-    DateTime(2026, 4, 28), // Tuesday
-    DateTime(2026, 4, 29), // Wednesday
-    DateTime(2026, 4, 30), // Thursday
+    DateTime(2026, 4, 24),
+    DateTime(2026, 4, 27),
+    DateTime(2026, 4, 28),
+    DateTime(2026, 4, 29),
+    DateTime(2026, 4, 30),
   ];
 
-  final List<Activity> historicalActivities = [];
-  for (final date in historicalDates) {
-    final dateStr = _dateStr(date);
-    historicalActivities.addAll([
-      rafiSekolah1Mei.copyWith(id: 'rafi-sekolah-$dateStr', date: date),
-      rafiSepeda1Mei.copyWith(id: 'rafi-sepeda-$dateStr', date: date),
-      rafiNgaji1Mei.copyWith(id: 'rafi-ngaji-$dateStr', date: date),
-      rafiTidur1Mei.copyWith(id: 'rafi-tidur-$dateStr', date: date),
-    ]);
-  }
+  final historicalActivities = <Activity>[
+    for (final date in historicalDates) ...[
+      Activity(
+        id: 'rafi-sekolah-${_dateStr(date)}',
+        childId: rafi.id,
+        title: 'Sekolah',
+        shortTitle: 'Sekolah',
+        icon: ActivityIcon.sekolah,
+        date: date,
+        start: const TimeOfDayLite(7, 0),
+        end: const TimeOfDayLite(8, 0),
+        steps: const [
+          'Bangun dan rapikan tempat tidur',
+          'Sarapan',
+          'Pakai seragam',
+          'Berangkat sekolah',
+        ],
+        repeatWeekdays: const {1, 2, 3, 4, 5},
+      ),
+      Activity(
+        id: 'rafi-sepeda-${_dateStr(date)}',
+        childId: rafi.id,
+        title: 'Sepeda Santai',
+        shortTitle: 'Sepeda',
+        icon: ActivityIcon.sepeda,
+        date: date,
+        start: const TimeOfDayLite(16, 0),
+        end: const TimeOfDayLite(17, 0),
+        steps: const [
+          'Pakai helm dan sepatu',
+          'Bersepeda santai di dekat rumah',
+          'Parkir sepeda, lalu minum air putih',
+        ],
+        repeatWeekdays: const {1, 2, 3, 4, 5},
+      ),
+      Activity(
+        id: 'rafi-ngaji-${_dateStr(date)}',
+        childId: rafi.id,
+        title: 'Ngaji di Rumah',
+        shortTitle: 'Ngaji',
+        icon: ActivityIcon.ngaji,
+        date: date,
+        start: const TimeOfDayLite(18, 0),
+        end: const TimeOfDayLite(19, 0),
+        steps: const [
+          'Ambil wudu dengan tenang',
+          "Siapkan Iqra atau Al-Qur'an",
+          'Membaca bersama Ustaz Farhan',
+        ],
+        repeatWeekdays: const {1, 2, 3, 4, 5},
+      ),
+      Activity(
+        id: 'rafi-tidur-${_dateStr(date)}',
+        childId: rafi.id,
+        title: 'Istirahat & Tidur Malam',
+        shortTitle: 'Tidur',
+        icon: ActivityIcon.tidur,
+        date: date,
+        start: const TimeOfDayLite(21, 0),
+        end: null,
+        steps: const ['Sikat gigi dan cuci muka', 'Ganti baju tidur', 'Tidur'],
+        repeatWeekdays: const {1, 2, 3, 4, 5, 6, 7},
+      ),
+    ],
+  ];
 
-  // ── 7.4 Atalia's activities, Friday 1 May 2026 ─────────────────
   final ataliaSekolah = Activity(
     id: 'atalia-sekolah-20260501',
     childId: atalia.id,
@@ -174,24 +222,18 @@ AppState buildSeedState() {
     repeatWeekdays: const {},
   );
 
-  // ── All activities ──────────────────────────────────────────────
   final allActivities = [
-    // Rafi May 1
     rafiSekolah1Mei,
     rafiSepeda1Mei,
     rafiNgaji1Mei,
     rafiLes1Mei,
     rafiTidur1Mei,
-    // Rafi historical
     ...historicalActivities,
-    // Atalia May 1
     ataliaSekolah,
     ataliaMakan,
     ataliaPuzzle,
   ];
 
-  // ── Completions ─────────────────────────────────────────────────
-  // Rafi Sekolah May 1 completed at 07:55 on time (all steps checked)
   final completions = <Completion>[
     Completion(
       activityId: rafiSekolah1Mei.id,
@@ -200,7 +242,6 @@ AppState buildSeedState() {
       onTime: true,
       stepsChecked: const [true, true, true, true],
     ),
-    // Atalia's completed activities on May 1
     Completion(
       activityId: ataliaSekolah.id,
       date: friday,
@@ -215,7 +256,6 @@ AppState buildSeedState() {
       onTime: true,
       stepsChecked: const [],
     ),
-    // Sepeda Santai completions for 24, 27, 28, 29, 30 April (on time at 16:50)
     for (final date in historicalDates)
       Completion(
         activityId: 'rafi-sepeda-${_dateStr(date)}',
@@ -226,7 +266,6 @@ AppState buildSeedState() {
       ),
   ];
 
-  // ── 7.5 Initial notifications (today) ───────────────────────────
   final notifications = <CaregiverNotification>[
     CaregiverNotification(
       id: 'notif-1',
@@ -252,11 +291,6 @@ AppState buildSeedState() {
     ),
   ];
 
-  // ── 7.6 No ChangeNotice in seed ─────────────────────────────────
-
-  // ── Settings ────────────────────────────────────────────────────
-  const settings = Settings();
-
   return AppState(
     children: [rafi, atalia],
     activities: allActivities,
@@ -264,7 +298,11 @@ AppState buildSeedState() {
     notices: const [],
     notifications: notifications,
     suggestionStatus: const {},
-    settings: settings,
+    settings: const Settings(
+      caregiverName: 'Bu Sari',
+      emergencyNumber: '081234567890',
+      backupNumber: '081298765432',
+    ),
   );
 }
 

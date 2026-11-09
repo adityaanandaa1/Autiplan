@@ -1,6 +1,5 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/schedule_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,8 +9,8 @@ void main() {
     late DateTime now;
 
     setUp(() {
-      state = buildSeedState();
-      now = Clock.demoTime; // Jumat 1 Mei 2026 16.00
+      state = buildFixtureState();
+      now = fixtureNow; // Jumat 1 Mei 2026 16.00
     });
 
     test(

@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
+import '../../core/widgets/calm_empty_screen.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../core/widgets/card_surface.dart';
 import '../../data/models/models.dart';
@@ -17,12 +18,12 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
-    final selectedChildId = ref.watch(selectedChildIdProvider);
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen();
     final clock = ref.watch(clockProvider);
     final now = clock.now;
 
-    final child = state.children.firstWhere((c) => c.id == selectedChildId);
-    final suggestions = generateSuggestions(state, now, selectedChildId);
+    final suggestions = generateSuggestions(state, now, child.id);
 
     return Scaffold(
       body: SafeArea(
@@ -78,7 +79,7 @@ class CaregiverSuggestionsScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  if (transitionGapAllClear(state, now, selectedChildId)) ...[
+                  if (transitionGapAllClear(state, now, child.id)) ...[
                     const SizedBox(height: AppSpacing.grid24),
                     Text('Cek otomatis', style: AppTypography.judulBagian),
                     const SizedBox(height: AppSpacing.grid12),

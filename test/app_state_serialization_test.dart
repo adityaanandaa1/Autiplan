@@ -1,13 +1,13 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AppState Serialization (Test 13 Bagian 16)', () {
     test('AppState -> JSON -> AppState menghasilkan objek yang identik', () {
-      final original = buildSeedState();
+      final original = buildFixtureState();
 
       // Encode to JSON string
       final jsonMap = original.toJson();
@@ -105,16 +105,13 @@ void main() {
         original.settings.emergencyNumber,
       );
       expect(restored.settings.backupNumber, original.settings.backupNumber);
-      expect(
-        restored.settings.demoClockEnabled,
-        original.settings.demoClockEnabled,
-      );
+      expect(restored.settings.caregiverName, original.settings.caregiverName);
     });
 
     test(
       'AppState berisi ChangeNotice dan status saran identik setelah round-trip',
       () {
-        final base = buildSeedState();
+        final base = buildFixtureState();
         const before = ActivitySnapshot(
           shortTitle: 'Les',
           title: 'Les dengan Pak Lana',

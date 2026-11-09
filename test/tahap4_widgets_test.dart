@@ -1,4 +1,4 @@
-import 'package:autiplan/core/clock.dart';
+﻿import 'package:autiplan/core/clock.dart';
 import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/core/widgets/activity_icon_data.dart';
 import 'package:autiplan/core/widgets/caregiver_header.dart';
@@ -8,7 +8,8 @@ import 'package:autiplan/core/widgets/suggestion_card.dart';
 import 'package:autiplan/core/widgets/week_strip.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/seed.dart';
+import 'package:autiplan/data/repository.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/caregiver_shell.dart';
 import 'package:autiplan/features/caregiver/home_screen.dart';
@@ -38,20 +39,32 @@ Future<ProviderContainer> _pump(
   tester.view.physicalSize = const Size(900, 1600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  final s = state ?? buildFixtureState();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appStateProvider.overrideWith(
+          (ref) => AppStateNotifier(_FakeRepo(), s),
+        ),
+        clockProvider.overrideWithValue(Clock(() => fixtureNow)),
+      ],
       child: MaterialApp(theme: buildParentTheme(), home: screen),
     ),
   );
   final container = ProviderScope.containerOf(
     tester.element(find.byWidget(screen)),
   );
-  if (state != null) {
-    container.read(appStateProvider.notifier).updateState(state);
-    await tester.pump();
-  }
   return container;
+}
+
+class _FakeRepo implements AutiPlanRepository {
+  @override
+  Future<AppState?> load() async => null;
+  @override
+  Future<void> save(AppState state) async {}
+  @override
+  Future<void> reset() async {}
 }
 
 ChangeNotice _notice(
@@ -100,8 +113,8 @@ Activity _act(
 );
 
 void main() {
-  final seed = buildSeedState();
-  final today = Clock.demoTime;
+  final seed = buildFixtureState();
+  final today = fixtureNow;
 
   group('A5/A7 CaregiverHeader', () {
     testWidgets('titik notifikasi berwarna utama, bukan bahaya', (t) async {

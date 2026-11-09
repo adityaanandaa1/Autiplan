@@ -38,6 +38,10 @@ class _ChildCallingScreenState extends ConsumerState<ChildCallingScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<ChildPalette>()!;
+    final caregiverName = ref.watch(
+      appStateProvider.select((s) => s.settings.caregiverName),
+    );
+    final caregiverLabel = caregiverName.isEmpty ? 'pengasuh' : caregiverName;
 
     return Scaffold(
       backgroundColor: palette.anakLatar,
@@ -62,15 +66,21 @@ class _ChildCallingScreenState extends ConsumerState<ChildCallingScreen> {
                             width: 4,
                           ),
                         ),
-                        child: const Center(
-                          child: Text('IS', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w600)),
+                        child: Center(
+                          child: Text(
+                            initialsOf(caregiverName),
+                            style: AppTypography.inisialBesar,
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.grid24),
-                      Text('Menelepon Ibu Sari…', style: AppTypography.judulAnak),
+                      Text(
+                        'Menelepon $caregiverLabel…',
+                        style: AppTypography.judulAnak,
+                      ),
                       const SizedBox(height: AppSpacing.grid12),
                       Text(
-                        'Tarik napas pelan-pelan. Ibu akan segera menjawab.',
+                        'Tarik napas pelan-pelan. $caregiverLabel akan segera menjawab.',
                         style: AppTypography.isiAnak,
                         textAlign: TextAlign.center,
                       ),
@@ -91,8 +101,10 @@ class _ChildCallingScreenState extends ConsumerState<ChildCallingScreen> {
                             const SizedBox(width: AppSpacing.grid12),
                             Expanded(
                               child: Text(
-                                'Kalau Ibu belum menjawab, HP akan menelepon kontak cadangan.',
-                                style: AppTypography.isiAnak.copyWith(fontSize: 15),
+                                'Kalau $caregiverLabel belum menjawab, HP akan menelepon kontak cadangan.',
+                                style: AppTypography.isiAnak.copyWith(
+                                  fontSize: 15,
+                                ),
                               ),
                             ),
                           ],

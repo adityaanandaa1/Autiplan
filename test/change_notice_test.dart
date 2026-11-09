@@ -1,6 +1,5 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/schedule_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,8 +10,8 @@ void main() {
     late Activity les;
 
     setUp(() {
-      state = buildSeedState();
-      now = Clock.demoTime;
+      state = buildFixtureState();
+      now = fixtureNow;
       final rafi = state.children.firstWhere((c) => c.name == 'Rafi');
       les = state.activities.firstWhere(
         (a) => a.childId == rafi.id && a.title == 'Les dengan Pak Lana',

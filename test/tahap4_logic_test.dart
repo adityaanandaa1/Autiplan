@@ -1,7 +1,6 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/core/widgets/change_notice_card.dart';
+﻿import 'package:autiplan/core/widgets/change_notice_card.dart';
 import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/home_screen.dart';
 import 'package:autiplan/features/caregiver/notifications_screen.dart';
@@ -40,11 +39,11 @@ ChangeNotice _notice(
 }
 
 void main() {
-  final now = Clock.demoTime;
+  final now = fixtureNow;
 
   group('A1 emptyDaySuggestionForDate', () {
     test('hanya mengembalikan saran untuk tanggal yang dipilih', () {
-      final state = buildSeedState();
+      final state = buildFixtureState();
       final all = generateSuggestions(state, now, 'child-rafi');
       final sat = emptyDaySuggestionForDate(all, DateTime(2026, 5, 2));
       final sun = emptyDaySuggestionForDate(all, DateTime(2026, 5, 3));
@@ -69,7 +68,7 @@ void main() {
   group('B1 sapaan', () {
     test('batas waktu pagi/siang/sore/malam', () {
       String g(int h, [int m = 0]) =>
-          caregiverGreeting(DateTime(2026, 5, 1, h, m));
+          caregiverGreeting(DateTime(2026, 5, 1, h, m), 'Bu Sari');
       expect(g(3, 59), 'Selamat malam, Bu Sari');
       expect(g(4), 'Selamat pagi, Bu Sari');
       expect(g(10, 59), 'Selamat pagi, Bu Sari');
@@ -112,13 +111,13 @@ void main() {
   group('B6 transitionGapAllClear', () {
     test('seed: aman', () {
       expect(
-        transitionGapAllClear(buildSeedState(), now, 'child-rafi'),
+        transitionGapAllClear(buildFixtureState(), now, 'child-rafi'),
         isTrue,
       );
     });
 
     test('ada pemicu (walau saran diabaikan): tidak aman', () {
-      final seed = buildSeedState();
+      final seed = buildFixtureState();
       final state = seed.copyWith(
         settings: seed.settings.copyWith(minGapMinutes: 20),
       );
@@ -136,7 +135,7 @@ void main() {
     test('hari tanpa kegiatan: tidak ditampilkan', () {
       expect(
         transitionGapAllClear(
-          buildSeedState().copyWith(activities: const []),
+          buildFixtureState().copyWith(activities: const []),
           now,
           'child-rafi',
         ),
@@ -147,7 +146,7 @@ void main() {
 
   group('A9 ikon notifikasi', () {
     test('diturunkan dari judul kegiatan pada teks', () {
-      final state = buildSeedState();
+      final state = buildFixtureState();
       NotificationType.values;
       CaregiverNotification n(NotificationType type, String text) =>
           CaregiverNotification(

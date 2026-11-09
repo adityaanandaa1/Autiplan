@@ -22,11 +22,8 @@ class ChildHomeScreen extends ConsumerWidget {
     final clock = ref.watch(clockProvider);
     final now = clock.now;
 
-    // Rafi hardcoded (satu anak untuk demo)
-    final child = state.children.firstWhere(
-      (c) => c.name == 'Rafi',
-      orElse: () => state.children.first,
-    );
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen(isChild: true);
 
     final palette = Theme.of(context).extension<ChildPalette>()!;
     final today = DateTime(now.year, now.month, now.day);
@@ -36,10 +33,10 @@ class ChildHomeScreen extends ConsumerWidget {
     final greeting = hour >= 4 && hour < 11
         ? 'Selamat pagi'
         : hour >= 11 && hour < 15
-            ? 'Selamat siang'
-            : hour >= 15 && hour < 18
-                ? 'Selamat sore'
-                : 'Selamat malam';
+        ? 'Selamat siang'
+        : hour >= 15 && hour < 18
+        ? 'Selamat sore'
+        : 'Selamat malam';
 
     // Banner: ada ChangeNotice hari ini dengan seenAt == null
     final hasUnseenNotice = state.notices.any(
@@ -93,8 +90,18 @@ class ChildHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: palette.anakLatar,
-      body: _buildBody(context, child, palette, today, now, greeting,
-          hasUnseenNotice, sorted, current, state),
+      body: _buildBody(
+        context,
+        child,
+        palette,
+        today,
+        now,
+        greeting,
+        hasUnseenNotice,
+        sorted,
+        current,
+        state,
+      ),
     );
   }
 
@@ -250,35 +257,32 @@ class ChildHomeScreen extends ConsumerWidget {
         horizontal: AppSpacing.screenPaddingChild,
       ),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index >= sorted.length) return null;
-            final activity = sorted[index];
-            final status = _cardStatus(
-              activity,
-              today,
-              now,
-              current,
-              state.completions,
-              state.notices,
-            );
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: index == sorted.length - 1
-                    ? 0
-                    : AppSpacing.sectionGapChild,
-              ),
-              child: ChildActivityCard(
-                icon: activity.icon,
-                title: activity.shortTitle,
-                time: formatTimeLite(activity.start),
-                status: status,
-                onTap: () => context.push('/anak/aktivitas/${activity.id}'),
-              ),
-            );
-          },
-          childCount: sorted.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index >= sorted.length) return null;
+          final activity = sorted[index];
+          final status = _cardStatus(
+            activity,
+            today,
+            now,
+            current,
+            state.completions,
+            state.notices,
+          );
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == sorted.length - 1
+                  ? 0
+                  : AppSpacing.sectionGapChild,
+            ),
+            child: ChildActivityCard(
+              icon: activity.icon,
+              title: activity.shortTitle,
+              time: formatTimeLite(activity.start),
+              status: status,
+              onTap: () => context.push('/anak/aktivitas/${activity.id}'),
+            ),
+          );
+        }, childCount: sorted.length),
       ),
     );
   }
@@ -323,4 +327,3 @@ class ChildHomeScreen extends ConsumerWidget {
     );
   }
 }
-

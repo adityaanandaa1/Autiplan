@@ -104,11 +104,7 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
                   AppSpacing.screenPaddingChild,
                   AppSpacing.grid20,
                 ),
-                child: _buildContent(
-                  activity,
-                  isCompleted,
-                  palette,
-                ),
+                child: _buildContent(activity, isCompleted, palette),
               ),
             ),
             if (!isCompleted)
@@ -154,14 +150,14 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
   }
 
   Widget _buildCompletedMessage() => Text(
-        'Kegiatan ini sudah selesai.',
-        style: AppTypography.isiAnak.copyWith(color: AppColors.teksSekunder),
-      );
+    'Kegiatan ini sudah selesai.',
+    style: AppTypography.isiAnak.copyWith(color: AppColors.teksSekunder),
+  );
 
   Widget _buildNoSteps() => Text(
-        'Tidak ada langkah khusus.',
-        style: AppTypography.isiAnak.copyWith(color: AppColors.teksSekunder),
-      );
+    'Tidak ada langkah khusus.',
+    style: AppTypography.isiAnak.copyWith(color: AppColors.teksSekunder),
+  );
 
   Widget _buildIndependentCard(Activity activity, ChildPalette palette) {
     return Container(
@@ -217,7 +213,9 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
         ...List.generate(activity.steps.length, (i) {
           return Padding(
             padding: EdgeInsets.only(
-              bottom: i == activity.steps.length - 1 ? 0 : AppSpacing.sectionGapChild,
+              bottom: i == activity.steps.length - 1
+                  ? 0
+                  : AppSpacing.sectionGapChild,
             ),
             child: _buildStepRow(i, activity.steps[i]),
           );
@@ -231,7 +229,8 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
       color: AppColors.permukaan,
       borderRadius: AppRadius.barisLangkahAnak,
       child: InkWell(
-        onTap: () => setState(() => _stepsChecked[index] = !_stepsChecked[index]),
+        onTap: () =>
+            setState(() => _stepsChecked[index] = !_stepsChecked[index]),
         borderRadius: AppRadius.barisLangkahAnak,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.grid16),
@@ -243,13 +242,21 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: _stepsChecked[index] ? AppColors.sukses : AppColors.garis,
+                    color: _stepsChecked[index]
+                        ? AppColors.sukses
+                        : AppColors.garis,
                     width: 2,
                   ),
-                  color: _stepsChecked[index] ? AppColors.sukses : AppColors.transparan,
+                  color: _stepsChecked[index]
+                      ? AppColors.sukses
+                      : AppColors.transparan,
                 ),
                 child: _stepsChecked[index]
-                    ? const Icon(LucideIcons.check, size: 16, color: AppColors.teksDiAtasUtama)
+                    ? const Icon(
+                        LucideIcons.check,
+                        size: 16,
+                        color: AppColors.teksDiAtasUtama,
+                      )
                     : null,
               ),
               const SizedBox(width: AppSpacing.grid12),

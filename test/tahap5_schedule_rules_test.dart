@@ -1,6 +1,5 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+﻿import 'package:autiplan/data/models/models.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/schedule_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -94,7 +93,7 @@ void main() {
   });
 
   group('applyActivityEdit menolak waktu tidak valid', () {
-    final state = buildSeedState();
+    final state = buildFixtureState();
     final les = state.activities.firstWhere(
       (a) => a.title == 'Les dengan Pak Lana',
     );
@@ -105,7 +104,7 @@ void main() {
           state: state,
           updated: les.copyWith(end: const TimeOfDayLite(19, 0)),
           message: 'Pesan',
-          now: Clock.demoTime,
+          now: fixtureNow,
           noticeId: 'n',
         ),
         throwsArgumentError,
@@ -118,7 +117,7 @@ void main() {
           state: state,
           updated: les.copyWith(clearEnd: true),
           message: 'Pesan',
-          now: Clock.demoTime,
+          now: fixtureNow,
           noticeId: 'n',
         ),
         throwsArgumentError,
@@ -133,7 +132,7 @@ void main() {
         state: state,
         updated: tidur.copyWith(steps: ['Satu']),
         message: null,
-        now: Clock.demoTime,
+        now: fixtureNow,
         noticeId: 'n',
       );
       expect(result.notice, isNull);
@@ -141,7 +140,7 @@ void main() {
   });
 
   group('findShortGapBefore (§8.5 teks bantu)', () {
-    final state = buildSeedState();
+    final state = buildFixtureState();
     final all = state.activities;
 
     test('Mulai 17.05 setelah Sepeda Santai selesai 17.00: jeda 5 menit', () {

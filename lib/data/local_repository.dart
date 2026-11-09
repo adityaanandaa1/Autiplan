@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:autiplan/data/models/app_state.dart';
 import 'package:autiplan/data/repository.dart';
-import 'package:autiplan/data/seed.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// [AutiPlanRepository] implementation backed by [SharedPreferences].
@@ -37,7 +36,6 @@ class LocalRepository implements AutiPlanRepository {
 
   @override
   Future<void> reset() async {
-    final seed = buildSeedState();
-    await save(seed);
+    await save(AppState.empty());
   }
 }

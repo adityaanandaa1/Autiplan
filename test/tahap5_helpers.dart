@@ -1,10 +1,10 @@
-// Pembantu bersama tes widget Tahap 5 (bukan tes; main kosong supaya
+﻿// Pembantu bersama tes widget Tahap 5 (bukan tes; main kosong supaya
 // `flutter test test/tahap5_*` tidak gagal).
 import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/data/local_repository.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,7 +68,7 @@ Future<SheetHost> pumpOpener(
       appStateProvider.overrideWith(
         (ref) => AppStateNotifier(
           LocalRepository(prefs),
-          initial ?? buildSeedState(),
+          initial ?? buildFixtureState(),
         ),
       ),
     ],

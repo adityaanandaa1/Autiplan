@@ -9,10 +9,15 @@ List<Suggestion> generateSuggestions(
 ) {
   final suggestions = <Suggestion>[];
 
-  final child = state.children.firstWhere(
-    (c) => c.id == childId,
-    orElse: () => state.children.first,
-  );
+  // Tanpa anak, tidak ada saran (akun baru belum mengisi profil).
+  Child? child;
+  for (final c in state.children) {
+    if (c.id == childId) {
+      child = c;
+      break;
+    }
+  }
+  if (child == null) return const [];
 
   suggestions.addAll(_generateIndependenceSuggestions(state, now, child));
   suggestions.addAll(_generateQuietTimeSuggestions(state, now, child));

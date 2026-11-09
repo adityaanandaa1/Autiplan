@@ -26,6 +26,17 @@ class AppState {
   final Map<String, SuggestionStatus> suggestionStatus;
   final Settings settings;
 
+  /// State kosong untuk akun baru: semua list kosong, `Settings()` bawaan.
+  factory AppState.empty() => const AppState(
+    children: [],
+    activities: [],
+    completions: [],
+    notices: [],
+    notifications: [],
+    suggestionStatus: {},
+    settings: Settings(),
+  );
+
   AppState copyWith({
     List<Child>? children,
     List<Activity>? activities,

@@ -1,7 +1,7 @@
 import 'package:autiplan/app.dart';
 import 'package:autiplan/data/local_repository.dart';
 import 'package:autiplan/data/providers.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +15,8 @@ Future<void> _pumpApp(WidgetTester tester) async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         appStateProvider.overrideWith(
-          (ref) => AppStateNotifier(LocalRepository(prefs), buildSeedState()),
+          (ref) =>
+              AppStateNotifier(LocalRepository(prefs), buildFixtureState()),
         ),
       ],
       child: const AutiPlanApp(),

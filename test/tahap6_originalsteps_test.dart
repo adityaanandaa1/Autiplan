@@ -66,7 +66,11 @@ void main() {
       final withOriginal = base.copyWith(
         originalSteps: const ['Siapkan buku', 'Belajar', 'Rapikan'],
       );
-      expect(withOriginal.originalSteps, ['Siapkan buku', 'Belajar', 'Rapikan']);
+      expect(withOriginal.originalSteps, [
+        'Siapkan buku',
+        'Belajar',
+        'Rapikan',
+      ]);
       expect(withOriginal.steps, ['Belajar']);
     });
 

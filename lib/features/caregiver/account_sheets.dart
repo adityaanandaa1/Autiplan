@@ -105,11 +105,6 @@ void showReminderSheet(BuildContext context, WidgetRef ref) {
       builder: (ctx, setSheetState) => _SheetFrame(
         title: 'Pengingat sebelum kegiatan',
         children: [
-          Text(
-            'Di prototipe hanya disimpan sebagai angka.',
-            style: AppTypography.meta,
-          ),
-          const SizedBox(height: AppSpacing.grid12),
           _StepperRow(
             label: 'Sebelum kegiatan',
             value: '$value menit',
@@ -270,35 +265,6 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
         SecondaryButton(
           label: 'Batal',
           onPressed: () => Navigator.of(ctx).pop(),
-        ),
-      ],
-    ),
-  );
-}
-
-/// Konfirmasi reset data demo (§OT-14).
-void confirmResetDemo(BuildContext context, WidgetRef ref) {
-  showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.dialog),
-      title: const Text('Reset data demo?', style: AppTypography.judulSheet),
-      content: const Text(
-        'Semua perubahan jadwal, saran, dan notifikasi akan kembali ke data awal.',
-        style: AppTypography.kecil,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Batal'),
-        ),
-        TextButton(
-          onPressed: () {
-            ref.read(appStateProvider.notifier).resetToSeed();
-            Navigator.of(ctx).pop();
-            CalmSnackbar.show(context, message: 'Data demo dikembalikan');
-          },
-          child: const Text('Reset'),
         ),
       ],
     ),

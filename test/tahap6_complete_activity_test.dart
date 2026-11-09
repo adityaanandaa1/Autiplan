@@ -58,7 +58,10 @@ void main() {
         result.state.notifications.first.text,
         'Rafi menyelesaikan Sepeda Santai',
       );
-      expect(result.state.notifications.first.type, NotificationType.activityDone);
+      expect(
+        result.state.notifications.first.type,
+        NotificationType.activityDone,
+      );
     });
 
     test('onTime=false bila selesai setelah end', () {

@@ -1,33 +1,34 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/providers.dart';
-
-/// A clock abstraction that can be locked to a fixed time for demo mode.
+/// A clock abstraction that can be replaced in tests.
 ///
-/// When [demoClockEnabled] is true, [now] returns
-/// Friday, May 1, 2026, 16:00 local time and does NOT advance.
+/// Defaults to [DateTime.now]. Pass a callback to lock the time.
 class Clock {
-  const Clock({this.demoClockEnabled = true});
+  const Clock([this._now = DateTime.now]);
 
-  final bool demoClockEnabled;
+  final DateTime Function() _now;
 
-  /// The fixed demo time: Friday, 1 May 2026, 16:00 local.
-  static final DateTime demoTime = DateTime(2026, 5, 1, 16, 0);
-
-  DateTime get now => demoClockEnabled ? demoTime : DateTime.now();
-
-  Clock copyWith({bool? demoClockEnabled}) {
-    return Clock(demoClockEnabled: demoClockEnabled ?? this.demoClockEnabled);
-  }
+  DateTime get now => _now();
 }
+
+/// Emits every 30 seconds so widgets that show "Sekarang" refresh when the
+/// hour or day changes while the app stays open.
+///
+/// Under `flutter test` (`FLUTTER_TEST` set), returns an empty stream so
+/// widget tests do not leave a pending periodic timer.
+final minuteTickProvider = StreamProvider.autoDispose<int>((ref) {
+  if (Platform.environment.containsKey('FLUTTER_TEST')) {
+    return const Stream<int>.empty();
+  }
+  return Stream<int>.periodic(const Duration(seconds: 30), (i) => i);
+});
 
 /// Riverpod provider for the application clock.
 ///
-/// Derived from `Settings.demoClockEnabled` so there is a single source of
-/// truth for demo mode.
+/// Watches [minuteTickProvider] so dependents rebuild on each tick.
 final clockProvider = Provider<Clock>((ref) {
-  final demo = ref.watch(
-    appStateProvider.select((s) => s.settings.demoClockEnabled),
-  );
-  return Clock(demoClockEnabled: demo);
+  ref.watch(minuteTickProvider);
+  return const Clock();
 });

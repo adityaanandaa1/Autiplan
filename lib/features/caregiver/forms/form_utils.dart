@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../data/models/models.dart';
 import '../../../domain/schedule_rules.dart';
@@ -17,8 +18,7 @@ bool isSameDay(DateTime a, DateTime b) =>
 DateTime dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
-String generateId(String prefix) =>
-    '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+String generateId(String prefix) => '$prefix-${const Uuid().v4()}';
 
 /// Kantuk / layar: ikon nonton otomatis dianggap memakai layar.
 Activity buildActivity({

@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'data/local_repository.dart';
+import 'data/models/models.dart';
 import 'data/providers.dart';
-import 'data/seed.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,13 +13,10 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final repo = LocalRepository(prefs);
 
-  // If repository is empty on first launch, initialize with seed
+  // Akun baru mulai dari data kosong; pengguna mengisi profil lewat
+  // /profil-awal. Data lama yang tersimpan tetap dipakai bila ada.
   final existingState = await repo.load();
-  if (existingState == null) {
-    await repo.save(buildSeedState());
-  }
-
-  final initialState = existingState ?? buildSeedState();
+  final initialState = existingState ?? AppState.empty();
 
   runApp(
     ProviderScope(

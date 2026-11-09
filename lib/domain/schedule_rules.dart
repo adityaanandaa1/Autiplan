@@ -604,15 +604,17 @@ CompleteActivityResult completeActivity({
   required String notificationId,
 }) {
   final child = state.children.firstWhere((c) => c.id == activity.childId);
-  final onTime = activity.end == null || now.isBefore(
-    DateTime(
-      activity.date.year,
-      activity.date.month,
-      activity.date.day,
-      activity.end!.hour,
-      activity.end!.minute,
-    ).add(const Duration(minutes: 1)),
-  );
+  final onTime =
+      activity.end == null ||
+      now.isBefore(
+        DateTime(
+          activity.date.year,
+          activity.date.month,
+          activity.date.day,
+          activity.end!.hour,
+          activity.end!.minute,
+        ).add(const Duration(minutes: 1)),
+      );
 
   final completion = Completion(
     activityId: activity.id,

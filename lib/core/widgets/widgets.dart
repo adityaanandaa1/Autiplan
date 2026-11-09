@@ -1,6 +1,7 @@
 export 'activity_row.dart';
 export 'add_fab.dart';
 export 'buttons.dart';
+export 'calm_empty_screen.dart';
 export 'calm_snackbar.dart';
 export 'card_surface.dart';
 export 'caregiver_header.dart';
@@ -13,8 +14,8 @@ export 'child_header.dart';
 export 'child_segmented.dart';
 export 'day_summary.dart';
 export 'emergency_button.dart';
+export 'initials.dart';
 export 'mascot.dart';
-export 'placeholder_screen.dart';
 export 'role_switch_button.dart';
 export 'suggestion_card.dart';
 export 'week_strip.dart';

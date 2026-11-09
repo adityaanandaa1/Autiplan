@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'local_repository.dart';
 import 'models/models.dart';
 import 'repository.dart';
-import 'seed.dart';
 
 /// Provider for SharedPreferences instance. Must be overridden in main().
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -29,13 +28,6 @@ class AppStateNotifier extends StateNotifier<AppState> {
     _repository.save(newState);
   }
 
-  /// Reset the state back to seed data.
-  Future<void> resetToSeed() async {
-    final seed = buildSeedState();
-    state = seed;
-    await _repository.save(seed);
-  }
-
   /// Reload state from repository.
   Future<void> reload() async {
     final loaded = await _repository.load();
@@ -50,12 +42,25 @@ final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   ref,
 ) {
   final repository = ref.watch(repositoryProvider);
-  // Default to seed if repository load has not happened yet
-  return AppStateNotifier(repository, buildSeedState());
+  // Start empty; main() overrides this with the loaded state.
+  return AppStateNotifier(repository, AppState.empty());
 });
 
 /// Provider for the currently active role in demo ('caregiver' or 'child').
 final activeRoleProvider = StateProvider<String?>((ref) => null);
 
-/// Provider for the currently selected child ID in caregiver view (defaults to Rafi).
-final selectedChildIdProvider = StateProvider<String>((ref) => 'child-rafi');
+/// Provider for the currently selected child ID in caregiver view.
+final selectedChildIdProvider = StateProvider<String?>((ref) => null);
+
+/// Anak yang sedang dipakai: anak terpilih, atau anak pertama, atau null.
+final currentChildProvider = Provider<Child?>((ref) {
+  final children = ref.watch(appStateProvider.select((s) => s.children));
+  if (children.isEmpty) return null;
+  final selectedId = ref.watch(selectedChildIdProvider);
+  if (selectedId != null) {
+    for (final child in children) {
+      if (child.id == selectedId) return child;
+    }
+  }
+  return children.first;
+});

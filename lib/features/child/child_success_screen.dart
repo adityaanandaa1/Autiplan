@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/models.dart';
@@ -18,6 +19,8 @@ class ChildSuccessScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
     final palette = Theme.of(context).extension<ChildPalette>()!;
+    final clock = ref.watch(clockProvider);
+    final now = clock.now;
 
     final activity = state.activities.firstWhere(
       (a) => a.id == activityId,
@@ -27,7 +30,7 @@ class ChildSuccessScreen extends ConsumerWidget {
         title: '',
         shortTitle: '',
         icon: ActivityIcon.sepeda,
-        date: DateTime.now(),
+        date: now,
         start: const TimeOfDayLite(0, 0),
       ),
     );
@@ -70,7 +73,10 @@ class ChildSuccessScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Berikutnya', style: AppTypography.kegiatanAnak),
+                            Text(
+                              'Berikutnya',
+                              style: AppTypography.kegiatanAnak,
+                            ),
                             const SizedBox(height: AppSpacing.grid12),
                             if (nextActivity != null) ...[
                               Row(
@@ -91,9 +97,13 @@ class ChildSuccessScreen extends ConsumerWidget {
                                   const SizedBox(width: AppSpacing.grid12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(nextActivity.shortTitle, style: AppTypography.isiAnak),
+                                        Text(
+                                          nextActivity.shortTitle,
+                                          style: AppTypography.isiAnak,
+                                        ),
                                         Text(
                                           formatTimeLite(nextActivity.start),
                                           style: AppTypography.sekunderAnak,

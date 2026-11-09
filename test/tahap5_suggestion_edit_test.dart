@@ -1,7 +1,6 @@
-import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/core/widgets/buttons.dart';
+﻿import 'package:autiplan/core/widgets/buttons.dart';
 import 'package:autiplan/data/models/models.dart';
-import 'package:autiplan/data/seed.dart';
+import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/widgets/edit_activity_sheet.dart';
 import 'package:autiplan/features/caregiver/widgets/suggestion_detail_sheet.dart';
@@ -36,7 +35,7 @@ Widget _edit(
 
 /// Seed + "Mandi Sore" 17.05-17.35 (jeda 5 menit setelah Sepeda Santai).
 AppState _withShortGap() {
-  final s = buildSeedState();
+  final s = buildFixtureState();
   final rafi = rafiOf(s);
   return s.copyWith(
     activities: [
@@ -63,7 +62,7 @@ void main() {
         final initial = _withShortGap();
         final suggestion = generateSuggestions(
           initial,
-          Clock.demoTime,
+          fixtureNow,
           rafiOf(initial).id,
         ).firstWhere((s) => s.type == SuggestionType.transitionGap);
         expect(suggestion.actionLabel, 'Geser Mandi Sore');
@@ -113,7 +112,7 @@ void main() {
         expect(
           generateSuggestions(
             host.state,
-            Clock.demoTime,
+            fixtureNow,
             rafiOf(host.state).id,
           ).where((s) => s.type == SuggestionType.transitionGap),
           isEmpty,
@@ -126,10 +125,10 @@ void main() {
     testWidgets('Kurangi langkah -> mode mandiri, applied, snackbar', (
       tester,
     ) async {
-      final seed = buildSeedState();
+      final seed = buildFixtureState();
       final suggestion = generateSuggestions(
         seed,
-        Clock.demoTime,
+        fixtureNow,
         rafiOf(seed).id,
       ).firstWhere((s) => s.type == SuggestionType.independence);
 
@@ -154,7 +153,7 @@ void main() {
       expect(
         generateSuggestions(
           host.state,
-          Clock.demoTime,
+          fixtureNow,
           rafiOf(host.state).id,
         ).where((s) => s.type == SuggestionType.independence),
         isEmpty,

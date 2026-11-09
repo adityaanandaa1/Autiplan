@@ -18,6 +18,10 @@ class ChildEmergencyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<ChildPalette>()!;
+    final caregiverName = ref.watch(
+      appStateProvider.select((s) => s.settings.caregiverName),
+    );
+    final caregiverLabel = caregiverName.isEmpty ? 'pengasuh' : caregiverName;
 
     return Scaffold(
       backgroundColor: palette.anakLatar,
@@ -26,7 +30,10 @@ class ChildEmergencyScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.screenPaddingChild),
           child: Column(
             children: [
-              ChildBackHeader(title: 'Butuh Bantuan?', onBack: () => context.go('/anak')),
+              ChildBackHeader(
+                title: 'Butuh Bantuan?',
+                onBack: () => context.go('/anak'),
+              ),
               Expanded(
                 child: Center(
                   child: Column(
@@ -53,15 +60,18 @@ class ChildEmergencyScreen extends ConsumerWidget {
                           color: AppColors.utamaLembut,
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Text('IS', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w600)),
+                        child: Center(
+                          child: Text(
+                            initialsOf(caregiverName),
+                            style: AppTypography.inisialBesar,
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.grid16),
-                      Text('Ibu Sari', style: AppTypography.judulAnak),
+                      Text(caregiverLabel, style: AppTypography.judulAnak),
                       const SizedBox(height: AppSpacing.grid12),
                       Text(
-                        'Tekan tombol di bawah untuk menelepon Ibu Sari.',
+                        'Tekan tombol di bawah untuk menelepon $caregiverLabel.',
                         style: AppTypography.isiAnak,
                         textAlign: TextAlign.center,
                       ),
@@ -70,7 +80,7 @@ class ChildEmergencyScreen extends ConsumerWidget {
                 ),
               ),
               ChildButton(
-                label: 'Telepon Ibu Sari',
+                label: 'Telepon $caregiverLabel',
                 onPressed: () => _call(context, ref),
               ),
               const SizedBox(height: AppSpacing.grid12),
@@ -90,15 +100,16 @@ class ChildEmergencyScreen extends ConsumerWidget {
     final state = ref.read(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
     final clock = ref.read(clockProvider);
-    
-    final child = state.children.firstWhere((c) => c.name == 'Rafi');
+
+    final child = ref.read(currentChildProvider);
+    final childName = child?.name ?? 'Anak';
     final updated = state.copyWith(
       notifications: [
         ...state.notifications,
         CaregiverNotification(
           id: const Uuid().v4(),
           type: NotificationType.emergencyPressed,
-          text: '${child.name} menekan tombol bantuan',
+          text: '$childName menekan tombol bantuan',
           at: clock.now,
           read: false,
         ),
@@ -113,18 +124,22 @@ class ChildEmergencyScreen extends ConsumerWidget {
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Telepon tidak tersedia di perangkat ini')),
+            const SnackBar(
+              content: Text('Telepon tidak tersedia di perangkat ini'),
+            ),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Telepon tidak tersedia di perangkat ini')),
+          const SnackBar(
+            content: Text('Telepon tidak tersedia di perangkat ini'),
+          ),
         );
       }
     }
-    
+
     if (context.mounted) context.push('/anak/menelepon');
   }
 }

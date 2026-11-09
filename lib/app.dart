@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/router.dart';
 import 'core/theme/theme.dart';
+import 'data/models/models.dart';
 import 'data/providers.dart';
 
 class AutiPlanApp extends ConsumerStatefulWidget {
@@ -20,18 +21,16 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
   @override
   void initState() {
     super.initState();
-    _router = createRouter();
+    _router = createRouter(ref);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch AppState to retrieve active child theme
-    final appState = ref.watch(appStateProvider);
-    final rafi = appState.children.firstWhere(
-      (c) => c.name.toLowerCase() == 'rafi',
-      orElse: () => appState.children.first,
+    // Tema anak mengikuti anak yang sedang dipakai; tanpa anak, tema bawaan.
+    final child = ref.watch(currentChildProvider);
+    final childPalette = ChildPalette.fromTheme(
+      child?.theme ?? ChildTheme.lautTenang,
     );
-    final childPalette = ChildPalette.fromTheme(rafi.theme);
 
     return MaterialApp.router(
       title: 'AutiPlan',

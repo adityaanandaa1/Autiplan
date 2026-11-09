@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/add_fab.dart';
+import '../../core/widgets/calm_empty_screen.dart';
 import '../../core/widgets/card_surface.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../core/widgets/change_notice_card.dart';
@@ -22,7 +23,7 @@ import 'widgets/current_activity_card.dart';
 
 /// Sapaan Beranda (OT-01): pagi 04–10.59, siang 11–14.59, sore 15–17.59,
 /// malam 18–03.59.
-String caregiverGreeting(DateTime now) {
+String caregiverGreeting(DateTime now, String caregiverName) {
   final h = now.hour;
   final String part;
   if (h >= 4 && h < 11) {
@@ -34,7 +35,8 @@ String caregiverGreeting(DateTime now) {
   } else {
     part = 'malam';
   }
-  return 'Selamat $part, Bu Sari';
+  final name = caregiverName.isEmpty ? 'Pengasuh' : caregiverName;
+  return 'Selamat $part, $name';
 }
 
 class CaregiverHomeScreen extends ConsumerWidget {
@@ -43,19 +45,17 @@ class CaregiverHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
-    final selectedChildId = ref.watch(selectedChildIdProvider);
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen();
     final clock = ref.watch(clockProvider);
     final now = clock.now;
 
-    final child = state.children.firstWhere((c) => c.id == selectedChildId);
-    final childIndex = state.children.indexWhere(
-      (c) => c.id == selectedChildId,
-    );
+    final childIndex = state.children.indexWhere((c) => c.id == child.id);
 
     final todayActivities = state.activities
         .where(
           (a) =>
-              a.childId == selectedChildId &&
+              a.childId == child.id &&
               a.date.year == now.year &&
               a.date.month == now.month &&
               a.date.day == now.day,
@@ -63,7 +63,7 @@ class CaregiverHomeScreen extends ConsumerWidget {
         .toList();
 
     final sortedActivities = sortActivitiesByStartTime(todayActivities);
-    final suggestions = generateSuggestions(state, now, selectedChildId);
+    final suggestions = generateSuggestions(state, now, child.id);
 
     return Scaffold(
       body: SafeArea(
@@ -79,7 +79,10 @@ class CaregiverHomeScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.grid16),
                 children: [
-                  Text(caregiverGreeting(now), style: AppTypography.sapaan),
+                  Text(
+                    caregiverGreeting(now, state.settings.caregiverName),
+                    style: AppTypography.sapaan,
+                  ),
                   const SizedBox(height: AppSpacing.grid4),
                   Text(
                     DateFormat('EEEE, d MMMM y', 'id_ID').format(now),
@@ -134,7 +137,7 @@ class CaregiverHomeScreen extends ConsumerWidget {
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (ctx) =>
-                AddActivitySheet(childId: selectedChildId, initialDate: now),
+                AddActivitySheet(childId: child.id, initialDate: now),
           );
         },
       ),

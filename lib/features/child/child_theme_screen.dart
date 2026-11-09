@@ -21,8 +21,8 @@ class _ChildThemeScreenState extends ConsumerState<ChildThemeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(appStateProvider);
-    final child = state.children.firstWhere((c) => c.name == 'Rafi');
+    final child = ref.watch(currentChildProvider);
+    if (child == null) return const CalmEmptyScreen(isChild: true);
     _selected ??= child.theme;
 
     final palette = Theme.of(context).extension<ChildPalette>()!;
@@ -35,14 +35,19 @@ class _ChildThemeScreenState extends ConsumerState<ChildThemeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ChildBackHeader(title: 'Pilih Tema', onBack: () => context.go('/anak')),
+              ChildBackHeader(
+                title: 'Pilih Tema',
+                onBack: () => context.go('/anak'),
+              ),
               const SizedBox(height: AppSpacing.grid24),
               Expanded(
                 child: ListView(
                   children: [
                     for (final theme in ChildTheme.values)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sectionGapChild),
+                        padding: const EdgeInsets.only(
+                          bottom: AppSpacing.sectionGapChild,
+                        ),
                         child: _buildThemeCard(theme, child.theme),
                       ),
                   ],
@@ -110,12 +115,17 @@ class _ChildThemeScreenState extends ConsumerState<ChildThemeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_themeName(theme), style: AppTypography.kegiatanAnak),
+                      Text(
+                        _themeName(theme),
+                        style: AppTypography.kegiatanAnak,
+                      ),
                       if (isCurrent) ...[
                         const SizedBox(height: AppSpacing.grid4),
                         Text(
                           'Sedang dipakai',
-                          style: AppTypography.sekunderAnak.copyWith(fontSize: 14),
+                          style: AppTypography.sekunderAnak.copyWith(
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ],
@@ -133,16 +143,19 @@ class _ChildThemeScreenState extends ConsumerState<ChildThemeScreen> {
 
   String _themeName(ChildTheme theme) {
     switch (theme) {
-      case ChildTheme.lautTenang: return 'Laut Tenang';
-      case ChildTheme.padangHijau: return 'Padang Hijau';
-      case ChildTheme.pagiHangat: return 'Pagi Hangat';
+      case ChildTheme.lautTenang:
+        return 'Laut Tenang';
+      case ChildTheme.padangHijau:
+        return 'Padang Hijau';
+      case ChildTheme.pagiHangat:
+        return 'Pagi Hangat';
     }
   }
 
   Future<void> _applyTheme(Child child) async {
     final state = ref.read(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
-    
+
     final updated = state.copyWith(
       children: [
         for (final c in state.children)
