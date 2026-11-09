@@ -202,7 +202,7 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 
 ## Tahap 10 — Akun, sesi, dan aturan keamanan
 
-- **Status:** selesai di kode dan tes Flutter (9 November 2026). **Belum teruji:** tes aturan Firestore (emulator) dan deploy aturan.
+- **Status:** selesai di kode dan tes Flutter (9 November 2026). **Belum:** deploy aturan Firestore ke produksi dan uji di perangkat.
 - **Isi:**
   - `lib/data/auth_service.dart`: `AuthService` + `FirebaseAuthService` (daftar, masuk, reset sandi, anonim, `idToken`).
   - `lib/data/session/`: `DeviceSession` (`UnlinkedSession`, `CaregiverSession`, `ChildSession`) dan `SessionNotifier` (disimpan di `shared_preferences`; sesi anak memantau `devices/{uid}`, menjadi `Unlinked` bila dokumen hilang atau `permission-denied`).
@@ -211,13 +211,13 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - `firebase/firestore.rules` + `firebase/tests/` (tes aturan dengan vitest dan emulator).
   - Dihapus: `role_picker_screen`, `role_switch_button`, `firebase_bootstrap`, serta tes `role_picker_test` dan `role_switch_test` (menguji layar "Pilih peran untuk demo" yang sudah tidak ada).
 - **File utama:** `lib/data/auth_service.dart`, `lib/data/session/*`, `lib/data/providers.dart`, `lib/core/router.dart`, `lib/main.dart`, `lib/app.dart`, `lib/features/onboarding/*`, `firebase/firestore.rules`, `test/redirect_test.dart`, `test/session_notifier_test.dart`, `test/support/fake_auth_service.dart`, `test/support/test_session.dart`.
-- **Hasil:** `flutter analyze` 0 issue, `flutter test` 267 lulus.
+- **Hasil:** `flutter analyze` 0 issue, `flutter test` 267 lulus. Tes aturan Firestore di emulator: 10 dari 10 lulus (`firebase emulators:exec --only firestore --project autiplan-bd927 "npm --prefix firebase/tests test"`; butuh Java 21).
 - **Perbaikan saat penutupan tahap:**
+  - `firebase/tests/package.json`: `firebase` dinaikkan ke `^11.0.0` karena `@firebase/rules-unit-testing@4` mensyaratkannya sebagai peer dependency (sebelumnya `npm install` gagal ERESOLVE).
   - 97 file `.dart` kehilangan karakter pertama (`import`→`mport`, `enum`→`num`, `// File`→`/ File`) sehingga `analyze` melaporkan 293 galat. Dipulihkan dengan menambah satu byte di awal tiap file. **Penyebabnya belum diketahui** (diduga skrip pembersih BOM yang memotong satu byte tanpa memeriksa BOM). Jangan menjalankan ulang skrip semacam itu.
   - Bug asli: `notifyListeners` dipanggil dari luar subclass (`router.dart`, sekarang lewat `_RouterRefresh.refresh()`); `idToken()` mengembalikan `Future?` ke tipe `Future` (`auth_service.dart`).
   - 23 tes lama gagal karena `currentChildProvider` kini membaca `sessionProvider`. Tes memakai `sessionProvider.overrideWithValue(testCaregiverSession)` dari `test/support/test_session.dart` (5 file: `empty_state`, `live_clock`, `loading_schedule`, `profile_setup`, `tahap4_widgets`).
 - **Utang yang tersisa:**
-  - **Tes aturan Firestore belum pernah dijalankan:** Java belum terpasang (emulator butuh Java) dan `npm install` di `firebase/tests/` gagal dengan konflik versi (ERESOLVE). Aturan belum terbukti benar.
   - `firebase deploy --only firestore:rules` belum dijalankan (butuh persetujuan pengguna). Selama belum di-deploy, produksi menolak semua akses, jadi aplikasi belum bisa membaca atau menulis data sungguhan.
   - Alur akun belum diuji dengan Firebase Auth sungguhan di perangkat.
   - Pembatasan `normalize` (perluasan seri) hanya untuk HP orang tua belum diterapkan.
