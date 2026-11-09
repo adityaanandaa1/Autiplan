@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["vitest/globals"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": ["rules.test.ts"]
+}

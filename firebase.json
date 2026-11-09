@@ -1,1 +1,32 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"autiplan-bd927","appId":"1:500381335457:android:0b388860f4a8fe806715e0","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"autiplan-bd927","configurations":{"android":"1:500381335457:android:0b388860f4a8fe806715e0"}}}}}}
+{
+  "firestore": {
+    "rules": "firebase/firestore.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true
+    }
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "autiplan-bd927",
+          "appId": "1:500381335457:android:0b388860f4a8fe806715e0",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "autiplan-bd927",
+          "configurations": {
+            "android": "1:500381335457:android:0b388860f4a8fe806715e0"
+          }
+        }
+      }
+    }
+  }
+}

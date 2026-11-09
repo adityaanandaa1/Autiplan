@@ -7,6 +7,8 @@ import '../../core/widgets/calm_snackbar.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import '../../domain/phone_number.dart';
+import 'forms/form_field.dart';
+import 'forms/form_utils.dart';
 
 /// Sheet daftar chip (Suka / Hindari), teks bebas maks 5 (§OT-14).
 void showProfileListSheet(
@@ -287,6 +289,84 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
           ),
         ],
       ),
+    ),
+  );
+}
+
+/// Sheet "Tambah anak": nama lengkap, nama panggilan, umur.
+void showAddChildSheet(BuildContext context, WidgetRef ref) {
+  final fullName = TextEditingController();
+  final nickname = TextEditingController();
+  final age = TextEditingController();
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        final ageValue = RegExp(r'^\d+$').hasMatch(age.text.trim())
+            ? int.tryParse(age.text.trim())
+            : null;
+        final canSave =
+            fullName.text.trim().isNotEmpty &&
+            nickname.text.trim().isNotEmpty &&
+            ageValue != null &&
+            ageValue >= 1 &&
+            ageValue <= 18;
+
+        return _SheetFrame(
+          title: 'Tambah anak',
+          children: [
+            const FormLabel('Nama lengkap anak'),
+            FormTextField(
+              controller: fullName,
+              onChanged: (_) => setSheetState(() {}),
+            ),
+            const SizedBox(height: AppSpacing.grid12),
+            const FormLabel('Nama panggilan anak'),
+            FormTextField(
+              controller: nickname,
+              onChanged: (_) => setSheetState(() {}),
+            ),
+            const SizedBox(height: AppSpacing.grid12),
+            const FormLabel('Umur anak'),
+            FormTextField(
+              controller: age,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => setSheetState(() {}),
+            ),
+            const SizedBox(height: AppSpacing.grid16),
+            PrimaryButton(
+              label: 'Simpan',
+              enabled: canSave,
+              onPressed: () {
+                final state = ref.read(appStateProvider);
+                final child = Child(
+                  id: generateId('child'),
+                  name: nickname.text.trim(),
+                  fullName: fullName.text.trim(),
+                  age: ageValue!,
+                  theme: ChildTheme.lautTenang,
+                  likes: const [],
+                  avoids: const [],
+                );
+                ref
+                    .read(appStateProvider.notifier)
+                    .updateState(
+                      state.copyWith(children: [...state.children, child]),
+                    );
+                Navigator.of(ctx).pop();
+              },
+            ),
+            const SizedBox(height: AppSpacing.grid8),
+            SecondaryButton(
+              label: 'Batal',
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ],
+        );
+      },
     ),
   );
 }

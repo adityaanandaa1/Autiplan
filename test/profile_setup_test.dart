@@ -1,3 +1,4 @@
+import 'support/test_session.dart';
 import 'package:autiplan/app.dart';
 import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/clock.dart';
@@ -25,6 +26,7 @@ Future<ProviderContainer> _pumpEmptyApp(WidgetTester tester) async {
   addTearDown(tester.view.resetDevicePixelRatio);
   final container = ProviderContainer(
     overrides: [
+      sessionProvider.overrideWithValue(testCaregiverSession),
       sharedPreferencesProvider.overrideWithValue(prefs),
       clockProvider.overrideWithValue(Clock(() => fixtureNow)),
       appStateProvider.overrideWith(
@@ -119,6 +121,7 @@ void main() {
   group('kontak cadangan kosong di A-08', () {
     Widget app(String backup) => ProviderScope(
       overrides: [
+        sessionProvider.overrideWithValue(testCaregiverSession),
         appStateProvider.overrideWith(
           (ref) => AppStateNotifier(
             InMemoryRepository(),

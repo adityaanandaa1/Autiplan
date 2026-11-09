@@ -165,12 +165,9 @@ class ChildHomeScreen extends ConsumerWidget {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: GestureDetector(
-                    onLongPress: () => context.go('/'),
-                    child: ChildHeader(
-                      greeting: greeting,
-                      childName: 'Halo, ${child.name}!',
-                    ),
+                  child: ChildHeader(
+                    greeting: greeting,
+                    childName: 'Halo, ${child.name}!',
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -290,11 +287,6 @@ class ChildHomeScreen extends ConsumerWidget {
   Widget _buildOverlays(BuildContext context, ChildPalette palette) {
     return Stack(
       children: [
-        Positioned(
-          top: MediaQuery.of(context).padding.top + AppSpacing.grid8,
-          right: AppSpacing.grid16,
-          child: const RoleSwitchButton(isChild: true),
-        ),
         Positioned(
           right: AppSpacing.grid16,
           bottom: AppSpacing.grid16,

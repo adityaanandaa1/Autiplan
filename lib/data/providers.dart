@@ -1,22 +1,65 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/clock.dart';
 import '../domain/recurrence.dart';
+import 'auth_service.dart';
+import 'firestore_repository.dart';
 import 'models/models.dart';
 import 'repository.dart';
+import 'session/device_session.dart';
+import 'session/session_notifier.dart';
 
 /// Provider for SharedPreferences instance. Must be overridden in main().
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden');
 });
 
-/// Sumber data aplikasi. Harus di-override di main() (atau di tes).
+/// Layanan autentikasi. Harus di-override di main() (atau di tes).
+final authServiceProvider = Provider<AuthService>((ref) {
+  throw UnimplementedError('authServiceProvider must be overridden');
+});
+
+/// Notifier sesi perangkat; [sessionProvider] hanyalah pembacanya.
+final sessionNotifierProvider =
+    StateNotifierProvider<SessionNotifier, DeviceSession>((ref) {
+      return SessionNotifier(
+        ref.watch(authServiceProvider),
+        ref.watch(sharedPreferencesProvider),
+        db: fs.FirebaseFirestore.instance,
+      );
+    });
+
+/// Sesi perangkat saat ini (belum masuk, orang tua, atau anak).
+final sessionProvider = Provider<DeviceSession>((ref) {
+  return ref.watch(sessionNotifierProvider);
+});
+
+/// Repositori untuk sesi tanpa keluarga (belum masuk): tidak membaca atau
+/// menulis apa pun, supaya layar onboarding tidak butuh data.
+class _UnlinkedRepository implements AutiPlanRepository {
+  const _UnlinkedRepository();
+
+  @override
+  Stream<AppState> watch() => Stream<AppState>.value(AppState.empty());
+
+  @override
+  Future<void> apply(AppState before, AppState after) async {}
+}
+
+/// Sumber data aplikasi, dibuat dari sesi: `familyId` = uid orang tua, atau
+/// `familyId` dari [ChildSession]. Dibuat ulang saat sesi berubah.
 final repositoryProvider = Provider<AutiPlanRepository>((ref) {
-  throw UnimplementedError('repositoryProvider must be overridden');
+  final session = ref.watch(sessionProvider);
+  return switch (session) {
+    CaregiverSession(:final familyId) || ChildSession(:final familyId) =>
+      FirestoreRepository(fs.FirebaseFirestore.instance, familyId),
+    UnlinkedSession() => const _UnlinkedRepository(),
+  };
 });
 
 /// StateNotifier for managing the global AppState.
@@ -92,18 +135,26 @@ class AppStateNotifier extends StateNotifier<AppState> {
 }
 
 /// Provider for AppStateNotifier.
+///
+/// `normalize` (perluasan kegiatan berulang) hanya dipasang di HP orang tua;
+/// HP anak tidak boleh menulis kegiatan yang dibuat ulang.
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   ref,
 ) {
-  final notifier = AppStateNotifier(
-    ref.watch(repositoryProvider),
-    AppState.empty(),
-    normalize: (s) => s.copyWith(
+  final session = ref.watch(sessionProvider);
+  final AppState Function(AppState)? normalize = switch (session) {
+    CaregiverSession() => (s) => s.copyWith(
       activities: materializeRecurring(
         s.activities,
         ref.read(clockProvider).now,
       ),
     ),
+    _ => null,
+  };
+  final notifier = AppStateNotifier(
+    ref.watch(repositoryProvider),
+    AppState.empty(),
+    normalize: normalize,
   );
   // Hari berganti: perluas seri berulang tanpa menunggu perubahan lain.
   ref.listen<DateTime>(currentDayProvider, (_, _) => notifier.renormalize());
@@ -116,16 +167,24 @@ final repositoryReadyProvider = FutureProvider<void>((ref) {
   return ref.watch(appStateProvider.notifier).ready;
 });
 
-/// Provider for the currently active role ('caregiver' or 'child').
-final activeRoleProvider = StateProvider<String?>((ref) => null);
-
 /// Provider for the currently selected child ID in caregiver view.
 final selectedChildIdProvider = StateProvider<String?>((ref) => null);
 
 /// Anak yang sedang dipakai: anak terpilih, atau anak pertama, atau null.
+///
+/// Di HP anak, anak dipilih dari [ChildSession.childId].
 final currentChildProvider = Provider<Child?>((ref) {
   final children = ref.watch(appStateProvider.select((s) => s.children));
   if (children.isEmpty) return null;
+
+  final session = ref.watch(sessionProvider);
+  if (session is ChildSession) {
+    for (final child in children) {
+      if (child.id == session.childId) return child;
+    }
+    return null;
+  }
+
   final selectedId = ref.watch(selectedChildIdProvider);
   if (selectedId != null) {
     for (final child in children) {

@@ -1,3 +1,4 @@
+import 'support/test_session.dart';
 import 'dart:async';
 import 'support/in_memory_repository.dart';
 
@@ -25,6 +26,7 @@ Future<({ProviderContainer container, StreamController<int> ticks})> _pump(
   addTearDown(ticks.close);
   final container = ProviderContainer(
     overrides: [
+      sessionProvider.overrideWithValue(testCaregiverSession),
       minuteTickProvider.overrideWith((ref) => ticks.stream),
       clockProvider.overrideWith((ref) {
         ref.watch(minuteTickProvider);
@@ -57,7 +59,10 @@ void main() {
     final ticks = StreamController<int>();
     addTearDown(ticks.close);
     final container = ProviderContainer(
-      overrides: [minuteTickProvider.overrideWith((ref) => ticks.stream)],
+      overrides: [
+        sessionProvider.overrideWithValue(testCaregiverSession),
+        minuteTickProvider.overrideWith((ref) => ticks.stream),
+      ],
     );
     addTearDown(container.dispose);
 
@@ -75,7 +80,10 @@ void main() {
     final ticks = StreamController<int>();
     addTearDown(ticks.close);
     final container = ProviderContainer(
-      overrides: [minuteTickProvider.overrideWith((ref) => ticks.stream)],
+      overrides: [
+        sessionProvider.overrideWithValue(testCaregiverSession),
+        minuteTickProvider.overrideWith((ref) => ticks.stream),
+      ],
     );
     addTearDown(container.dispose);
     container.listen(selectedDateProvider, (_, _) {});

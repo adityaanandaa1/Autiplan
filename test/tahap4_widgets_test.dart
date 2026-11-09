@@ -1,3 +1,4 @@
+import 'support/test_session.dart';
 import 'package:autiplan/core/clock.dart';
 import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/theme/theme.dart';
@@ -43,6 +44,7 @@ Future<ProviderContainer> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sessionProvider.overrideWithValue(testCaregiverSession),
         sharedPreferencesProvider.overrideWithValue(prefs),
         appStateProvider.overrideWith(
           (ref) => AppStateNotifier(InMemoryRepository(), s),
@@ -547,7 +549,10 @@ void main() {
       );
       await t.pumpWidget(
         ProviderScope(
-          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+          overrides: [
+            sessionProvider.overrideWithValue(testCaregiverSession),
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
           child: MaterialApp.router(
             theme: buildParentTheme(),
             routerConfig: router,

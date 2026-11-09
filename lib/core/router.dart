@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/providers.dart';
+import '../data/session/device_session.dart';
 import '../features/caregiver/account_screen.dart';
 import '../features/caregiver/caregiver_shell.dart';
 import '../features/caregiver/home_screen.dart';
@@ -17,29 +18,50 @@ import '../features/child/child_home_screen.dart';
 import '../features/child/child_success_screen.dart';
 import '../features/child/child_theme_screen.dart';
 import '../features/onboarding/profile_setup_screen.dart';
-import '../features/role_picker/role_picker_screen.dart';
+import '../features/onboarding/sign_in_screen.dart';
+import '../features/onboarding/sign_up_screen.dart';
+import '../features/onboarding/welcome_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
-GoRouter createRouter(WidgetRef ref) {
+/// Router aplikasi. Dibuat lewat provider supaya redirect dievaluasi ulang
+/// saat sesi atau jumlah anak berubah (lewat [refreshListenable]).
+final routerProvider = Provider<GoRouter>((ref) => createRouter(ref));
+
+GoRouter createRouter(Ref ref) {
+  final refresh = ref.watch(_routerRefreshProvider);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: refresh,
     redirect: (context, state) {
-      // Akun baru tanpa anak diarahkan mengisi profil dulu.
+      final session = ref.read(sessionProvider);
       final hasChildren = ref.read(appStateProvider).children.isNotEmpty;
-      final atProfileSetup = state.matchedLocation == '/profil-awal';
-      if (!hasChildren && !atProfileSetup) return '/profil-awal';
-      if (hasChildren && atProfileSetup) return '/ortu/beranda';
-      return null;
+      return redirectFor(
+        session,
+        path: state.matchedLocation,
+        hasChildren: hasChildren,
+      );
     },
     routes: [
+      GoRoute(path: '/', builder: (context, state) => const SizedBox.shrink()),
       GoRoute(
-        path: '/',
-        name: 'rolePicker',
-        builder: (context, state) => const RolePickerScreen(),
+        path: '/mulai',
+        name: 'welcome',
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/masuk',
+        name: 'signIn',
+        builder: (context, state) => const SignInScreen(),
+      ),
+      GoRoute(
+        path: '/daftar',
+        name: 'signUp',
+        builder: (context, state) => const SignUpScreen(),
       ),
 
       GoRoute(
@@ -142,4 +164,66 @@ GoRouter createRouter(WidgetRef ref) {
       ),
     ],
   );
+}
+
+/// Menghasilkan rute tujuan dari sesi. Lihat tabel redirectFor di rencana.
+String? redirectFor(
+  DeviceSession session, {
+  required String path,
+  required bool hasChildren,
+}) {
+  switch (session) {
+    case UnlinkedSession():
+      if (path == '/mulai' ||
+          path == '/masuk' ||
+          path == '/daftar' ||
+          path == '/hubungkan') {
+        return null;
+      }
+      return '/mulai';
+
+    case CaregiverSession():
+      if (!hasChildren) {
+        return path == '/profil-awal' ? null : '/profil-awal';
+      }
+      if (_isStart(path) ||
+          _isAuth(path) ||
+          _isChildPath(path) ||
+          path == '/profil-awal') {
+        return '/ortu/beranda';
+      }
+      return null;
+
+    case ChildSession():
+      return _isChildPath(path) ? null : '/anak';
+  }
+}
+
+bool _isStart(String path) => path == '/';
+
+bool _isAuth(String path) =>
+    path == '/mulai' ||
+    path.startsWith('/mulai/') ||
+    path == '/masuk' ||
+    path == '/daftar' ||
+    path == '/hubungkan';
+
+bool _isChildPath(String path) => path == '/anak' || path.startsWith('/anak/');
+
+/// Memberi tahu GoRouter untuk mengevaluasi ulang redirect saat sesi atau
+/// jumlah anak berubah, tanpa membuat ulang router.
+final _routerRefreshProvider = Provider<Listenable>((ref) {
+  final notifier = _RouterRefresh();
+  ref.onDispose(notifier.dispose);
+  ref.listen(sessionProvider, (_, _) => notifier.refresh());
+  ref.listen(
+    appStateProvider.select((s) => s.children.length),
+    (_, _) => notifier.refresh(),
+  );
+  return notifier;
+});
+
+class _RouterRefresh extends ChangeNotifier {
+  // `notifyListeners` itu protected; ini pintu publik untuk provider di atas.
+  void refresh() => notifyListeners();
 }

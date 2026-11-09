@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'core/router.dart';
 import 'core/theme/theme.dart';
@@ -17,8 +16,6 @@ class AutiPlanApp extends ConsumerStatefulWidget {
 }
 
 class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
-  GoRouter? _router;
-
   @override
   Widget build(BuildContext context) {
     // Tema anak mengikuti anak yang sedang dipakai; tanpa anak, tema bawaan.
@@ -29,9 +26,8 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
 
     final theme = buildParentTheme(childPalette: childPalette);
 
-    // Router baru dibuat setelah data pertama masuk: redirect awalnya
-    // bergantung pada ada-tidaknya anak, dan state kosong sebelum itu bukan
-    // berarti akun baru.
+    // Selama data belum dimuat (termasuk setelah sesi berubah), tampilkan
+    // teks "Memuat jadwal" supaya anak tidak melihat jadwal kosong sesaat.
     if (ref.watch(repositoryReadyProvider).isLoading) {
       return MaterialApp(
         title: 'AutiPlan',
@@ -40,7 +36,7 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
         home: const LoadingScheduleScreen(),
       );
     }
-    final router = _router ??= createRouter(ref);
+    final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       title: 'AutiPlan',

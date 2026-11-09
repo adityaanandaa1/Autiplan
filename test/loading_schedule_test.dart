@@ -1,3 +1,4 @@
+import 'support/test_session.dart';
 import 'dart:async';
 
 import 'package:autiplan/app.dart';
@@ -37,6 +38,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            sessionProvider.overrideWithValue(testCaregiverSession),
             sharedPreferencesProvider.overrideWithValue(prefs),
             clockProvider.overrideWithValue(Clock(() => fixtureNow)),
             repositoryProvider.overrideWithValue(repo),

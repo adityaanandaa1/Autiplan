@@ -1,0 +1,15 @@
+{
+  "name": "autiplan-rules-tests",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Tes aturan keamanan Firestore AutiPlan (emulator).",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^10.14.1",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

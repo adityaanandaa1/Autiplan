@@ -12,7 +12,6 @@ import '../../core/widgets/card_surface.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../core/widgets/change_notice_card.dart';
 import '../../core/widgets/child_segmented.dart';
-import '../../core/widgets/role_switch_button.dart';
 import '../../core/widgets/suggestion_card.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
@@ -122,7 +121,6 @@ class CaregiverHomeScreen extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.grid20),
-                  const RoleSwitchButton(),
                 ],
               ),
             ),

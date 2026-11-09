@@ -1,32 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/theme.dart';
-import '../../data/providers.dart';
 
-class RolePickerScreen extends ConsumerWidget {
-  const RolePickerScreen({super.key});
-
-  static const String _lastRoleKey = 'last_selected_role';
-
-  Future<void> _selectRole(
-    BuildContext context,
-    WidgetRef ref,
-    String role,
-    String route,
-  ) async {
-    ref.read(activeRoleProvider.notifier).state = role;
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setString(_lastRoleKey, role);
-    if (context.mounted) {
-      context.go(route);
-    }
-  }
+/// `/mulai`: sambutan awal. Kartu "Orang tua" masuk lewat email, kartu "Anak"
+/// mengarah ke `/hubungkan` (layar penghubung dibuat di Tahap 11).
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
       body: SafeArea(
@@ -45,33 +29,30 @@ class RolePickerScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Spacer(),
-                  Text(
+                  const Text(
                     'AutiPlan',
                     textAlign: TextAlign.center,
                     style: AppTypography.logo,
                   ),
                   const SizedBox(height: AppSpacing.grid8),
-                  Text(
-                    'Pilih peran untuk demo',
+                  const Text(
+                    'HP ini dipakai oleh siapa?',
                     textAlign: TextAlign.center,
-                    style: AppTypography.isi.copyWith(
-                      color: AppColors.teksSekunder,
-                    ),
+                    style: AppTypography.isi,
                   ),
                   const SizedBox(height: AppSpacing.grid40),
-                  _RoleCard(
-                    title: 'Orang tua · Bu Sari',
+                  _WelcomeCard(
+                    title: 'Orang tua',
                     subtitle: 'Atur jadwal, beri tahu perubahan, terima saran',
                     icon: LucideIcons.user,
-                    onTap: () =>
-                        _selectRole(context, ref, 'caregiver', '/ortu/beranda'),
+                    onTap: () => context.go('/masuk'),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
-                  _RoleCard(
-                    title: 'Anak · Rafi',
+                  _WelcomeCard(
+                    title: 'Anak',
                     subtitle: 'Lihat jadwal hari ini dan ikuti kegiatan',
                     icon: LucideIcons.smile,
-                    onTap: () => _selectRole(context, ref, 'child', '/anak'),
+                    onTap: () => context.go('/hubungkan'),
                   ),
                   const Spacer(flex: 2),
                 ],
@@ -84,8 +65,8 @@ class RolePickerScreen extends ConsumerWidget {
   }
 }
 
-class _RoleCard extends StatelessWidget {
-  const _RoleCard({
+class _WelcomeCard extends StatelessWidget {
+  const _WelcomeCard({
     required this.title,
     required this.subtitle,
     required this.icon,

@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function owner(f) { return request.auth != null && request.auth.uid == f; }
+    function devicePath(f) { return /databases/$(db)/documents/families/$(f)/devices/$(request.auth.uid); }
+    function childDevice(f) { return request.auth != null && exists(devicePath(f)) && get(devicePath(f)).data.role == 'child'; }
+    function member(f) { return owner(f) || childDevice(f); }
+    function changedOnly(k) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(k); }
+
+    match /families/{f} {
+      allow read: if member(f);
+      allow create, update: if owner(f);
+      match /children/{id} {
+        allow read: if member(f);
+        allow create, delete: if owner(f);
+        allow update: if owner(f) || (childDevice(f) && id == get(devicePath(f)).data.childId && changedOnly(['theme']));
+      }
+      match /activities/{id} { allow read: if member(f); allow write: if owner(f); }
+      match /suggestionStatus/{id} { allow read: if member(f); allow write: if owner(f); }
+      match /completions/{id} {
+        allow read: if member(f);
+        allow create: if member(f);
+        allow update, delete: if owner(f);
+      }
+      match /notices/{id} {
+        allow read: if member(f);
+        allow create, delete: if owner(f);
+        allow update: if owner(f) || (childDevice(f) && changedOnly(['seenAt']));
+      }
+      match /notifications/{id} {
+        allow read: if member(f);
+        allow create: if owner(f) || (childDevice(f) && request.resource.data.type in ['changeSeen','activityDone','emergencyPressed']);
+        allow update: if owner(f);
+      }
+      match /devices/{uid} {
+        allow read: if owner(f) || request.auth.uid == uid;
+        allow create, update: if owner(f) && request.auth.uid == uid;
+        allow delete: if owner(f);
+      }
+    }
+    match /pairingCodes/{c} { allow read, write: if false; }
+  }
+}

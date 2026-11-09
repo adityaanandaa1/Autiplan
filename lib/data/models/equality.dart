@@ -1,4 +1,4 @@
-/// Pure-Dart collection equality helpers (models must not import Flutter).
+// Pure-Dart collection equality helpers (models must not import Flutter).
 bool listEq<T>(List<T> a, List<T> b) {
   if (identical(a, b)) return true;
   if (a.length != b.length) return false;

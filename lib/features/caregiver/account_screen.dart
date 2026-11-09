@@ -105,6 +105,30 @@ class CaregiverAccountScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.grid16),
+                  _buildGroupLabel('Akun'),
+                  CardSurface(
+                    padding: const EdgeInsets.all(AppSpacing.grid16),
+                    child: Column(
+                      children: [
+                        AccountListRow(
+                          icon: LucideIcons.userPlus,
+                          label: 'Tambah anak',
+                          value: '',
+                          onTap: () => showAddChildSheet(context, ref),
+                        ),
+                        const AccountListDivider(),
+                        AccountListRow(
+                          icon: LucideIcons.logOut,
+                          label: 'Keluar',
+                          value: '',
+                          onTap: () => ref
+                              .read(sessionNotifierProvider.notifier)
+                              .signOut(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

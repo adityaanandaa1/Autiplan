@@ -1,3 +1,4 @@
+import 'support/test_session.dart';
 import 'package:autiplan/core/clock.dart';
 import 'support/in_memory_repository.dart';
 import 'package:autiplan/core/widgets/initials.dart';
@@ -69,6 +70,7 @@ void main() {
   group('Widget dengan AppState.empty', () {
     Widget wrap(Widget child) => ProviderScope(
       overrides: [
+        sessionProvider.overrideWithValue(testCaregiverSession),
         clockProvider.overrideWithValue(Clock(() => fixtureNow)),
         appStateProvider.overrideWith(
           (ref) => AppStateNotifier(InMemoryRepository(), AppState.empty()),
@@ -109,6 +111,7 @@ void main() {
       Future<void> pumpAt(DateTime now) async {
         final container = ProviderContainer(
           overrides: [
+            sessionProvider.overrideWithValue(testCaregiverSession),
             appStateProvider.overrideWith(
               (ref) => AppStateNotifier(InMemoryRepository(), state),
             ),

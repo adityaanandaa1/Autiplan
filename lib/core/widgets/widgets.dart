@@ -16,6 +16,5 @@ export 'day_summary.dart';
 export 'emergency_button.dart';
 export 'initials.dart';
 export 'mascot.dart';
-export 'role_switch_button.dart';
 export 'suggestion_card.dart';
 export 'week_strip.dart';

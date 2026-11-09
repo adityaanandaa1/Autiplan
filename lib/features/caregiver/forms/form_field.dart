@@ -67,6 +67,7 @@ class FormTextField extends StatelessWidget {
     this.hint,
     this.maxLength,
     this.keyboardType,
+    this.obscureText = false,
     this.onChanged,
     this.errorText,
   });
@@ -75,6 +76,7 @@ class FormTextField extends StatelessWidget {
   final String? hint;
   final int? maxLength;
   final TextInputType? keyboardType;
+  final bool obscureText;
   final ValueChanged<String>? onChanged;
 
   /// Pesan validasi tenang di bawah kotak (bukan merah, mengikuti §8.4).
@@ -88,6 +90,7 @@ class FormTextField extends StatelessWidget {
         onChanged: onChanged,
         maxLength: maxLength,
         keyboardType: keyboardType,
+        obscureText: obscureText,
         style: AppTypography.isi,
         decoration: InputDecoration(
           hintText: hint,

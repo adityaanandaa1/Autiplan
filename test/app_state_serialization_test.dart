@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:autiplan/data/models/models.dart';
 import 'support/fixture_state.dart';

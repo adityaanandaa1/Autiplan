@@ -1,4 +1,4 @@
-﻿import 'package:autiplan/core/widgets/change_notice_card.dart';
+import 'package:autiplan/core/widgets/change_notice_card.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'support/fixture_state.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
