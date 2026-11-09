@@ -202,7 +202,7 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 
 ## Tahap 10 — Akun, sesi, dan aturan keamanan
 
-- **Status:** selesai di kode dan tes Flutter (9 November 2026). **Belum:** deploy aturan Firestore ke produksi dan uji di perangkat.
+- **Status:** selesai di kode dan tes Flutter (9 November 2026). Aturan Firestore sudah di-deploy ke `autiplan-bd927` (9 November 2026, `firebase deploy --only firestore:rules --project autiplan-bd927`, kompilasi berhasil). **Belum:** uji di perangkat dengan Firestore dan Auth sungguhan.
 - **Isi:**
   - `lib/data/auth_service.dart`: `AuthService` + `FirebaseAuthService` (daftar, masuk, reset sandi, anonim, `idToken`).
   - `lib/data/session/`: `DeviceSession` (`UnlinkedSession`, `CaregiverSession`, `ChildSession`) dan `SessionNotifier` (disimpan di `shared_preferences`; sesi anak memantau `devices/{uid}`, menjadi `Unlinked` bila dokumen hilang atau `permission-denied`).
@@ -218,7 +218,6 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Bug asli: `notifyListeners` dipanggil dari luar subclass (`router.dart`, sekarang lewat `_RouterRefresh.refresh()`); `idToken()` mengembalikan `Future?` ke tipe `Future` (`auth_service.dart`).
   - 23 tes lama gagal karena `currentChildProvider` kini membaca `sessionProvider`. Tes memakai `sessionProvider.overrideWithValue(testCaregiverSession)` dari `test/support/test_session.dart` (5 file: `empty_state`, `live_clock`, `loading_schedule`, `profile_setup`, `tahap4_widgets`).
 - **Utang yang tersisa:**
-  - `firebase deploy --only firestore:rules` belum dijalankan (butuh persetujuan pengguna). Selama belum di-deploy, produksi menolak semua akses, jadi aplikasi belum bisa membaca atau menulis data sungguhan.
   - Alur akun belum diuji dengan Firebase Auth sungguhan di perangkat.
   - Pembatasan `normalize` (perluasan seri) hanya untuk HP orang tua belum diterapkan.
   - Penghubungan HP anak baru dibuat di Tahap 11 (`AccountProfileCard` masih "Belum terhubung ke HP anak").
