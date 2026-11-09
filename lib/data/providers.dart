@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/clock.dart';
+import '../domain/recurrence.dart';
 import 'local_repository.dart';
 import 'models/models.dart';
 import 'repository.dart';
@@ -18,14 +20,32 @@ final repositoryProvider = Provider<AutiPlanRepository>((ref) {
 
 /// StateNotifier for managing the global AppState.
 class AppStateNotifier extends StateNotifier<AppState> {
-  AppStateNotifier(this._repository, AppState initial) : super(initial);
+  AppStateNotifier(
+    this._repository,
+    AppState initial, {
+    AppState Function(AppState)? normalize,
+  }) : _normalize = normalize,
+       super(normalize == null ? initial : normalize(initial));
 
   final AutiPlanRepository _repository;
 
+  /// Dipakai pada setiap perubahan, mis. memperluas kegiatan berulang.
+  final AppState Function(AppState)? _normalize;
+
   /// Update the state and persist to repository asynchronously.
   void updateState(AppState newState) {
-    state = newState;
-    _repository.save(newState);
+    final next = _normalize == null ? newState : _normalize(newState);
+    state = next;
+    _repository.save(next);
+  }
+
+  /// Menormalkan ulang state sekarang, mis. saat hari berganti.
+  void renormalize() {
+    final normalize = _normalize;
+    if (normalize == null) return;
+    final next = normalize(state);
+    if (identical(next.activities, state.activities)) return;
+    updateState(next);
   }
 
   /// Reload state from repository.
@@ -37,13 +57,27 @@ class AppStateNotifier extends StateNotifier<AppState> {
   }
 }
 
+/// State awal yang dimuat di main(); kosong bila belum ada data.
+final initialAppStateProvider = Provider<AppState>((ref) => AppState.empty());
+
 /// Provider for AppStateNotifier.
 final appStateProvider = StateNotifierProvider<AppStateNotifier, AppState>((
   ref,
 ) {
   final repository = ref.watch(repositoryProvider);
-  // Start empty; main() overrides this with the loaded state.
-  return AppStateNotifier(repository, AppState.empty());
+  final notifier = AppStateNotifier(
+    repository,
+    ref.read(initialAppStateProvider),
+    normalize: (s) => s.copyWith(
+      activities: materializeRecurring(
+        s.activities,
+        ref.read(clockProvider).now,
+      ),
+    ),
+  );
+  // Hari berganti: perluas seri berulang tanpa menunggu perubahan lain.
+  ref.listen<DateTime>(currentDayProvider, (_, _) => notifier.renormalize());
+  return notifier;
 });
 
 /// Provider for the currently active role ('caregiver' or 'child').

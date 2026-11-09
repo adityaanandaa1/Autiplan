@@ -10,6 +10,7 @@ import '../../../core/widgets/calm_snackbar.dart';
 import '../../../core/widgets/suggestion_card.dart';
 import '../../../data/models/models.dart';
 import '../../../data/providers.dart';
+import '../../../domain/recurrence.dart';
 import '../../../domain/schedule_rules.dart';
 import '../../../domain/suggestion_engine.dart';
 import '../forms/form_field.dart';
@@ -158,6 +159,7 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
       repeatWeekdays: _repeatWeekdays,
       shortTitle: _shortTitleController.text,
       independentMode: _independentMode,
+      seriesId: _original.seriesId,
     );
     // Ikon tidak berubah: pertahankan usesScreen asli (§6, layar ikut ikon).
     if (_icon == _original.icon && built.usesScreen != _original.usesScreen) {
@@ -480,13 +482,28 @@ class _EditActivitySheetState extends ConsumerState<EditActivitySheet> {
       now: now,
       noticeId: generateId('notice'),
     );
+    // Hari ulang berubah: kemunculan setelah tanggal ini dibuat ulang.
+    final repeatChanged =
+        candidate.repeatWeekdays.length != _original.repeatWeekdays.length ||
+        !candidate.repeatWeekdays.containsAll(_original.repeatWeekdays);
+    final saved = repeatChanged
+        ? result.state.copyWith(
+            activities: applyRepeatChange(
+              result.state.activities,
+              result.state.activities.firstWhere(
+                (a) => a.id == candidate.id,
+                orElse: () => candidate,
+              ),
+            ),
+          )
+        : result.state;
     // Status saran menjadi applied hanya setelah perubahan tersimpan (§9.1).
     notifier.updateState(
       suggestionId == null
-          ? result.state
-          : result.state.copyWith(
+          ? saved
+          : saved.copyWith(
               suggestionStatus: {
-                ...result.state.suggestionStatus,
+                ...saved.suggestionStatus,
                 suggestionId: SuggestionStatus.applied,
               },
             ),

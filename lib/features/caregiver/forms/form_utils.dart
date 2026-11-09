@@ -33,6 +33,7 @@ Activity buildActivity({
   Set<int> repeatWeekdays = const {},
   String? shortTitle,
   bool independentMode = false,
+  String? seriesId,
 }) {
   return Activity(
     id: id,
@@ -50,6 +51,7 @@ Activity buildActivity({
     steps: steps,
     repeatWeekdays: repeatWeekdays,
     independentMode: independentMode,
+    seriesId: seriesId,
   );
 }
 

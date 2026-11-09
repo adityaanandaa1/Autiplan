@@ -302,8 +302,9 @@ class _AddActivitySheetState extends ConsumerState<AddActivitySheet> {
         .where((t) => t.isNotEmpty)
         .toList();
 
+    final newId = generateId('act');
     final newAct = buildActivity(
-      id: generateId('act'),
+      id: newId,
       childId: _childId,
       title: title,
       icon: _icon!,
@@ -314,6 +315,9 @@ class _AddActivitySheetState extends ConsumerState<AddActivitySheet> {
       repeatWeekdays: _repeatWeekdays,
       shortTitle: _shortTitleController.text,
       independentMode: _independentMode,
+      // Hari ulang memulai seri; salinan tanggal berikutnya dibuat oleh
+      // normalisasi state (materializeRecurring).
+      seriesId: _repeatWeekdays.isEmpty ? null : newId,
     );
 
     final appState = ref.read(appStateProvider);

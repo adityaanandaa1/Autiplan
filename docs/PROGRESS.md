@@ -155,4 +155,22 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Utang Tahap 5–6 tetap: UI "Lihat langkah lengkap" dan "Bisa dikembalikan ke N langkah", swipe abaikan saran, pemilih bulan.
 - **Langkah berikutnya:** Tahap 8 — kegiatan berulang (`lib/domain/recurrence.dart`).
 
+## Tahap 8 — Kegiatan berulang
 
+- **Status:** selesai (9 November 2026).
+- **Isi:**
+  - `Activity.seriesId` (`String?`) masuk `copyWith` (+`clearSeriesId`), `toJson`, `fromJson` (bawaan null), `==`, `hashCode`.
+  - `lib/domain/recurrence.dart`: `materializeRecurring` (salinan per tanggal sampai 28 hari ke depan, ID `'${seriesId}_yyyyMMdd'`, idempoten, tidak menyentuh kegiatan tanpa `seriesId`) dan `applyRepeatChange` (membuang kemunculan seri setelah tanggal yang diubah).
+  - `AppStateNotifier(repository, initial, {normalize})` + `renormalize()`. `appStateProvider` memberi `normalize` yang memanggil `materializeRecurring` dengan `clockProvider`, dan memantau `currentDayProvider` supaya seri diperluas saat hari berganti. `main.dart` kini meng-override `initialAppStateProvider`, bukan `appStateProvider`.
+  - Form Tambah mengisi `seriesId = id` bila ada hari ulang; form Ubah meneruskan `seriesId` dan memanggil `applyRepeatChange` bila hari ulang berubah.
+- **File utama:** `lib/domain/recurrence.dart`, `lib/data/models/activity.dart`, `lib/data/providers.dart`, `lib/main.dart`, `lib/features/caregiver/forms/form_utils.dart`, `add_activity_sheet.dart`, `edit_activity_sheet.dart`, `test/recurrence_test.dart`, `test/recurrence_forms_test.dart`.
+- **Hasil:** `dart format .` bersih, `flutter analyze` 0 issue, `flutter test` 199 lulus (180 lama tanpa diubah + 16 domain/model/notifier + 3 alur form).
+- **Review Focus:** tidak ada butir yang menjadi milik Tahap 8 (1 dan 3 di Tahap 7, 2 dan 5 di Tahap 9, 4 di Tahap 12). Pergantian hari untuk perluasan seri dites lewat `renormalize`.
+- **Keputusan:** tercatat di DECISIONS.md (tidak mengisi mundur, horizon inklusif, hari ulang dari kemunculan terakhir, seri baru dari kegiatan biasa, `normalize` lewat `initialAppStateProvider`).
+- **Utang yang tersisa:**
+  - Menghapus kemunculan **terakhir** sebuah seri membuatnya dibuat lagi (tidak ada penanda hapus). Kemunculan di tengah aman.
+  - Mengubah jam/nama satu kemunculan hanya berlaku untuk tanggal itu (keputusan 8); belum ada cara mengubah seluruh seri sekaligus selain hari ulang.
+  - `normalize` berlaku di HP mana pun yang menjalankan aplikasi; pembatasan "hanya HP orang tua" menunggu sesi perangkat di Tahap 10.
+  - Belum dijalankan di perangkat (overflow 360 dp / skala 1.3x, telepon `tel:` Android 11+ belum diuji).
+  - Utang Tahap 7 lainnya tetap (lihat di atas), termasuk `firstWhere` tanpa `orElse` yang wajib ditutup di Tahap 9.
+- **Langkah berikutnya:** Tahap 9 — sinkronisasi Firestore (perlu persetujuan sebelum `flutterfire configure`).

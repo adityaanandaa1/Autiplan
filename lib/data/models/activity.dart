@@ -18,6 +18,7 @@ class Activity {
     this.independentMode = false,
     this.replacedTitle,
     this.originalSteps,
+    this.seriesId,
   }) : usesScreen = usesScreen ?? (icon == ActivityIcon.nonton);
 
   final String id;
@@ -34,6 +35,9 @@ class Activity {
   final bool independentMode;
   final String? replacedTitle;
   final List<String>? originalSteps;
+
+  /// Penanda seri kegiatan berulang; null bila bukan bagian dari seri.
+  final String? seriesId;
 
   Activity copyWith({
     String? id,
@@ -53,6 +57,8 @@ class Activity {
     bool clearReplacedTitle = false,
     List<String>? originalSteps,
     bool clearOriginalSteps = false,
+    String? seriesId,
+    bool clearSeriesId = false,
   }) {
     return Activity(
       id: id ?? this.id,
@@ -73,6 +79,7 @@ class Activity {
       originalSteps: clearOriginalSteps
           ? null
           : (originalSteps ?? this.originalSteps),
+      seriesId: clearSeriesId ? null : (seriesId ?? this.seriesId),
     );
   }
 
@@ -92,6 +99,7 @@ class Activity {
     'independentMode': independentMode,
     if (replacedTitle != null) 'replacedTitle': replacedTitle,
     if (originalSteps != null) 'originalSteps': originalSteps,
+    if (seriesId != null) 'seriesId': seriesId,
   };
 
   factory Activity.fromJson(Map<String, dynamic> json) {
@@ -120,6 +128,7 @@ class Activity {
       originalSteps: json['originalSteps'] != null
           ? (json['originalSteps'] as List).map((e) => e as String).toList()
           : null,
+      seriesId: json['seriesId'] as String?,
     );
   }
 
@@ -143,6 +152,7 @@ class Activity {
           usesScreen == other.usesScreen &&
           independentMode == other.independentMode &&
           replacedTitle == other.replacedTitle &&
+          seriesId == other.seriesId &&
           (originalSteps == null && other.originalSteps == null ||
               originalSteps != null &&
                   other.originalSteps != null &&
@@ -159,5 +169,6 @@ class Activity {
       date.month.hashCode ^
       date.day.hashCode ^
       start.hashCode ^
-      end.hashCode;
+      end.hashCode ^
+      seriesId.hashCode;
 }

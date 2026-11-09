@@ -21,9 +21,7 @@ Future<void> main() async {
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        appStateProvider.overrideWith(
-          (ref) => AppStateNotifier(repo, initialState),
-        ),
+        initialAppStateProvider.overrideWithValue(initialState),
       ],
       child: const AutiPlanApp(),
     ),
