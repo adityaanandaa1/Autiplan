@@ -68,6 +68,7 @@ void main() {
       backend.nextFailure = BackendFailure.invalidCode;
       await tester.pumpWidget(wrap(const LinkDeviceScreen()));
       await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
       await tester.tap(find.text('Hubungkan'));
       await tester.pumpAndSettle();
       expect(find.text('Kode belum cocok. Coba periksa lagi.'), findsOneWidget);
@@ -79,6 +80,7 @@ void main() {
       backend.nextFailure = BackendFailure.expiredCode;
       await tester.pumpWidget(wrap(const LinkDeviceScreen()));
       await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
       await tester.tap(find.text('Hubungkan'));
       await tester.pumpAndSettle();
       expect(
@@ -93,6 +95,7 @@ void main() {
         backend.nextFailure = BackendFailure.tooManyAttempts;
         await tester.pumpWidget(wrap(const LinkDeviceScreen()));
         await tester.enterText(find.byType(TextField), '123456');
+        await tester.pump();
         await tester.tap(find.text('Hubungkan'));
         await tester.pumpAndSettle();
         expect(
@@ -108,6 +111,7 @@ void main() {
       backend.nextFailure = BackendFailure.offline;
       await tester.pumpWidget(wrap(const LinkDeviceScreen()));
       await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
       await tester.tap(find.text('Hubungkan'));
       await tester.pumpAndSettle();
       expect(find.text('Belum ada internet. Coba lagi nanti.'), findsOneWidget);

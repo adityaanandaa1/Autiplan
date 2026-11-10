@@ -1,6 +1,6 @@
 import 'package:autiplan/core/clock.dart';
+import 'package:autiplan/core/theme/theme.dart';
 import 'package:autiplan/data/backend_api.dart';
-import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
 import 'package:autiplan/features/child/child_emergency_screen.dart';
 import 'package:autiplan/features/child/child_calling_screen.dart';
@@ -74,21 +74,29 @@ void main() {
             appStateProvider.overrideWith(
               (ref) => AppStateNotifier(
                 InMemoryRepository(),
-                buildFixtureState().copyWith(
-                  settings: const Settings(emergencyNumber: '081234567890'),
-                ),
+                (() {
+                  final base = buildFixtureState();
+                  return base.copyWith(
+                    settings: base.settings.copyWith(
+                      emergencyNumber: '081234567890',
+                    ),
+                  );
+                })(),
               ),
             ),
           ],
-          child: MaterialApp.router(routerConfig: router),
+          child: MaterialApp.router(
+            routerConfig: router,
+            theme: buildParentTheme(childPalette: ChildPalette.lautTenang),
+          ),
         ),
       );
 
-      await tester.tap(find.text('Telepon Ibu Sari'));
+      await tester.tap(find.text('Telepon Bu Sari'));
       await tester.pumpAndSettle();
 
       expect(calls, ['launch:tel:081234567890', 'notify']);
-      expect(find.text('Menelepon Ibu Sari…'), findsOneWidget);
+      expect(find.text('Menelepon Bu Sari…'), findsOneWidget);
       expect(find.byType(SnackBar), findsNothing);
       expect(find.textContaining('internet'), findsNothing);
     },

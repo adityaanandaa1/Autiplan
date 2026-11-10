@@ -94,6 +94,10 @@ void main() {
     testWidgets('menampilkan baris Hubungkan dan Putuskan HP Rafi', (
       tester,
     ) async {
+      tester.view.physicalSize = const Size(430, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(wrap(const CaregiverAccountScreen()));
       expect(find.text('Hubungkan HP Rafi'), findsOneWidget);
       expect(find.text('Putuskan HP Rafi'), findsOneWidget);
