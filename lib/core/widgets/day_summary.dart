@@ -26,7 +26,8 @@ class DaySummary extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(dateText, style: AppTypography.judulBaris),
+            Flexible(child: Text(dateText, style: AppTypography.judulBaris)),
+            const SizedBox(width: AppSpacing.grid8),
             Text(
               hasActivities
                   ? '$completedCount/$totalCount selesai'

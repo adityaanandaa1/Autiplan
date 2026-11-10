@@ -14,6 +14,7 @@ import 'firestore_repository.dart';
 import 'models/models.dart';
 import 'notify_helper.dart';
 import 'push_service.dart';
+import 'reminder_service.dart';
 import 'repository.dart';
 import 'session/device_session.dart';
 import 'session/session_notifier.dart';
@@ -29,6 +30,11 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 final backendApiProvider = Provider<BackendApi>((ref) {
   return const NoopBackendApi();
 });
+
+/// Bawaan tidak menjadwalkan apa pun; diganti setelah paket notifikasi lokal disetujui.
+final reminderServiceProvider = Provider<ReminderService>(
+  (ref) => const NoopReminderService(),
+);
 
 final pushServiceProvider = Provider<PushService>((ref) {
   return FirebasePushService();

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/clock.dart';
 import 'core/router.dart';
 import 'core/theme/theme.dart';
 import 'core/widgets/loading_schedule_screen.dart';
 import 'data/models/models.dart';
+import 'domain/reminder_plan.dart';
 import 'data/providers.dart';
 import 'data/session/device_session.dart';
 
@@ -26,6 +28,34 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
       sessionProvider,
       (_, next) => _registerPush(next),
       fireImmediately: true,
+    );
+    ref.listenManual<AppState>(
+      appStateProvider,
+      (_, _) => _syncReminders(),
+      fireImmediately: true,
+    );
+    ref.listenManual<DeviceSession>(
+      sessionProvider,
+      (_, _) => _syncReminders(),
+    );
+  }
+
+  /// Jadwalkan ulang pengingat tiap state berubah; hanya di HP orang tua.
+  void _syncReminders() {
+    final service = ref.read(reminderServiceProvider);
+    final session = ref.read(sessionProvider);
+    final Future<void> job = session is CaregiverSession
+        ? service.reschedule(
+            planReminders(
+              ref.read(appStateProvider),
+              ref.read(clockProvider).now,
+            ),
+          )
+        : service.cancelAll();
+    unawaited(
+      job.catchError((Object e) {
+        debugPrint('Pengingat belum bisa dijadwalkan: $e');
+      }),
     );
   }
 

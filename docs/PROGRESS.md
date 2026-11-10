@@ -290,3 +290,21 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Klaim ganda atas kode pasangan (Firestore `FAILED_PRECONDITION` → HTTP 400) dan `/notify` di perangkat nyata belum diuji di emulator/deploy.
   - Sisa masa berlaku kode pasangan belum ditampilkan (teks wajib "Berlaku 10 menit.").
   - Worker belum dideploy; uji dua perangkat dan uji push di perangkat menunggu deploy.
+
+
+## Tahap 13 — Pengingat lokal dan uji akhir (sebagian)
+
+- **Status:** sebagian (10 November 2026). Perencanaan pengingat selesai dan teruji; penjadwalan notifikasi sungguhan **menunggu persetujuan paket** `flutter_local_notifications`, `timezone`, `flutter_timezone` (belum ada di `pubspec.yaml`). Langkah 5 (uji dua HP) bukan bagian pekerjaan ini.
+- **Isi:**
+  - `lib/domain/reminder_plan.dart`: `PlannedReminder` + `planReminders(state, now, {maxCount = 50})`. Teks "{judul} untuk {anak} mulai {n} menit lagi."; waktu lewat dan kegiatan selesai dilewati; urut paling awal.
+  - `lib/data/reminder_service.dart`: antarmuka `ReminderService` + `NoopReminderService`; `reminderServiceProvider` di `providers.dart`.
+  - `lib/app.dart`: tiap `appStateProvider` atau sesi berubah memanggil `reschedule` (hanya `CaregiverSession`; selain itu `cancelAll`). Sementara Noop.
+  - `DaySummary`: tanggal kini `Flexible` (tidak overflow di 360 dp, skala 1.3). "Lihat langkah lengkap" kini minimal 48 dp dan ber-`Semantics`.
+  - `test/reminder_plan_test.dart`, `test/layout_small_screen_test.dart` (lima layar di 360 dp, skala teks 1.3).
+- **Sudah ada sebelumnya (diverifikasi):** "Berlaku 10 menit." di sheet pairing, "Bisa dikembalikan ke N langkah kapan saja.", tombol "Lihat langkah lengkap", dan tidak ada lagi teks "hanya disimpan sebagai angka" di `lib/`.
+- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 333 lulus. Worker tidak berubah.
+- **Utang:**
+  - `FlutterLocalNotificationsReminderService` (`AndroidScheduleMode.inexactAllowWhileIdle`, izin `POST_NOTIFICATIONS` sudah ada) dan core library desugaring di `android/app/build.gradle.kts` menunggu persetujuan paket; desugaring belum diaktifkan karena belum bisa dibuktikan lewat build.
+  - Baris HANDOFF §11 "Pengingat di prototipe hanya disimpan sebagai angka" masih ada dan perlu diperbarui setelah notifikasi sungguhan jalan.
+  - Audit aksesibilitas §14 menyeluruh (label Semantics tiap tombol, kontras) belum dilakukan di semua layar; baru kasus "Lihat langkah lengkap".
+  - Langkah 5, `flutter build apk --release`, deploy Worker: menunggu pengguna.

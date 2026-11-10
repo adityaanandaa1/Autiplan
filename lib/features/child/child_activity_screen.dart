@@ -188,15 +188,23 @@ class _ChildActivityScreenState extends ConsumerState<ChildActivityScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.grid12),
-          InkWell(
-            onTap: () => setState(() => _showFullSteps = true),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid8),
-              child: Text(
-                'Lihat langkah lengkap',
-                style: AppTypography.tombolAnakTeks.copyWith(
-                  color: palette.anakAksenKuat,
-                  decoration: TextDecoration.underline,
+          Semantics(
+            button: true,
+            label: 'Lihat langkah lengkap',
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: () => setState(() => _showFullSteps = true),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Lihat langkah lengkap',
+                    style: AppTypography.tombolAnakTeks.copyWith(
+                      color: palette.anakAksenKuat,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
               ),
             ),
