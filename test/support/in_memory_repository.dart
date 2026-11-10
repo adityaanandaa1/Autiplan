@@ -50,4 +50,7 @@ class InMemoryRepository implements AutiPlanRepository {
     _current = after;
     _updates.add(after);
   }
+
+  @override
+  Future<void> unlinkChildDevice(String childId) async {}
 }

@@ -4,12 +4,15 @@ import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/clock.dart';
 import '../domain/recurrence.dart';
 import 'auth_service.dart';
+import 'backend_api.dart';
 import 'firestore_repository.dart';
 import 'models/models.dart';
+import 'push_service.dart';
 import 'repository.dart';
 import 'session/device_session.dart';
 import 'session/session_notifier.dart';
@@ -18,6 +21,68 @@ import 'session/session_notifier.dart';
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden');
 });
+
+/// Klien Worker (kode pasangan). Di-override di main() dengan URL dari
+/// `--dart-define=WORKER_URL=...`, dan di tes dengan versi palsu.
+final backendApiProvider = Provider<BackendApi>((ref) {
+  throw UnimplementedError('backendApiProvider must be overridden');
+});
+
+final pushServiceProvider = Provider<PushService>((ref) {
+  return FirebasePushService();
+});
+
+/// Membuka aplikasi telepon. Di tes diganti agar tidak menyentuh platform.
+final phoneLauncherProvider = Provider<Future<void> Function(Uri)>((ref) {
+  return (uri) async {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  };
+});
+
+/// Perangkat yang terhubung untuk keluarga (dokumen `devices/{uid}`).
+/// Kosong bila belum ada atau sesi belum masuk. Untuk layar Akun.
+final linkedDevicesProvider = StreamProvider<List<LinkedDevice>>((ref) {
+  final session = ref.watch(sessionProvider);
+  final db = fs.FirebaseFirestore.instance;
+  final familyId = switch (session) {
+    CaregiverSession(:final familyId) => familyId,
+    _ => null,
+  };
+  if (familyId == null) return Stream<List<LinkedDevice>>.value(const []);
+  return db
+      .collection('families')
+      .doc(familyId)
+      .collection('devices')
+      .snapshots()
+      .map((query) {
+        final devices = <LinkedDevice>[];
+        for (final doc in query.docs) {
+          final device = LinkedDevice.fromMap(doc.id, doc.data());
+          if (device != null) devices.add(device);
+        }
+        return devices;
+      })
+      .handleError((Object e) => debugPrint('Perangkat tidak bisa dibaca: $e'));
+});
+
+/// Perangkat terhubung: HP anak dengan role `child`.
+class LinkedDevice {
+  const LinkedDevice({required this.uid, required this.childId});
+
+  final String uid;
+  final String childId;
+
+  static LinkedDevice? fromMap(String uid, Map<String, dynamic> data) {
+    final role = data['role'];
+    final childId = data['childId'];
+    if (role is String && role == 'child' && childId is String) {
+      return LinkedDevice(uid: uid, childId: childId);
+    }
+    return null;
+  }
+}
 
 /// Layanan autentikasi. Harus di-override di main() (atau di tes).
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -49,6 +114,9 @@ class _UnlinkedRepository implements AutiPlanRepository {
 
   @override
   Future<void> apply(AppState before, AppState after) async {}
+
+  @override
+  Future<void> unlinkChildDevice(String childId) async {}
 }
 
 /// Sumber data aplikasi, dibuat dari sesi: `familyId` = uid orang tua, atau

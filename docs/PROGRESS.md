@@ -223,3 +223,52 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Penghubungan HP anak baru dibuat di Tahap 11 (`AccountProfileCard` masih "Belum terhubung ke HP anak").
   - Utang Tahap 7–9 lainnya tetap.
 - **Langkah berikutnya:** Tahap 11 — Worker dan kode pasangan (butuh akun Cloudflare dan kunci service account).
+
+## Tahap 11 — Worker dan kode pasangan
+
+- **Status:** selesai di kode dan tes Flutter (10 November 2026). **Belum:** `wrangler login`, KV namespace, `wrangler secret put`, `wrangler deploy`, dan uji dua perangkat — semua menunggu persetujuan/dikerjakan bersama pengguna (gerbang persetujuan rencana). Tes worker (`npm test`) ditulis tetapi belum dijalankan sesuai aturan tes tahap ini; dijalankan sekali di verifikasi akhir.
+- **Isi:**
+  - `worker/`: `wrangler.toml` (KV `ATTEMPTS`, id diisi saat pembuatan namespace), `package.json`, `tsconfig.json`, `vitest.config.ts`, `.dev.vars.example`, `src/index.ts` (Bearer token wajib, `/notify` → 501), `src/auth.ts` (verifikasi ID token Firebase dengan `jose` + JWKS securetoken), `src/firestore.ts` (REST Firestore: baca/tulis kode, `documents:commit` dengan prasyarat `updateTime` + tulis `devices/{uid}`), `src/pairing.ts` (kode 6 digit dari `crypto.getRandomValues`, batas percobaan di KV 5x/uid/15 menit dan 20x/IP/1 jam, create/claim), `test/pairing.test.ts`.
+  - `lib/data/backend_api.dart`: `PairingCode`, `ClaimedLink`, `BackendFailure`, `BackendException`, `BackendApi`, `HttpBackendApi` (petakan 400→invalidCode, 410→expiredCode, 429→tooManyAttempts, SocketException/ClientException→offline, lain→unknown). `backendApiProvider` di `providers.dart`, di-override di `main()` bila `--dart-define=WORKER_URL` diisi.
+  - `lib/features/onboarding/link_device_screen.dart` (`/hubungkan`): masuk anonim → klaim kode → `ChildSession` (`adoptChildSession`). Galat memakai teks tabel "Galat kode" persis.
+  - `lib/features/caregiver/pairing_sheet.dart`: sheet "Hubungkan HP {anak}" (kode besar, "Buat kode baru") dan dialog "Putuskan HP {anak}?".
+  - `account_screen.dart`: grup Akun bertambah "Hubungkan HP {anak}" dan "Putuskan HP {anak}"; `AccountProfileCard` menampilkan "Terhubung ke HP {anak}" bila ada dokumen `devices` role child (`linkedDevicesProvider` baru).
+  - `AutiPlanRepository.unlinkChildDevice(childId)`: hapus dokumen `devices/{uid}` anak (implementasi di `FirestoreRepository`; sesi anak menjadi `Unlinked` lewat listener Tahap 10).
+  - `.gitignore`: `worker/.dev.vars`, `*service-account*.json`.
+- **File utama:** `worker/*`, `lib/data/backend_api.dart`, `lib/data/providers.dart`, `lib/data/repository.dart`, `lib/data/firestore_repository.dart`, `lib/features/onboarding/link_device_screen.dart`, `lib/features/caregiver/pairing_sheet.dart`, `lib/features/caregiver/account_screen.dart`, `lib/features/caregiver/account_widgets.dart`, `lib/main.dart`, `lib/core/router.dart`, `.gitignore`, `test/backend_api_test.dart`, `test/link_device_screen_test.dart`, `test/account_pairing_test.dart`, `test/support/test_session.dart` (`testChildSession`), `test/support/in_memory_repository.dart`.
+- **Hasil:** diisi setelah verifikasi akhir (format/analyze/test/apk).
+- **Utang yang tersisa:**
+  - Worker belum dideploy; KV namespace belum dibuat; `FIREBASE_SERVICE_ACCOUNT` belum diisi. Semua butuh persetujuan.
+  - Uji dua perangkat (kode benar terhubung, kode dipakai dua kali ditolak, jadwal muncul di HP anak) belum bisa dilakukan tanpa deploy.
+  - Teks sheet pairing untuk galat create (mis. anak tidak ada / offline saat membuat kode) memakai teks tenang sendiri karena tabel "Teks baru" hanya memuat galat klaim; lihat DECISIONS.md.
+  - Utang Tahap 7–10 lainnya tetap.
+- **Langkah berikutnya:** Tahap 12 — push ke orang tua (setelah Worker terdeploy).
+
+
+## Tahap 12 — Push ke orang tua
+
+- **Status:** selesai di kode dan tes (11 November 2026). **Belum:** `wrangler deploy` Worker, `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, dan uji push di perangkat — menunggu persetujuan pengguna. Tes ditulis tetapi belum dijalankan sesuai aturan tes tahap ini.
+- **Isi:**
+  - `lib/data/push_service.dart`: `PushService` + `FirebasePushService` (izin notifikasi, `getToken`, simpan ke `families/{familyId}/devices/{uid}` sebagai `fcmToken` + `role: 'caregiver'`, ikuti `onTokenRefresh`). Dipakai hanya pada `CaregiverSession`.
+  - `lib/app.dart`: `registerCaregiverDevice` dipanggil saat sesi sudah `CaregiverSession` (post-frame) dan saat sesi berubah; galat hanya dicatat.
+  - `android/app/src/main/AndroidManifest.xml`: izin `POST_NOTIFICATIONS` (+ `INTERNET`).
+  - `worker/src/notify.ts`: `POST /notify` `{familyId, notificationId}` — verifikasi anggota keluarga (`403` bila bukan), teks dari dokumen `notifications/{id}`, `activityDone` tidak mengirim, FCM HTTP v1 dengan token OAuth, hapus `fcmToken` bila `UNREGISTERED`, balas `204`.
+  - `worker/src/firestore.ts`: `checkFamilyMember`, `getNotification`, `getDevices`, `clearFcmToken`, `sendFcmMessage`; cakupan OAuth `datastore` + `firebase.messaging`.
+  - `worker/src/index.ts`: rute `/notify` diteruskan ke `handleNotify` (menggantikan `501`).
+  - `lib/features/child/child_emergency_screen.dart` (A-07): urutan buka telepon → simpan notifikasi `emergencyPressed` → `notify` tanpa `await` (galat ditelan) → `/anak/menelepon`. Tanpa snackbar/dialog soal internet atau push.
+  - `lib/features/child/child_change_screen.dart`: `changeSeen` juga memanggil `notify` dengan perlakuan galat yang sama.
+  - `lib/data/providers.dart`: `pushServiceProvider`, `phoneLauncherProvider`.
+  - Paket baru: `firebase_messaging: ^17.0.1` (disetujui pengguna).
+- **File utama:** `lib/data/push_service.dart`, `lib/app.dart`, `lib/data/providers.dart`, `lib/features/child/child_emergency_screen.dart`, `lib/features/child/child_change_screen.dart`, `android/app/src/main/AndroidManifest.xml`, `worker/src/notify.ts`, `worker/src/firestore.ts`, `worker/src/index.ts`, `worker/test/notify.test.ts`, `test/emergency_flow_test.dart`, `pubspec.yaml`, `pubspec.lock`, `docs/DECISIONS.md`.
+- **Hasil `dart format`:** bersih (seluruh file berhasil diformat).
+- **Hasil `flutter analyze`:** 0 issue.
+- **Hasil `tsc --noEmit` (worker):** lulus, 0 galat.
+- **Hasil tes:** diisi setelah verifikasi akhir. Tes `worker/test/notify.test.ts` dan `test/emergency_flow_test.dart` ditulis tetapi belum dijalankan sesuai aturan tes tahap ini.
+- **Utang yang tersisa:**
+  - Uji push di perangkat (aplikasi orang tua tertutup, tombol darurat memunculkan push) menunggu deploy Worker dan pengisian `FIREBASE_SERVICE_ACCOUNT`.
+  - `notify.test.ts` dan `emergency_flow_test.dart` belum pernah dijalankan; hasil sebenarnya baru diketahui di verifikasi akhir (Tahap 13).
+  - Kasus tepi no. 4 rencana (tombol darurat tanpa internet) baru terbukti setelah tes jalan.
+  - `firebase_messaging` 17 menandai `getToken`/`onTokenRefresh` deprecated; pengganti `register`/`onRegistered` memberi FID, jadi belum dipakai. Lihat DECISIONS.md.
+  - Utang Tahap 7–11 lainnya tetap.
+- **Langkah berikutnya:** Tahap 13 — pengingat lokal dan uji akhir (setelah verifikasi akhir menjalankan seluruh tes).
+

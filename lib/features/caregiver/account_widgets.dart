@@ -9,7 +9,10 @@ import '../../data/models/models.dart';
 import '../../data/providers.dart';
 
 class AccountProfileCard extends ConsumerWidget {
-  const AccountProfileCard({super.key});
+  const AccountProfileCard({super.key, this.linkedChildName});
+
+  /// Nama anak yang HP-nya sudah terhubung, atau null bila belum.
+  final String? linkedChildName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,6 +20,7 @@ class AccountProfileCard extends ConsumerWidget {
       appStateProvider.select((s) => s.settings.caregiverName),
     );
     final displayName = caregiverName.isEmpty ? 'Pengasuh' : caregiverName;
+    final linkedChildName = this.linkedChildName;
 
     return CardSurface(
       padding: const EdgeInsets.all(AppSpacing.grid16),
@@ -43,8 +47,10 @@ class AccountProfileCard extends ConsumerWidget {
               children: [
                 Text(displayName, style: AppTypography.judulBaris),
                 const SizedBox(height: AppSpacing.grid2),
-                const Text(
-                  'Pengasuh utama · Belum terhubung ke HP anak',
+                Text(
+                  linkedChildName == null
+                      ? 'Pengasuh utama · Belum terhubung ke HP anak'
+                      : 'Pengasuh utama · Terhubung ke HP $linkedChildName',
                   style: AppTypography.meta,
                 ),
               ],

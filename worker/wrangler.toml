@@ -1,0 +1,14 @@
+name = "autiplan-worker"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# KV untuk batas percobaan klaim kode pasangan:
+# gagal 5x per uid per 15 menit, 20x per IP per jam.
+# Namespace diisi setelah `wrangler kv namespace create ATTEMPTS` (perlu
+# persetujuan pengguna), lalu id-nya ditempel di sini.
+[[kv_namespaces]]
+binding = "ATTEMPTS"
+id = ""
+
+[vars]
+FIREBASE_PROJECT_ID = "autiplan-bd927"

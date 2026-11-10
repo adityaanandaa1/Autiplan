@@ -199,4 +199,17 @@ class FirestoreRepository implements AutiPlanRepository {
     ...write.fields,
     for (final key in write.deletedFields) key: fs.FieldValue.delete(),
   };
+
+  @override
+  Future<void> unlinkChildDevice(String childId) async {
+    final query = await _family
+        .collection('devices')
+        .where('childId', isEqualTo: childId)
+        .get();
+    for (final doc in query.docs) {
+      if (doc.data()['role'] == 'child') {
+        await doc.reference.delete();
+      }
+    }
+  }
 }

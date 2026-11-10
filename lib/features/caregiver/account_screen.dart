@@ -9,6 +9,7 @@ import '../../core/widgets/caregiver_header.dart';
 import '../../data/providers.dart';
 import 'account_sheets.dart';
 import 'account_widgets.dart';
+import 'pairing_sheet.dart';
 
 class CaregiverAccountScreen extends ConsumerWidget {
   const CaregiverAccountScreen({super.key});
@@ -18,6 +19,20 @@ class CaregiverAccountScreen extends ConsumerWidget {
     final state = ref.watch(appStateProvider);
     final child = ref.watch(currentChildProvider);
     if (child == null) return const CalmEmptyScreen();
+
+    final linkedDevices = ref.watch(linkedDevicesProvider).value ?? const [];
+    final linkedChildId = linkedDevices.isEmpty
+        ? null
+        : linkedDevices.first.childId;
+    String? linkedChild;
+    if (linkedChildId != null) {
+      for (final c in state.children) {
+        if (c.id == linkedChildId) {
+          linkedChild = c.name;
+          break;
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -29,7 +44,7 @@ class CaregiverAccountScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.grid16),
                 children: [
-                  const AccountProfileCard(),
+                  AccountProfileCard(linkedChildName: linkedChild),
                   const SizedBox(height: AppSpacing.grid16),
                   _buildGroupLabel('Anak'),
                   CardSurface(
@@ -116,6 +131,20 @@ class CaregiverAccountScreen extends ConsumerWidget {
                           label: 'Tambah anak',
                           value: '',
                           onTap: () => showAddChildSheet(context, ref),
+                        ),
+                        const AccountListDivider(),
+                        AccountListRow(
+                          icon: LucideIcons.smartphone,
+                          label: 'Hubungkan HP ${child.name}',
+                          value: '',
+                          onTap: () => showPairingSheet(context, ref, child),
+                        ),
+                        const AccountListDivider(),
+                        AccountListRow(
+                          icon: LucideIcons.unlink,
+                          label: 'Putuskan HP ${child.name}',
+                          value: '',
+                          onTap: () => showUnlinkDialog(context, ref, child),
                         ),
                         const AccountListDivider(),
                         AccountListRow(

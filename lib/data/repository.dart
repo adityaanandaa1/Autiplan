@@ -13,4 +13,9 @@ abstract class AutiPlanRepository {
   /// selama HP tanpa internet, jadi pemanggil di jalur UI tidak boleh
   /// menunggunya.
   Future<void> apply(AppState before, AppState after);
+
+  /// Menghapus dokumen `devices/{uid}` anak yang terhubung (HP anak kembali
+  /// meminta kode). Diimplementasikan repositori nyata; sesi tanpa keluarga
+  /// tidak melakukan apa-apa.
+  Future<void> unlinkChildDevice(String childId) async {}
 }

@@ -17,6 +17,7 @@ import '../features/child/child_emergency_screen.dart';
 import '../features/child/child_home_screen.dart';
 import '../features/child/child_success_screen.dart';
 import '../features/child/child_theme_screen.dart';
+import '../features/onboarding/link_device_screen.dart';
 import '../features/onboarding/profile_setup_screen.dart';
 import '../features/onboarding/sign_in_screen.dart';
 import '../features/onboarding/sign_up_screen.dart';
@@ -62,6 +63,11 @@ GoRouter createRouter(Ref ref) {
         path: '/daftar',
         name: 'signUp',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/hubungkan',
+        name: 'linkDevice',
+        builder: (context, state) => const LinkDeviceScreen(),
       ),
 
       GoRoute(

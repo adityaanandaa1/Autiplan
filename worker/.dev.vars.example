@@ -1,0 +1,4 @@
+# Rahasia Worker, diisi lewat `wrangler secret put FIREBASE_SERVICE_ACCOUNT`.
+# File ini TIDAK boleh masuk git (sudah ada di .gitignore) dan kunci service
+# account harus tetap di luar repo.
+FIREBASE_PROJECT_ID=autiplan-bd927

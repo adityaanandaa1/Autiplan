@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'core/theme/theme.dart';
 import 'core/widgets/loading_schedule_screen.dart';
 import 'data/models/models.dart';
 import 'data/providers.dart';
+import 'data/session/device_session.dart';
 
 class AutiPlanApp extends ConsumerStatefulWidget {
   const AutiPlanApp({super.key});
@@ -16,6 +19,38 @@ class AutiPlanApp extends ConsumerStatefulWidget {
 }
 
 class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = ref.read(sessionProvider);
+      if (session is CaregiverSession) {
+        unawaited(
+          ref
+              .read(pushServiceProvider)
+              .registerCaregiverDevice(session.familyId)
+              .catchError((Object e) {
+                debugPrint('Gagal mendaftarkan push orang tua: $e');
+                return null;
+              }),
+        );
+      }
+    });
+    ref.listenManual<DeviceSession>(sessionProvider, (_, next) {
+      if (next is CaregiverSession) {
+        unawaited(
+          ref
+              .read(pushServiceProvider)
+              .registerCaregiverDevice(next.familyId)
+              .catchError((Object e) {
+                debugPrint('Gagal mendaftarkan push orang tua: $e');
+                return null;
+              }),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Tema anak mengikuti anak yang sedang dipakai; tanpa anak, tema bawaan.

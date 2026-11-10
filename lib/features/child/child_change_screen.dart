@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../../core/theme/theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../../data/session/device_session.dart';
 import '../../domain/schedule_rules.dart';
 import '../../features/caregiver/forms/form_utils.dart';
 
@@ -244,13 +247,29 @@ class ChildChangeScreen extends ConsumerWidget {
   ) {
     final state = ref.read(appStateProvider);
     final notifier = ref.read(appStateProvider.notifier);
+    final notificationId = const Uuid().v4();
     final updated = acknowledgeNotice(
       state: state,
       noticeId: notice.id,
       now: now,
-      notificationId: const Uuid().v4(),
+      notificationId: notificationId,
     );
     notifier.updateState(updated);
+
+    final session = ref.read(sessionProvider);
+    final familyId = session is ChildSession ? session.familyId : '';
+    if (familyId.isNotEmpty) {
+      unawaited(
+        ref
+            .read(backendApiProvider)
+            .notify(familyId, notificationId)
+            .catchError((Object e) {
+              debugPrint('Gagal push perubahan: $e');
+              return null;
+            }),
+      );
+    }
+
     context.go('/anak');
   }
 }

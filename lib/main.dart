@@ -7,8 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'data/auth_service.dart';
+import 'data/backend_api.dart';
 import 'data/providers.dart';
 import 'firebase_options.dart';
+
+/// URL Worker dari `--dart-define=WORKER_URL=...`; kosong bila tidak diisi,
+/// mis. saat mendemokan aplikasi tanpa backend.
+const _workerUrl = String.fromEnvironment('WORKER_URL');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +29,10 @@ Future<void> main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         authServiceProvider.overrideWithValue(auth),
+        if (_workerUrl.isNotEmpty)
+          backendApiProvider.overrideWithValue(
+            HttpBackendApi(baseUrl: _workerUrl, authService: auth),
+          ),
       ],
       child: const AutiPlanApp(),
     ),
