@@ -391,7 +391,7 @@ Saat anak menekan "Oke, aku mengerti" di A-02: `seenAt = now`, tambah notifikasi
 ### 8.11 Darurat
 - A-07 → "Telepon {pengasuh}" membuka `tel:{emergencyNumber}` lewat `url_launcher`, lalu menampilkan A-08, dan menambah notifikasi `emergencyPressed` "{anak} menekan tombol bantuan".
 - A-08 menampilkan hitungan 30 detik. Setelah 30 detik, tampilkan tombol garis "Telepon kontak cadangan" (`tel:{backupNumber}`). Aplikasi tidak bisa tahu apakah telepon dijawab; teks di A-08 menjelaskan langkah ini, bukan mendeteksinya.
-- Kalau `url_launcher` gagal (emulator tanpa telepon), tetap tampilkan A-08 dan snackbar kecil "Telepon tidak tersedia di perangkat ini".
+- Kalau `url_launcher` gagal (emulator tanpa telepon), tetap tampilkan A-08 tanpa snackbar atau pesan apa pun di sisi anak; galat hanya dicatat (lihat §14 dan DECISIONS Tahap 12).
 
 ### 8.12 Tema anak
 Dipilih di A-09, disimpan di `Child.theme`, berlaku untuk semua layar anak. Sisi orang tua tidak berubah.

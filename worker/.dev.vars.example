@@ -2,3 +2,5 @@
 # File ini TIDAK boleh masuk git (sudah ada di .gitignore) dan kunci service
 # account harus tetap di luar repo.
 FIREBASE_PROJECT_ID=autiplan-bd927
+# JSON kunci service account dalam SATU baris. Jangan commit nilai aslinya.
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"autiplan-bd927","client_email":"ISI@autiplan-bd927.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\nISI\n-----END PRIVATE KEY-----\n"}

@@ -12,6 +12,7 @@ import 'auth_service.dart';
 import 'backend_api.dart';
 import 'firestore_repository.dart';
 import 'models/models.dart';
+import 'notify_helper.dart';
 import 'push_service.dart';
 import 'repository.dart';
 import 'session/device_session.dart';
@@ -23,9 +24,10 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 });
 
 /// Klien Worker (kode pasangan). Di-override di main() dengan URL dari
-/// `--dart-define=WORKER_URL=...`, dan di tes dengan versi palsu.
+/// `--dart-define=WORKER_URL=...`, dan di tes dengan versi palsu. Tanpa
+/// override (WORKER_URL kosong) dipakai [NoopBackendApi], bukan melempar.
 final backendApiProvider = Provider<BackendApi>((ref) {
-  throw UnimplementedError('backendApiProvider must be overridden');
+  return const NoopBackendApi();
 });
 
 final pushServiceProvider = Provider<PushService>((ref) {
@@ -96,6 +98,7 @@ final sessionNotifierProvider =
         ref.watch(authServiceProvider),
         ref.watch(sharedPreferencesProvider),
         db: fs.FirebaseFirestore.instance,
+        beforeSignOut: () => ref.read(pushServiceProvider).unregister(),
       );
     });
 
@@ -173,17 +176,22 @@ class AppStateNotifier extends StateNotifier<AppState> {
   /// Ubah state seketika, lalu tulis selisihnya ke repositori tanpa
   /// menunggu: tanpa internet, penulisan baru selesai saat HP online lagi.
   void updateState(AppState newState) {
+    unawaited(updateStateAndWait(newState));
+  }
+
+  /// Sama dengan [updateState], tetapi mengembalikan future penulisan ke
+  /// repositori (tidak pernah gagal; bisa lama selesai saat offline). UI tidak
+  /// boleh menunggunya; dipakai untuk menunda push sampai dokumen ada.
+  Future<void> updateStateAndWait(AppState newState) {
     final next = _normalize == null ? newState : _normalize(newState);
     final before = state;
     state = next;
-    unawaited(
-      Future<void>.sync(() => _repository.apply(before, next)).catchError((
-        Object error,
-        StackTrace stack,
-      ) {
-        debugPrint('Perubahan belum tersimpan: $error');
-      }),
-    );
+    return Future<void>.sync(() => _repository.apply(before, next)).catchError((
+      Object error,
+      StackTrace stack,
+    ) {
+      debugPrint('Perubahan belum tersimpan: $error');
+    });
   }
 
   /// Menormalkan ulang state sekarang, mis. saat hari berganti.

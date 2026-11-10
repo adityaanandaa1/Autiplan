@@ -22,33 +22,23 @@ class _AutiPlanAppState extends ConsumerState<AutiPlanApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final session = ref.read(sessionProvider);
-      if (session is CaregiverSession) {
-        unawaited(
-          ref
-              .read(pushServiceProvider)
-              .registerCaregiverDevice(session.familyId)
-              .catchError((Object e) {
-                debugPrint('Gagal mendaftarkan push orang tua: $e');
-                return null;
-              }),
-        );
-      }
-    });
-    ref.listenManual<DeviceSession>(sessionProvider, (_, next) {
-      if (next is CaregiverSession) {
-        unawaited(
-          ref
-              .read(pushServiceProvider)
-              .registerCaregiverDevice(next.familyId)
-              .catchError((Object e) {
-                debugPrint('Gagal mendaftarkan push orang tua: $e');
-                return null;
-              }),
-        );
-      }
-    });
+    ref.listenManual<DeviceSession>(
+      sessionProvider,
+      (_, next) => _registerPush(next),
+      fireImmediately: true,
+    );
+  }
+
+  void _registerPush(DeviceSession session) {
+    if (session is! CaregiverSession) return;
+    unawaited(
+      ref
+          .read(pushServiceProvider)
+          .registerCaregiverDevice(session.familyId)
+          .catchError((Object e) {
+            debugPrint('Gagal mendaftarkan push orang tua: $e');
+          }),
+    );
   }
 
   @override

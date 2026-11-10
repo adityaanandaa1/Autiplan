@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,8 +8,8 @@ import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/models.dart';
+import '../../data/notify_helper.dart';
 import '../../data/providers.dart';
-import '../../data/session/device_session.dart';
 import '../../domain/schedule_rules.dart';
 import '../../features/caregiver/forms/form_utils.dart';
 
@@ -246,7 +244,6 @@ class ChildChangeScreen extends ConsumerWidget {
     DateTime now,
   ) {
     final state = ref.read(appStateProvider);
-    final notifier = ref.read(appStateProvider.notifier);
     final notificationId = const Uuid().v4();
     final updated = acknowledgeNotice(
       state: state,
@@ -254,21 +251,15 @@ class ChildChangeScreen extends ConsumerWidget {
       now: now,
       notificationId: notificationId,
     );
-    notifier.updateState(updated);
-
-    final session = ref.read(sessionProvider);
-    final familyId = session is ChildSession ? session.familyId : '';
-    if (familyId.isNotEmpty) {
-      unawaited(
-        ref
-            .read(backendApiProvider)
-            .notify(familyId, notificationId)
-            .catchError((Object e) {
-              debugPrint('Gagal push perubahan: $e');
-              return null;
-            }),
-      );
-    }
+    final written = ref
+        .read(appStateProvider.notifier)
+        .updateStateAndWait(updated);
+    notifyParentAfterWrite(
+      ref,
+      written: written,
+      notificationId: notificationId,
+      label: 'perubahan',
+    );
 
     context.go('/anak');
   }

@@ -226,7 +226,7 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 
 ## Tahap 11 — Worker dan kode pasangan
 
-- **Status:** selesai di kode dan tes Flutter (10 November 2026). **Belum:** `wrangler login`, KV namespace, `wrangler secret put`, `wrangler deploy`, dan uji dua perangkat — semua menunggu persetujuan/dikerjakan bersama pengguna (gerbang persetujuan rencana). Tes worker (`npm test`) ditulis tetapi belum dijalankan sesuai aturan tes tahap ini; dijalankan sekali di verifikasi akhir.
+- **Status:** selesai di kode dan tes Flutter (10 November 2026). **Belum:** `wrangler login`, KV namespace, `wrangler secret put`, `wrangler deploy`, dan uji dua perangkat — semua menunggu persetujuan/dikerjakan bersama pengguna (gerbang persetujuan rencana). Tes worker dijalankan pada audit 11 November 2026 (lihat bagian "Audit Tahap 11–12").
 - **Isi:**
   - `worker/`: `wrangler.toml` (KV `ATTEMPTS`, id diisi saat pembuatan namespace), `package.json`, `tsconfig.json`, `vitest.config.ts`, `.dev.vars.example`, `src/index.ts` (Bearer token wajib, `/notify` → 501), `src/auth.ts` (verifikasi ID token Firebase dengan `jose` + JWKS securetoken), `src/firestore.ts` (REST Firestore: baca/tulis kode, `documents:commit` dengan prasyarat `updateTime` + tulis `devices/{uid}`), `src/pairing.ts` (kode 6 digit dari `crypto.getRandomValues`, batas percobaan di KV 5x/uid/15 menit dan 20x/IP/1 jam, create/claim), `test/pairing.test.ts`.
   - `lib/data/backend_api.dart`: `PairingCode`, `ClaimedLink`, `BackendFailure`, `BackendException`, `BackendApi`, `HttpBackendApi` (petakan 400→invalidCode, 410→expiredCode, 429→tooManyAttempts, SocketException/ClientException→offline, lain→unknown). `backendApiProvider` di `providers.dart`, di-override di `main()` bila `--dart-define=WORKER_URL` diisi.
@@ -236,7 +236,7 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - `AutiPlanRepository.unlinkChildDevice(childId)`: hapus dokumen `devices/{uid}` anak (implementasi di `FirestoreRepository`; sesi anak menjadi `Unlinked` lewat listener Tahap 10).
   - `.gitignore`: `worker/.dev.vars`, `*service-account*.json`.
 - **File utama:** `worker/*`, `lib/data/backend_api.dart`, `lib/data/providers.dart`, `lib/data/repository.dart`, `lib/data/firestore_repository.dart`, `lib/features/onboarding/link_device_screen.dart`, `lib/features/caregiver/pairing_sheet.dart`, `lib/features/caregiver/account_screen.dart`, `lib/features/caregiver/account_widgets.dart`, `lib/main.dart`, `lib/core/router.dart`, `.gitignore`, `test/backend_api_test.dart`, `test/link_device_screen_test.dart`, `test/account_pairing_test.dart`, `test/support/test_session.dart` (`testChildSession`), `test/support/in_memory_repository.dart`.
-- **Hasil:** diisi setelah verifikasi akhir (format/analyze/test/apk).
+- **Hasil:** lihat bagian "Audit Tahap 11–12" di bawah.
 - **Utang yang tersisa:**
   - Worker belum dideploy; KV namespace belum dibuat; `FIREBASE_SERVICE_ACCOUNT` belum diisi. Semua butuh persetujuan.
   - Uji dua perangkat (kode benar terhubung, kode dipakai dua kali ditolak, jadwal muncul di HP anak) belum bisa dilakukan tanpa deploy.
@@ -247,7 +247,7 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 
 ## Tahap 12 — Push ke orang tua
 
-- **Status:** selesai di kode dan tes (11 November 2026). **Belum:** `wrangler deploy` Worker, `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, dan uji push di perangkat — menunggu persetujuan pengguna. Tes ditulis tetapi belum dijalankan sesuai aturan tes tahap ini.
+- **Status:** selesai di kode dan tes (11 November 2026). **Belum:** `wrangler deploy` Worker, `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, dan uji push di perangkat — menunggu persetujuan pengguna. Tes dijalankan pada audit (lihat "Audit Tahap 11–12").
 - **Isi:**
   - `lib/data/push_service.dart`: `PushService` + `FirebasePushService` (izin notifikasi, `getToken`, simpan ke `families/{familyId}/devices/{uid}` sebagai `fcmToken` + `role: 'caregiver'`, ikuti `onTokenRefresh`). Dipakai hanya pada `CaregiverSession`.
   - `lib/app.dart`: `registerCaregiverDevice` dipanggil saat sesi sudah `CaregiverSession` (post-frame) dan saat sesi berubah; galat hanya dicatat.
@@ -263,12 +263,30 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
 - **Hasil `dart format`:** bersih (seluruh file berhasil diformat).
 - **Hasil `flutter analyze`:** 0 issue.
 - **Hasil `tsc --noEmit` (worker):** lulus, 0 galat.
-- **Hasil tes:** diisi setelah verifikasi akhir. Tes `worker/test/notify.test.ts` dan `test/emergency_flow_test.dart` ditulis tetapi belum dijalankan sesuai aturan tes tahap ini.
+- **Hasil tes:** lihat "Audit Tahap 11–12".
 - **Utang yang tersisa:**
   - Uji push di perangkat (aplikasi orang tua tertutup, tombol darurat memunculkan push) menunggu deploy Worker dan pengisian `FIREBASE_SERVICE_ACCOUNT`.
-  - `notify.test.ts` dan `emergency_flow_test.dart` belum pernah dijalankan; hasil sebenarnya baru diketahui di verifikasi akhir (Tahap 13).
   - Kasus tepi no. 4 rencana (tombol darurat tanpa internet) baru terbukti setelah tes jalan.
   - `firebase_messaging` 17 menandai `getToken`/`onTokenRefresh` deprecated; pengganti `register`/`onRegistered` memberi FID, jadi belum dipakai. Lihat DECISIONS.md.
   - Utang Tahap 7–11 lainnya tetap.
 - **Langkah berikutnya:** Tahap 13 — pengingat lokal dan uji akhir (setelah verifikasi akhir menjalankan seluruh tes).
 
+
+
+## Audit Tahap 11–12 (11 November 2026)
+
+- **Temuan awal:** commit Tahap 12 berisi 6 tes merah (4 di `link_device_screen_test`, 1 di `account_pairing_test`, 1 di `emergency_flow_test`). Semuanya cacat tes: tidak ada `pump()` setelah `enterText`, baris Akun di luar viewport, tema anak tidak dipasang, dan fixture memakai "Bu Sari". Ringkasan Tahap 11 melaporkan perbaikan yang tidak pernah masuk repo. Pelajaran: tes ditulis tanpa dijalankan menyembunyikan kesalahan; jalankan di akhir setiap tahap.
+- **Perbaikan Flutter:**
+  - Jalur darurat (A-07) dan A-02: `backendApiProvider` bawaan kini `NoopBackendApi` (tidak melempar), `notify` dikirim lewat `notifyParentAfterWrite` setelah penulisan Firestore selesai dan tanpa menahan navigasi, state dibaca setelah `await` telepon, penjaga tekan ganda di A-07, judul "Butuh bantuan?" mengikuti HANDOFF.
+  - `HttpBackendApi`: timeout 10 detik, semua galat jaringan/auth/JSON dipetakan ke `BackendException`, 400 → `invalidCode` hanya untuk klaim.
+  - `PushService.unregister()` dipanggil sebelum `signOut`; `registerCaregiverDevice` idempoten; `onTokenRefresh` memakai `catchError`; `app.dart` memakai satu fungsi register.
+  - `LinkDeviceScreen`: sesi selalu terbentuk setelah klaim sukses; galat tak terduga jadi pesan tenang. Sheet pairing: galat putus HP ditangani; baris "Putuskan" hanya tampil bila ada HP anak terhubung; nama anak terhubung dipetakan dari `childId`.
+- **Perbaikan Worker:** validasi masukan dan `encodeURIComponent`, JWKS dan token OAuth di-cache, `/notify` hanya `emergencyPressed` dan `changeSeen` dengan `Promise.allSettled` dan `android.priority: high`, dokumen hilang → 404, UNREGISTERED dari badan JSON, prasyarat Firestore yang tepat, rate limiter naik sebelum verifikasi dan fail-closed.
+- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 321 lulus; `npx tsc --noEmit` bersih; `npx vitest run` 77 lulus (4 berkas).
+- **Utang yang diketahui:**
+  - Rate limiter memakai KV yang tidak atomik: pembatas upaya terbaik, bukan jaminan (Durable Object sengaja tidak dipakai).
+  - `CaregiverNotification.at` ditulis tanpa zona waktu, jadi cek umur notifikasi di Worker belum berlaku sampai klien menulis UTC.
+  - Klaim ganda atas kode pasangan (Firestore `FAILED_PRECONDITION` → HTTP 400) dan `/notify` di perangkat nyata belum diuji di emulator/deploy.
+  - `ChildChangeScreen._acknowledge` belum punya penjaga tekan ganda.
+  - Sisa masa berlaku kode pasangan belum ditampilkan (teks wajib "Berlaku 10 menit.").
+  - Worker belum dideploy; uji dua perangkat dan uji push di perangkat menunggu deploy.

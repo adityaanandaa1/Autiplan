@@ -1,5 +1,4 @@
 import 'package:autiplan/core/clock.dart';
-import 'package:autiplan/data/backend_api.dart';
 import 'package:autiplan/data/providers.dart';
 import 'package:autiplan/features/caregiver/account_screen.dart';
 import 'package:autiplan/features/caregiver/account_widgets.dart';
@@ -8,27 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_backend_api.dart';
 import 'support/fixture_state.dart';
 import 'support/in_memory_repository.dart';
 import 'support/test_session.dart';
-
-class FakeBackendApi implements BackendApi {
-  int createCalls = 0;
-
-  @override
-  Future<PairingCode> createPairingCode(String childId) async {
-    createCalls += 1;
-    return PairingCode(code: '654321', expiresAt: DateTime(2026, 5, 1, 16, 10));
-  }
-
-  @override
-  Future<ClaimedLink> claimPairingCode(String code) async {
-    return const ClaimedLink(familyId: 'fam', childId: 'child');
-  }
-
-  @override
-  Future<void> notify(String familyId, String notificationId) async {}
-}
 
 void main() {
   late FakeBackendApi backend;
@@ -65,6 +47,13 @@ void main() {
     );
   }
 
+  void bigView(WidgetTester tester) {
+    tester.view.physicalSize = const Size(430, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
   group('AccountProfileCard', () {
     testWidgets('belum terhubung', (tester) async {
       await tester.pumpWidget(
@@ -78,10 +67,7 @@ void main() {
 
     testWidgets('terhubung ke HP {anak}', (tester) async {
       await tester.pumpWidget(
-        wrap(
-          const AccountProfileCard(linkedChildName: 'Rafi'),
-          linkedDevices: const [LinkedDevice(uid: 'u1', childId: 'child-1')],
-        ),
+        wrap(const AccountProfileCard(linkedChildName: 'Rafi')),
       );
       expect(
         find.text('Pengasuh utama · Terhubung ke HP Rafi'),
@@ -91,16 +77,86 @@ void main() {
   });
 
   group('Layar Akun', () {
-    testWidgets('menampilkan baris Hubungkan dan Putuskan HP Rafi', (
+    testWidgets('Putuskan hanya tampil bila HP anak itu terhubung', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(430, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+      bigView(tester);
       await tester.pumpWidget(wrap(const CaregiverAccountScreen()));
+      await tester.pumpAndSettle();
       expect(find.text('Hubungkan HP Rafi'), findsOneWidget);
+      expect(find.text('Putuskan HP Rafi'), findsNothing);
+      expect(
+        find.text('Pengasuh utama · Belum terhubung ke HP anak'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('terhubung: nama dipetakan dari childId, Putuskan tampil', (
+      tester,
+    ) async {
+      bigView(tester);
+      await tester.pumpWidget(
+        wrap(
+          const CaregiverAccountScreen(),
+          linkedDevices: const [LinkedDevice(uid: 'u1', childId: 'child-1')],
+        ),
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Putuskan HP Rafi'), findsOneWidget);
+      expect(
+        find.text('Pengasuh utama · Terhubung ke HP Rafi'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('perangkat anak lain: Putuskan HP Rafi tidak tampil', (
+      tester,
+    ) async {
+      bigView(tester);
+      await tester.pumpWidget(
+        wrap(
+          const CaregiverAccountScreen(),
+          linkedDevices: const [LinkedDevice(uid: 'u1', childId: 'lain')],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Putuskan HP Rafi'), findsNothing);
+    });
+  });
+
+  group('linkedChildNamesOf', () {
+    final rafi = buildFixtureState().children.first.copyWith(
+      id: 'c1',
+      name: 'Rafi',
+    );
+    final atalia = rafi.copyWith(id: 'c2', name: 'Atalia');
+
+    test('memetakan childId ke nama, bukan perangkat pertama saja', () {
+      expect(
+        linkedChildNamesOf(
+          const [LinkedDevice(uid: 'u1', childId: 'c2')],
+          [rafi, atalia],
+        ),
+        'Atalia',
+      );
+    });
+
+    test('beberapa anak digabung; id tak dikenal diabaikan', () {
+      expect(
+        linkedChildNamesOf(
+          const [
+            LinkedDevice(uid: 'u1', childId: 'c1'),
+            LinkedDevice(uid: 'u2', childId: 'c2'),
+            LinkedDevice(uid: 'u3', childId: 'hilang'),
+          ],
+          [rafi, atalia],
+        ),
+        'Rafi, Atalia',
+      );
+    });
+
+    test('kosong menghasilkan null', () {
+      expect(linkedChildNamesOf(const [], [rafi]), isNull);
     });
   });
 }

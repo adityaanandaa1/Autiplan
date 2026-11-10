@@ -17,7 +17,7 @@ import 'device_session.dart';
 /// - [ChildSession] memantau `devices/{uid}` miliknya; bila dokumen hilang
 ///   atau listener menerima `permission-denied`, sesi menjadi [UnlinkedSession].
 class SessionNotifier extends StateNotifier<DeviceSession> {
-  SessionNotifier(this._auth, this._prefs, {this._db})
+  SessionNotifier(this._auth, this._prefs, {this._db, this._beforeSignOut})
     : super(const UnlinkedSession()) {
     _restore();
   }
@@ -27,6 +27,9 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
   final AuthService _auth;
   final SharedPreferences _prefs;
   final fs.FirebaseFirestore? _db;
+
+  /// Dipanggil sebelum keluar (mis. membatalkan push). Galatnya ditelan.
+  final Future<void> Function()? _beforeSignOut;
 
   StreamSubscription<fs.DocumentSnapshot<Map<String, dynamic>>>? _deviceSub;
 
@@ -49,6 +52,11 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
   }
 
   Future<void> signOut() async {
+    try {
+      await _beforeSignOut?.call();
+    } on Object catch (e) {
+      debugPrint('Pembatalan push gagal: $e');
+    }
     await _auth.signOut();
     _clear();
   }

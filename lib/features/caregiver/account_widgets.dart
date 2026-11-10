@@ -8,6 +8,18 @@ import '../../core/widgets/initials.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
 
+/// Nama anak yang HP-nya terhubung, dipetakan dari `childId` perangkat ke
+/// [children]. Beberapa anak digabung dengan koma; null bila tidak ada.
+String? linkedChildNamesOf(List<LinkedDevice> devices, List<Child> children) {
+  final names = <String>[];
+  for (final device in devices) {
+    for (final c in children) {
+      if (c.id == device.childId && !names.contains(c.name)) names.add(c.name);
+    }
+  }
+  return names.isEmpty ? null : names.join(', ');
+}
+
 class AccountProfileCard extends ConsumerWidget {
   const AccountProfileCard({super.key, this.linkedChildName});
 

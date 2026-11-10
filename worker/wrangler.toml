@@ -12,3 +12,6 @@ id = ""
 
 [vars]
 FIREBASE_PROJECT_ID = "autiplan-bd927"
+
+[observability]
+enabled = true

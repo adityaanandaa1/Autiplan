@@ -2,7 +2,7 @@ import { afterEach, beforeEach, beforeAll, afterAll, describe, expect, test, vi 
 import { createServer, type Server } from 'node:http';
 import { generateKeyPairSync } from 'node:crypto';
 import { exportJWK, importPKCS8, SignJWT } from 'jose';
-import { generate6DigitCode, handleClaimPairing, handleCreatePairing, RateLimiter } from '../src/pairing.js';
+import { generate6DigitCode, handleClaimPairing, handleCreatePairing, normalizeIp, RateLimiter } from '../src/pairing.js';
 import type { KVLike } from '../src/pairing.js';
 import { verifyIdToken } from '../src/auth.js';
 import type { FirestoreClient, PairingCodeDoc } from '../src/firestore.js';
@@ -41,17 +41,28 @@ class FakeFirestore {
     return this.children[`${familyId}/${childId}`] === true;
   }
 
-  async savePairingCode(code: string, data: PairingCodeDoc): Promise<void> {
+  collisions = 0;
+  saveAttempts = 0;
+
+  async savePairingCode(code: string, data: PairingCodeDoc): Promise<boolean> {
+    this.saveAttempts += 1;
+    if (this.collisions > 0) {
+      this.collisions -= 1;
+      return false;
+    }
     this.pairingCodes[code] = data;
+    return true;
   }
 
   async getPairingCode(code: string): Promise<PairingCodeDoc | null> {
     return this.pairingCodes[code] ?? null;
   }
 
+  claimResult = true;
+
   async claimPairingCodeAndRegisterDevice(): Promise<boolean> {
     this.claimCalled += 1;
-    return true;
+    return this.claimResult;
   }
 }
 
@@ -233,7 +244,7 @@ describe('handleClaimPairing', () => {
     expect(db.claimCalled).toBe(0);
   });
 
-  test('gagal tidak menghabiskan kuota uid lain', async () => {
+  test('kegagalan uid lain pada IP yang sama tidak memblokir uid ini', async () => {
     await limiter.recordFailure('uid-lain', '1.2.3.4');
     const res = await handleClaimPairing(
       'child-uid',
@@ -244,6 +255,139 @@ describe('handleClaimPairing', () => {
       NOW,
     );
     expect(res.status).toBe(200);
+  });
+});
+
+describe('handleCreatePairing (diperketat)', () => {
+  test('bentrok kode → ulangi dengan kode baru, maksimal 5 kali', async () => {
+    const db = new FakeFirestore();
+    db.children['uid-1/child-1'] = true;
+    db.collisions = 2;
+    const res = await handleCreatePairing('uid-1', { childId: 'child-1' }, db as unknown as FirestoreClient);
+    expect(res.status).toBe(200);
+    expect(db.saveAttempts).toBe(3);
+
+    const db2 = new FakeFirestore();
+    db2.children['uid-1/child-1'] = true;
+    db2.collisions = 99;
+    await expect(
+      handleCreatePairing('uid-1', { childId: 'child-1' }, db2 as unknown as FirestoreClient),
+    ).rejects.toThrow();
+    expect(db2.saveAttempts).toBe(5);
+  });
+
+  test('childId tidak valid → 400', async () => {
+    const db = new FakeFirestore();
+    for (const childId of ['../x', '', 5, undefined, 'a/b']) {
+      const res = await handleCreatePairing('uid-1', { childId }, db as unknown as FirestoreClient);
+      expect(res.status).toBe(400);
+    }
+  });
+});
+
+describe('RateLimiter (diperketat)', () => {
+  const NOW = Date.UTC(2026, 10, 10, 12, 0, 0);
+
+  function claim(db: FakeFirestore, limiter: RateLimiter, code: unknown = '123456', uid = 'child-uid', ip = '1.2.3.4') {
+    return handleClaimPairing(uid, ip, { code }, db as unknown as FirestoreClient, limiter, NOW);
+  }
+
+  function seeded() {
+    const db = new FakeFirestore();
+    db.pairingCodes['123456'] = {
+      familyId: 'family-1',
+      childId: 'child-1',
+      expiresAt: new Date(NOW + 60_000).toISOString(),
+      usedAt: null,
+      updateTime: 't-1',
+    };
+    return db;
+  }
+
+  test('hitungan naik sebelum verifikasi selesai (permintaan paralel terlihat)', async () => {
+    const kv = new MemoryKV();
+    const db = seeded();
+    let seenDuringLookup: string | null = 'belum';
+    db.getPairingCode = async () => {
+      seenDuringLookup = await kv.get('fail:uid:child-uid');
+      return null;
+    };
+    await claim(db, new RateLimiter(kv));
+    expect(seenDuringLookup).toBe('1');
+  });
+
+  test('klaim berhasil mengembalikan hitungan; kegagalan mempertahankannya', async () => {
+    const kv = new MemoryKV();
+    const limiter = new RateLimiter(kv);
+    const db = seeded();
+    expect((await claim(db, limiter)).status).toBe(200);
+    expect(await kv.get('fail:uid:child-uid')).toBe('0');
+    expect((await claim(db, limiter, '000000')).status).toBe(400);
+    expect(await kv.get('fail:uid:child-uid')).toBe('1');
+  });
+
+  test('klaim gagal di commit (false) tetap terhitung', async () => {
+    const kv = new MemoryKV();
+    const db = seeded();
+    db.claimResult = false;
+    const res = await claim(db, new RateLimiter(kv));
+    expect(res.status).toBe(400);
+    expect(await kv.get('fail:uid:child-uid')).toBe('1');
+  });
+
+  test('format kode salah tetap dihitung sebagai kegagalan', async () => {
+    const kv = new MemoryKV();
+    const limiter = new RateLimiter(kv);
+    const db = seeded();
+    for (const bad of ['12', 123456, null, 'abcdef']) {
+      expect((await claim(db, limiter, bad)).status).toBe(400);
+    }
+    expect(await kv.get('fail:uid:child-uid')).toBe('4');
+    expect(db.claimCalled).toBe(0);
+  });
+
+  test('percobaan ke-6 ditolak 429 dan tidak menaikkan hitungan lagi', async () => {
+    const kv = new MemoryKV();
+    const limiter = new RateLimiter(kv);
+    const db = seeded();
+    for (let i = 0; i < 5; i += 1) await claim(db, limiter, '000000');
+    expect((await claim(db, limiter)).status).toBe(429);
+    expect(await kv.get('fail:uid:child-uid')).toBe('5');
+  });
+
+  test('tanpa binding KV → 503 unavailable; failOpen hanya untuk tes', async () => {
+    const db = seeded();
+    const res = await claim(db, new RateLimiter(null));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'unavailable' });
+    expect(db.claimCalled).toBe(0);
+    expect((await claim(db, new RateLimiter(null, { failOpen: true }))).status).toBe(200);
+  });
+
+  test('KV get/put melempar → 503, bukan galat tak terkendali', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken: KVLike = {
+      get: async () => { throw new Error('kv down'); },
+      put: async () => { throw new Error('kv down'); },
+    };
+    expect((await claim(seeded(), new RateLimiter(broken))).status).toBe(503);
+
+    const putFails: KVLike = { get: async () => null, put: async () => { throw new Error('kv down'); } };
+    expect((await claim(seeded(), new RateLimiter(putFails))).status).toBe(503);
+  });
+
+  test('IPv6 dikunci per /64', async () => {
+    expect(normalizeIp('2001:db8:1:2:aaaa:bbbb:cccc:dddd')).toBe('2001:db8:1:2::/64');
+    expect(normalizeIp('2001:0db8:0001:0002::1')).toBe('2001:db8:1:2::/64');
+    expect(normalizeIp('2001:db8::1')).toBe('2001:db8:0:0::/64');
+    expect(normalizeIp('::ffff:1.2.3.4')).toBe('1.2.3.4');
+    expect(normalizeIp('1.2.3.4')).toBe('1.2.3.4');
+
+    const kv = new MemoryKV();
+    const limiter = new RateLimiter(kv);
+    await limiter.recordFailure('u1', '2001:db8:1:2::1');
+    await limiter.recordFailure('u2', '2001:db8:1:2:ffff::9');
+    expect(await kv.get('fail:ip:2001:db8:1:2::/64')).toBe('2');
   });
 });
 

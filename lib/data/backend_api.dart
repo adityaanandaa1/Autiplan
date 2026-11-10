@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
+// dart:io dipertahankan: SocketException/HandshakeException tidak selalu
+// dibungkus http.ClientException oleh klien IO.
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -10,16 +13,6 @@ class PairingCode {
 
   final String code;
   final DateTime expiresAt;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PairingCode &&
-          code == other.code &&
-          expiresAt == other.expiresAt;
-
-  @override
-  int get hashCode => Object.hash(code, expiresAt);
 }
 
 class ClaimedLink {
@@ -27,16 +20,6 @@ class ClaimedLink {
 
   final String familyId;
   final String childId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ClaimedLink &&
-          familyId == other.familyId &&
-          childId == other.childId;
-
-  @override
-  int get hashCode => Object.hash(familyId, childId);
 }
 
 enum BackendFailure {
@@ -70,27 +53,33 @@ class HttpBackendApi implements BackendApi {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
+  static const _timeout = Duration(seconds: 10);
+
   final String baseUrl;
   final AuthService authService;
   final http.Client _client;
 
   @override
   Future<PairingCode> createPairingCode(String childId) async {
-    final response = await _post('/pairing/create', {'childId': childId});
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return PairingCode(
-      code: json['code'] as String,
-      expiresAt: DateTime.parse(json['expiresAt'] as String),
+    final json = await _postJson('/pairing/create', {'childId': childId});
+    return _parse(
+      () => PairingCode(
+        code: json['code'] as String,
+        expiresAt: DateTime.parse(json['expiresAt'] as String),
+      ),
     );
   }
 
   @override
   Future<ClaimedLink> claimPairingCode(String code) async {
-    final response = await _post('/pairing/claim', {'code': code});
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return ClaimedLink(
-      familyId: json['familyId'] as String,
-      childId: json['childId'] as String,
+    final json = await _postJson('/pairing/claim', {
+      'code': code,
+    }, badRequest: BackendFailure.invalidCode);
+    return _parse(
+      () => ClaimedLink(
+        familyId: json['familyId'] as String,
+        childId: json['childId'] as String,
+      ),
     );
   }
 
@@ -102,36 +91,68 @@ class HttpBackendApi implements BackendApi {
     });
   }
 
-  Future<http.Response> _post(String path, Map<String, dynamic> body) async {
-    final token = await authService.idToken();
+  /// Body 2xx yang rusak atau salah bentuk menjadi [BackendFailure.unknown].
+  static T _parse<T>(T Function() build) {
     try {
-      final uri = Uri.parse('$baseUrl$path');
-      final response = await _client.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
+      return build();
+    } on Object {
+      throw const BackendException(BackendFailure.unknown);
+    }
+  }
+
+  Future<Map<String, dynamic>> _postJson(
+    String path,
+    Map<String, dynamic> body, {
+    BackendFailure badRequest = BackendFailure.unknown,
+  }) async {
+    final response = await _post(path, body, badRequest: badRequest);
+    return _parse(() => jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<http.Response> _post(
+    String path,
+    Map<String, dynamic> body, {
+    BackendFailure badRequest = BackendFailure.unknown,
+  }) async {
+    try {
+      final token = await authService.idToken();
+      final response = await _client
+          .post(
+            Uri.parse('$baseUrl$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }
-      throw _mapStatusCode(response.statusCode);
+      throw BackendException(_mapStatusCode(response.statusCode, badRequest));
+    } on BackendException {
+      rethrow;
+    } on TimeoutException {
+      throw const BackendException(BackendFailure.offline);
     } on SocketException {
+      throw const BackendException(BackendFailure.offline);
+    } on HandshakeException {
       throw const BackendException(BackendFailure.offline);
     } on http.ClientException {
       throw const BackendException(BackendFailure.offline);
+    } on Object {
+      // Galat auth (mis. gagal menyegarkan token) atau galat tak terduga.
+      throw const BackendException(BackendFailure.unknown);
     }
   }
 
-  static BackendException _mapStatusCode(int statusCode) {
+  static BackendFailure _mapStatusCode(int statusCode, BackendFailure bad) {
     return switch (statusCode) {
-      400 => const BackendException(BackendFailure.invalidCode),
-      410 => const BackendException(BackendFailure.expiredCode),
-      429 => const BackendException(BackendFailure.tooManyAttempts),
-      _ => const BackendException(BackendFailure.unknown),
+      400 => bad,
+      410 => BackendFailure.expiredCode,
+      429 => BackendFailure.tooManyAttempts,
+      _ => BackendFailure.unknown,
     };
   }
 }

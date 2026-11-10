@@ -7,6 +7,7 @@ import '../../core/widgets/calm_snackbar.dart';
 import '../../data/backend_api.dart';
 import '../../data/models/models.dart';
 import '../../data/providers.dart';
+import '../common/backend_failure_message.dart';
 
 /// Sheet "Hubungkan HP {anak}": buat kode 6 angka, tampilkan, dan tombol
 /// "Buat kode baru".
@@ -50,19 +51,11 @@ class _PairingSheetState extends ConsumerState<_PairingSheet> {
           .createPairingCode(widget.child.id);
       if (mounted) setState(() => _pairing = result);
     } on BackendException catch (e) {
-      if (mounted) setState(() => _message = _messageFor(e.failure));
+      if (mounted) setState(() => _message = e.failure.createMessage);
     } finally {
       if (mounted) setState(() => _creating = false);
     }
   }
-
-  static String _messageFor(BackendFailure failure) => switch (failure) {
-    BackendFailure.offline => 'Belum ada internet. Coba lagi nanti.',
-    BackendFailure.invalidCode => 'Anak belum bisa dihubungkan. Coba lagi.',
-    BackendFailure.expiredCode => 'Kode sudah tidak berlaku. Buat kode baru.',
-    BackendFailure.tooManyAttempts => 'Coba lagi sebentar lagi.',
-    BackendFailure.unknown => 'Belum bisa membuat kode. Coba lagi sebentar.',
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +155,12 @@ Future<void> showUnlinkDialog(
   );
 
   if (confirmed != true) return;
-  await ref.read(repositoryProvider).unlinkChildDevice(child.id);
-  if (context.mounted) {
-    CalmSnackbar.show(context, message: 'HP ${child.name} sudah diputuskan');
+  String message;
+  try {
+    await ref.read(repositoryProvider).unlinkChildDevice(child.id);
+    message = 'HP ${child.name} sudah diputuskan';
+  } on Object {
+    message = 'Belum bisa memutuskan. Coba lagi sebentar.';
   }
+  if (context.mounted) CalmSnackbar.show(context, message: message);
 }

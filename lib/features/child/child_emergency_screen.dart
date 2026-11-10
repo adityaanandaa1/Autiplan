@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,16 +8,24 @@ import '../../core/clock.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/models.dart';
+import '../../data/notify_helper.dart';
 import '../../data/providers.dart';
-import '../../data/session/device_session.dart';
 
 /// A-07: Konfirmasi darurat (HANDOFF §12 A-07).
 
-class ChildEmergencyScreen extends ConsumerWidget {
+class ChildEmergencyScreen extends ConsumerStatefulWidget {
   const ChildEmergencyScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChildEmergencyScreen> createState() =>
+      _ChildEmergencyScreenState();
+}
+
+class _ChildEmergencyScreenState extends ConsumerState<ChildEmergencyScreen> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<ChildPalette>()!;
     final caregiverName = ref.watch(
       appStateProvider.select((s) => s.settings.caregiverName),
@@ -34,7 +40,7 @@ class ChildEmergencyScreen extends ConsumerWidget {
           child: Column(
             children: [
               ChildBackHeader(
-                title: 'Butuh Bantuan?',
+                title: 'Butuh bantuan?',
                 onBack: () => context.go('/anak'),
               ),
               Expanded(
@@ -84,7 +90,7 @@ class ChildEmergencyScreen extends ConsumerWidget {
               ),
               ChildButton(
                 label: 'Telepon $caregiverLabel',
-                onPressed: () => _call(context, ref),
+                onPressed: () => _call(),
               ),
               const SizedBox(height: AppSpacing.grid12),
               ChildButton(
@@ -99,50 +105,53 @@ class ChildEmergencyScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _call(BuildContext context, WidgetRef ref) async {
-    final state = ref.read(appStateProvider);
-    final notifier = ref.read(appStateProvider.notifier);
-    final clock = ref.read(clockProvider);
-    final child = ref.read(currentChildProvider);
-    final childName = child?.name ?? 'Anak';
-
-    final uri = Uri(scheme: 'tel', path: state.settings.emergencyNumber);
+  Future<void> _call() async {
+    if (_busy) return;
+    _busy = true;
     try {
-      if (state.settings.emergencyNumber.isNotEmpty) {
-        await ref.read(phoneLauncherProvider)(uri);
+      final number = ref.read(appStateProvider).settings.emergencyNumber;
+      if (number.isNotEmpty) {
+        try {
+          await ref.read(phoneLauncherProvider)(
+            Uri(scheme: 'tel', path: number),
+          );
+        } catch (e) {
+          debugPrint('Gagal membuka telepon: $e');
+        }
       }
-    } catch (e) {
-      debugPrint('Gagal membuka telepon: $e');
-    }
+      if (!mounted) return;
 
-    final notifId = const Uuid().v4();
-    final updated = state.copyWith(
-      notifications: [
-        ...state.notifications,
-        CaregiverNotification(
-          id: notifId,
-          type: NotificationType.emergencyPressed,
-          text: '$childName menekan tombol bantuan',
-          at: clock.now,
-          read: false,
-        ),
-      ],
-    );
-    notifier.updateState(updated);
-
-    final session = ref.read(sessionProvider);
-    final familyId = session is ChildSession ? session.familyId : '';
-    if (familyId.isNotEmpty) {
-      unawaited(
-        ref.read(backendApiProvider).notify(familyId, notifId).catchError((
-          Object e,
-        ) {
-          debugPrint('Gagal push darurat: $e');
-          return null;
-        }),
+      // Baca state SESUDAH peluncur telepon, agar tidak menimpa snapshot baru.
+      final state = ref.read(appStateProvider);
+      final childName = ref.read(currentChildProvider)?.name ?? 'Anak';
+      final notifId = const Uuid().v4();
+      final written = ref
+          .read(appStateProvider.notifier)
+          .updateStateAndWait(
+            state.copyWith(
+              notifications: [
+                ...state.notifications,
+                CaregiverNotification(
+                  id: notifId,
+                  type: NotificationType.emergencyPressed,
+                  text: '$childName menekan tombol bantuan',
+                  at: ref.read(clockProvider).now,
+                  read: false,
+                ),
+              ],
+            ),
+          );
+      notifyParentAfterWrite(
+        ref,
+        written: written,
+        notificationId: notifId,
+        label: 'darurat',
       );
+    } catch (e) {
+      debugPrint('Gagal mencatat darurat: $e');
+    } finally {
+      _busy = false;
     }
-
-    if (context.mounted) context.push('/anak/menelepon');
+    if (mounted) context.push('/anak/menelepon');
   }
 }

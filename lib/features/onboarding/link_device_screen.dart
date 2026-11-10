@@ -10,6 +10,7 @@ import '../../data/backend_api.dart';
 import '../../data/providers.dart';
 import '../../data/session/device_session.dart';
 import '../caregiver/forms/form_field.dart';
+import '../common/backend_failure_message.dart';
 
 /// `/hubungkan`: HP anak memasukkan kode 6 angka dari orang tua, lalu klaim
 /// lewat Worker. Berhasil: masuk anonim, klaim, lalu sesi [ChildSession].
@@ -32,36 +33,36 @@ class _LinkDeviceScreenState extends ConsumerState<LinkDeviceScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     final code = _code.text.trim();
+    // Ambil semua dependensi sebelum await: notifier sesi hidup lebih lama
+    // daripada layar ini, jadi klaim yang sukses selalu membentuk sesi.
+    final auth = ref.read(authServiceProvider);
+    final backend = ref.read(backendApiProvider);
+    final session = ref.read(sessionNotifierProvider.notifier);
     setState(() {
       _submitting = true;
       _message = null;
     });
     try {
-      await ref.read(authServiceProvider).signInAnonymously();
-      final link = await ref.read(backendApiProvider).claimPairingCode(code);
-      if (!mounted) return;
-      ref
-          .read(sessionNotifierProvider.notifier)
-          .adoptChildSession(familyId: link.familyId, childId: link.childId);
+      await auth.signInAnonymously();
+      final link = await backend.claimPairingCode(code);
+      session.adoptChildSession(familyId: link.familyId, childId: link.childId);
       // Sesi berganti; router mengarahkan ke /anak.
     } on AuthException catch (e) {
-      if (mounted) setState(() => _message = e.message);
+      _show(e.message);
     } on BackendException catch (e) {
-      if (mounted) setState(() => _message = _messageFor(e.failure));
+      _show(e.failure.claimMessage);
+    } on Object {
+      _show(BackendFailure.unknown.claimMessage);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  static String _messageFor(BackendFailure failure) => switch (failure) {
-    BackendFailure.invalidCode => 'Kode belum cocok. Coba periksa lagi.',
-    BackendFailure.expiredCode => 'Kode sudah tidak berlaku. Minta kode baru.',
-    BackendFailure.tooManyAttempts =>
-      'Terlalu banyak percobaan. Coba lagi nanti.',
-    BackendFailure.offline => 'Belum ada internet. Coba lagi nanti.',
-    BackendFailure.unknown => 'Belum bisa menghubungkan. Coba lagi sebentar.',
-  };
+  void _show(String message) {
+    if (mounted) setState(() => _message = message);
+  }
 
   @override
   Widget build(BuildContext context) {

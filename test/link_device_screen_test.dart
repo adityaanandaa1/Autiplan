@@ -1,6 +1,8 @@
+import 'package:autiplan/data/auth_service.dart';
 import 'package:autiplan/data/backend_api.dart';
 import 'package:autiplan/data/providers.dart';
 import 'package:autiplan/data/session/device_session.dart';
+import 'package:autiplan/data/session/session_notifier.dart';
 import 'package:autiplan/features/onboarding/link_device_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,49 +10,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_auth_service.dart';
+import 'support/fake_backend_api.dart';
 
-class FakeBackendApi implements BackendApi {
-  BackendFailure? nextFailure;
-  ClaimedLink? nextLink;
-
+class _AnonFailsAuth extends FakeAuthService {
   @override
-  Future<PairingCode> createPairingCode(String childId) async {
-    return PairingCode(
-      code: '123456',
-      expiresAt: DateTime.now().add(const Duration(minutes: 10)),
-    );
-  }
-
-  @override
-  Future<ClaimedLink> claimPairingCode(String code) async {
-    final f = nextFailure;
-    if (f != null) throw BackendException(f);
-    return nextLink ??
-        const ClaimedLink(familyId: 'fam-test', childId: 'child-test');
-  }
-
-  @override
-  Future<void> notify(String familyId, String notificationId) async {}
+  Future<String> signInAnonymously() async =>
+      throw const AuthException('Belum bisa masuk. Coba lagi sebentar.');
 }
 
 void main() {
   late FakeAuthService auth;
   late FakeBackendApi backend;
+  late SessionNotifier session;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
     auth = FakeAuthService();
     backend = FakeBackendApi();
+    session = SessionNotifier(auth, prefs);
   });
 
   Widget wrap(Widget child) => ProviderScope(
     overrides: [
       authServiceProvider.overrideWithValue(auth),
       backendApiProvider.overrideWithValue(backend),
-      sessionProvider.overrideWithValue(const UnlinkedSession()),
+      sessionNotifierProvider.overrideWith((ref) => session),
     ],
     child: MaterialApp(home: child),
   );
+
+  Future<void> submit(WidgetTester tester, [String code = '123456']) async {
+    await tester.enterText(find.byType(TextField), code);
+    await tester.pump();
+    await tester.tap(find.text('Hubungkan'));
+    await tester.pumpAndSettle();
+  }
 
   testWidgets('layar hubungkan menampilkan judul dan instruksi tenang', (
     tester,
@@ -61,60 +56,66 @@ void main() {
     expect(find.text('Hubungkan'), findsOneWidget);
   });
 
-  group('Pesan galat kode', () {
-    testWidgets('invalidCode → Kode belum cocok. Coba periksa lagi.', (
-      tester,
-    ) async {
-      backend.nextFailure = BackendFailure.invalidCode;
-      await tester.pumpWidget(wrap(const LinkDeviceScreen()));
-      await tester.enterText(find.byType(TextField), '123456');
-      await tester.pump();
-      await tester.tap(find.text('Hubungkan'));
-      await tester.pumpAndSettle();
-      expect(find.text('Kode belum cocok. Coba periksa lagi.'), findsOneWidget);
-    });
-
-    testWidgets('expiredCode → Kode sudah tidak berlaku. Minta kode baru.', (
-      tester,
-    ) async {
-      backend.nextFailure = BackendFailure.expiredCode;
-      await tester.pumpWidget(wrap(const LinkDeviceScreen()));
-      await tester.enterText(find.byType(TextField), '123456');
-      await tester.pump();
-      await tester.tap(find.text('Hubungkan'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Kode sudah tidak berlaku. Minta kode baru.'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets(
-      'tooManyAttempts → Terlalu banyak percobaan. Coba lagi nanti.',
-      (tester) async {
-        backend.nextFailure = BackendFailure.tooManyAttempts;
-        await tester.pumpWidget(wrap(const LinkDeviceScreen()));
-        await tester.enterText(find.byType(TextField), '123456');
-        await tester.pump();
-        await tester.tap(find.text('Hubungkan'));
-        await tester.pumpAndSettle();
-        expect(
-          find.text('Terlalu banyak percobaan. Coba lagi nanti.'),
-          findsOneWidget,
-        );
-      },
+  testWidgets('klaim sukses membentuk ChildSession dari hasil klaim', (
+    tester,
+  ) async {
+    backend.nextLink = const ClaimedLink(familyId: 'fam-1', childId: 'anak-1');
+    await tester.pumpWidget(wrap(const LinkDeviceScreen()));
+    await submit(tester);
+    expect(backend.claimedCodes, ['123456']);
+    expect(
+      session.state,
+      const ChildSession(familyId: 'fam-1', childId: 'anak-1'),
     );
+  });
 
-    testWidgets('offline → Belum ada internet. Coba lagi nanti.', (
-      tester,
-    ) async {
-      backend.nextFailure = BackendFailure.offline;
-      await tester.pumpWidget(wrap(const LinkDeviceScreen()));
-      await tester.enterText(find.byType(TextField), '123456');
-      await tester.pump();
-      await tester.tap(find.text('Hubungkan'));
-      await tester.pumpAndSettle();
-      expect(find.text('Belum ada internet. Coba lagi nanti.'), findsOneWidget);
-    });
+  testWidgets('tombol nonaktif saat kolom kosong', (tester) async {
+    await tester.pumpWidget(wrap(const LinkDeviceScreen()));
+    await tester.tap(find.text('Hubungkan'));
+    await tester.pumpAndSettle();
+    expect(backend.claimCalls, 0);
+    expect(session.state, const UnlinkedSession());
+  });
+
+  testWidgets('galat tak terduga: pesan unknown, tanpa sesi', (tester) async {
+    backend.nextError = StateError('aneh');
+    await tester.pumpWidget(wrap(const LinkDeviceScreen()));
+    await submit(tester);
+    expect(
+      find.text('Belum bisa menghubungkan. Coba lagi sebentar.'),
+      findsOneWidget,
+    );
+    expect(session.state, const UnlinkedSession());
+  });
+
+  testWidgets('AuthException ditampilkan apa adanya, klaim tidak dipanggil', (
+    tester,
+  ) async {
+    auth = _AnonFailsAuth();
+    final prefs = await SharedPreferences.getInstance();
+    session = SessionNotifier(auth, prefs);
+    await tester.pumpWidget(wrap(const LinkDeviceScreen()));
+    await submit(tester);
+    expect(find.text('Belum bisa masuk. Coba lagi sebentar.'), findsOneWidget);
+    expect(backend.claimCalls, 0);
+  });
+
+  group('Pesan galat kode', () {
+    const cases = {
+      BackendFailure.invalidCode: 'Kode belum cocok. Coba periksa lagi.',
+      BackendFailure.expiredCode: 'Kode sudah tidak berlaku. Minta kode baru.',
+      BackendFailure.tooManyAttempts:
+          'Terlalu banyak percobaan. Coba lagi nanti.',
+      BackendFailure.offline: 'Belum ada internet. Coba lagi nanti.',
+      BackendFailure.unknown: 'Belum bisa menghubungkan. Coba lagi sebentar.',
+    };
+    for (final entry in cases.entries) {
+      testWidgets('${entry.key.name} menampilkan pesan tenang', (tester) async {
+        backend.nextFailure = entry.key;
+        await tester.pumpWidget(wrap(const LinkDeviceScreen()));
+        await submit(tester);
+        expect(find.text(entry.value), findsOneWidget);
+      });
+    }
   });
 }

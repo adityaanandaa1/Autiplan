@@ -21,18 +21,8 @@ class CaregiverAccountScreen extends ConsumerWidget {
     if (child == null) return const CalmEmptyScreen();
 
     final linkedDevices = ref.watch(linkedDevicesProvider).value ?? const [];
-    final linkedChildId = linkedDevices.isEmpty
-        ? null
-        : linkedDevices.first.childId;
-    String? linkedChild;
-    if (linkedChildId != null) {
-      for (final c in state.children) {
-        if (c.id == linkedChildId) {
-          linkedChild = c.name;
-          break;
-        }
-      }
-    }
+    final linkedChild = linkedChildNamesOf(linkedDevices, state.children);
+    final childLinked = linkedDevices.any((d) => d.childId == child.id);
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -139,13 +129,15 @@ class CaregiverAccountScreen extends ConsumerWidget {
                           value: '',
                           onTap: () => showPairingSheet(context, ref, child),
                         ),
-                        const AccountListDivider(),
-                        AccountListRow(
-                          icon: LucideIcons.unlink,
-                          label: 'Putuskan HP ${child.name}',
-                          value: '',
-                          onTap: () => showUnlinkDialog(context, ref, child),
-                        ),
+                        if (childLinked) ...[
+                          const AccountListDivider(),
+                          AccountListRow(
+                            icon: LucideIcons.unlink,
+                            label: 'Putuskan HP ${child.name}',
+                            value: '',
+                            onTap: () => showUnlinkDialog(context, ref, child),
+                          ),
+                        ],
                         const AccountListDivider(),
                         AccountListRow(
                           icon: LucideIcons.logOut,
