@@ -9,6 +9,7 @@ import 'app.dart';
 import 'data/auth_service.dart';
 import 'data/backend_api.dart';
 import 'data/providers.dart';
+import 'data/reminder_service.dart';
 import 'firebase_options.dart';
 
 /// URL Worker dari `--dart-define=WORKER_URL=...`; kosong bila tidak diisi,
@@ -29,6 +30,9 @@ Future<void> main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         authServiceProvider.overrideWithValue(auth),
+        reminderServiceProvider.overrideWithValue(
+          FlutterLocalNotificationsReminderService(),
+        ),
         if (_workerUrl.isNotEmpty)
           backendApiProvider.overrideWithValue(
             HttpBackendApi(baseUrl: _workerUrl, authService: auth),

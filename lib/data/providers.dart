@@ -31,7 +31,8 @@ final backendApiProvider = Provider<BackendApi>((ref) {
   return const NoopBackendApi();
 });
 
-/// Bawaan tidak menjadwalkan apa pun; diganti setelah paket notifikasi lokal disetujui.
+/// Bawaan tidak menjadwalkan apa pun (aman untuk tes); `main()` menggantinya
+/// dengan [FlutterLocalNotificationsReminderService].
 final reminderServiceProvider = Provider<ReminderService>(
   (ref) => const NoopReminderService(),
 );

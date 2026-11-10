@@ -53,6 +53,7 @@ class CaregiverHeader extends StatelessWidget {
                 size: AppSpacing.iconSize24,
               ),
               onPressed: onBack,
+              tooltip: 'Kembali',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(
                 minWidth: AppSpacing.minTouchTarget,
@@ -112,6 +113,9 @@ class CaregiverHeader extends StatelessWidget {
                     size: AppSpacing.iconSize24,
                   ),
                   onPressed: onBellTap,
+                  tooltip: bellHasBadge
+                      ? 'Notifikasi, ada yang belum dibaca'
+                      : 'Notifikasi',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: AppSpacing.minTouchTarget,

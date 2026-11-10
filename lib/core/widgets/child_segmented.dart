@@ -29,21 +29,29 @@ class ChildSegmented extends StatelessWidget {
           final isSelected = index == selectedIndex;
 
           return Expanded(
-            child: GestureDetector(
-              onTap: () => onSegmentSelected(index),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.utamaLembut
-                      : AppColors.transparan,
-                  borderRadius: AppRadius.segmenTerpilih,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${child.name} · ${child.age} th',
-                  style: AppTypography.isi.copyWith(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? AppColors.utama : AppColors.teks,
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              label: '${child.name}, ${child.age} tahun',
+              excludeSemantics: true,
+              child: GestureDetector(
+                onTap: () => onSegmentSelected(index),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.utamaLembut
+                        : AppColors.transparan,
+                    borderRadius: AppRadius.segmenTerpilih,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${child.name} · ${child.age} th',
+                    style: AppTypography.isi.copyWith(
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: isSelected ? AppColors.utama : AppColors.teks,
+                    ),
                   ),
                 ),
               ),

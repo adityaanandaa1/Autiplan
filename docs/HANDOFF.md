@@ -522,7 +522,7 @@ Header "Akun" (tanpa lonceng). Grup:
 3. **Profil Rafi · dipakai untuk saran:** "Suka" (ikon `heart`) "Bersepeda, film animasi"; "Hindari" (ikon `sun`) "Suara keras, tempat ramai". Menekan → sheet edit berisi chip yang bisa ditambah/dihapus (teks bebas, maks 5).
 4. **Pengaturan:** "Pengingat sebelum kegiatan" "15 menit"; "Batas saran" "Jeda 10 mnt · 5 hari" (sheet berisi tiga stepper: jeda minimal 5–30, hari berturut-turut 3–10, waktu tenang 15–60); "Nomor darurat" "0812-3456-7890" (sheet dua kolom: nomor utama, kontak cadangan).
 5. **Demo:** "Ganti ke tampilan anak", "Reset data demo" (konfirmasi dialog sekunder).
-Pengingat di prototipe hanya disimpan sebagai angka (tidak menjadwalkan notifikasi sungguhan).
+Pengingat dijadwalkan sebagai notifikasi lokal di HP orang tua: satu notifikasi per kegiatan yang belum selesai, pada waktu mulai dikurangi nilai ini, isinya "{judul} untuk {anak} mulai {n} menit lagi.", tanpa suara dan getar. Jadwal disusun ulang tiap data berubah (lihat bagian 18).
 
 ### OT-15 · Notifikasi (`/ortu/notifikasi`)
 Header kembali "Notifikasi". Grup "Hari ini" (dan "Sebelumnya" jika ada). Baris: ubin ikon sesuai jenis (changeSeen `circleCheckBig` sukses; activityStarted ikon kegiatan `utama`; activityDone ikon kegiatan; emergencyPressed `phone` bahaya), teks, jam di kanan, pil badge opsional. Membuka layar menandai semua dibaca. Urut terbaru di atas.
@@ -647,7 +647,7 @@ Di `test/`:
 
 ## 17. Hal yang sengaja belum dibuat
 - Sinkronisasi antar-perangkat, akun, server.
-- Notifikasi pengingat sungguhan (nilai pengingat hanya disimpan).
+- Notifikasi pengingat sungguhan (dicabut di bagian 18; sekarang dibuat).
 - Deteksi apakah telepon dijawab.
 - Pemilih bulan penuh (cukup geser minggu).
 - Layar anak untuk Atalia.

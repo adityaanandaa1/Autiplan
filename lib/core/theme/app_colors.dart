@@ -7,7 +7,7 @@ abstract final class AppColors {
   static const Color utama = Color(0xFF3A6EA8);
   static const Color utamaLembut = Color(0xFFE5EDF7);
   static const Color teks = Color(0xFF2F3A45);
-  static const Color teksSekunder = Color(0xFF6B7684);
+  static const Color teksSekunder = Color(0xFF5C6775);
   static const Color garis = Color(0xFFE4E8EC);
   static const Color sukses = Color(0xFF4F8F6A);
   static const Color suksesLembut = Color(0xFFE3F0E8);

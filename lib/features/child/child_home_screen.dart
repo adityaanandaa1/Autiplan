@@ -303,12 +303,21 @@ class ChildHomeScreen extends ConsumerWidget {
             child: InkWell(
               onTap: () => context.push('/anak/tema'),
               borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.grid8),
-                child: Text(
-                  'Tema',
-                  style: AppTypography.sekunderAnak.copyWith(
-                    decoration: TextDecoration.underline,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: AppSpacing.minTouchTarget,
+                  minHeight: AppSpacing.minTouchTarget,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.grid8),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(
+                      'Tema',
+                      style: AppTypography.sekunderAnak.copyWith(
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                 ),
               ),

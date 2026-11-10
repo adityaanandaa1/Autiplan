@@ -100,8 +100,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     onPressed: _submit,
                   ),
                   const SizedBox(height: AppSpacing.grid16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'Sudah punya akun? ',

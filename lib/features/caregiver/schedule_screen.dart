@@ -100,7 +100,12 @@ class CaregiverScheduleScreen extends ConsumerWidget {
             _buildHeader(context, monthYear, state.notifications),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.grid16),
+                // Samping 12 (bukan 16) supaya tujuh tanggal tiap minimal 48 dp
+                // di lebar 360 dp.
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.grid12,
+                  vertical: AppSpacing.grid16,
+                ),
                 children: [
                   ChildSegmented(
                     children: state.children

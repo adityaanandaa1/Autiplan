@@ -11,6 +11,7 @@ class AddFab extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: onPressed,
+      tooltip: 'Tambah jadwal',
       backgroundColor: AppColors.utama,
       elevation: AppSpacing.fabElevation,
       child: const Icon(

@@ -27,53 +27,61 @@ class WeekStrip extends StatelessWidget {
         final dayName = DateFormat.E('id_ID').format(date);
 
         return Expanded(
-          child: GestureDetector(
-            onTap: () => onDateSelected(date),
-            child: Container(
-              color: AppColors.transparan,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid8),
-              child: Column(
-                children: [
-                  Text(
-                    dayName,
-                    style: AppTypography.mikro.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.teksSekunder,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.grid6),
-                  Container(
-                    width: AppSpacing.weekDateCircle,
-                    height: AppSpacing.weekDateCircle,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.utama
-                          : AppColors.transparan,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${date.day}',
-                      style: AppTypography.angkaTanggal.copyWith(
-                        color: isSelected
-                            ? AppColors.teksDiAtasUtama
-                            : AppColors.teks,
+          child: Semantics(
+            button: true,
+            selected: isSelected,
+            label:
+                '${DateFormat.EEEE('id_ID').format(date)} ${date.day}'
+                '${hasActivities ? ', ada kegiatan' : ''}',
+            excludeSemantics: true,
+            child: GestureDetector(
+              onTap: () => onDateSelected(date),
+              child: Container(
+                color: AppColors.transparan,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.grid8),
+                child: Column(
+                  children: [
+                    Text(
+                      dayName,
+                      style: AppTypography.mikro.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.teksSekunder,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.grid6),
-                  if (hasActivities)
+                    const SizedBox(height: AppSpacing.grid6),
                     Container(
-                      width: AppSpacing.weekDot,
-                      height: AppSpacing.weekDot,
-                      decoration: const BoxDecoration(
-                        color: AppColors.anakAksen,
+                      width: AppSpacing.weekDateCircle,
+                      height: AppSpacing.weekDateCircle,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.utama
+                            : AppColors.transparan,
                         shape: BoxShape.circle,
                       ),
-                    )
-                  else
-                    const SizedBox(height: AppSpacing.weekDot),
-                ],
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${date.day}',
+                        style: AppTypography.angkaTanggal.copyWith(
+                          color: isSelected
+                              ? AppColors.teksDiAtasUtama
+                              : AppColors.teks,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.grid6),
+                    if (hasActivities)
+                      Container(
+                        width: AppSpacing.weekDot,
+                        height: AppSpacing.weekDot,
+                        decoration: const BoxDecoration(
+                          color: AppColors.anakAksen,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    else
+                      const SizedBox(height: AppSpacing.weekDot),
+                  ],
+                ),
               ),
             ),
           ),

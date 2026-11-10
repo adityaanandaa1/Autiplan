@@ -35,7 +35,7 @@ abstract final class AppSpacing {
 
   // Ukuran komponen
   static const double headerHeight = 64.0;
-  static const double segmentedHeight = 44.0;
+  static const double segmentedHeight = 58.0;
   static const double activityTimeWidth = 44.0;
   static const double iconTile40 = 40.0;
   static const double iconTile44 = 44.0;

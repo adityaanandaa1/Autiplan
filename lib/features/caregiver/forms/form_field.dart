@@ -85,6 +85,9 @@ class FormTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final field = FormBox(
+      // Tinggi isian 48 dp dipegang oleh `constraints` di bawah, jadi padding
+      // vertikal kotak dibuang supaya target sentuh seluruh kotak.
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.grid14),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -99,6 +102,9 @@ class FormTextField extends StatelessWidget {
           isDense: true,
           counterText: '',
           contentPadding: EdgeInsets.zero,
+          constraints: const BoxConstraints(
+            minHeight: AppSpacing.minTouchTarget,
+          ),
         ),
       ),
     );

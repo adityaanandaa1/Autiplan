@@ -292,19 +292,17 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Worker belum dideploy; uji dua perangkat dan uji push di perangkat menunggu deploy.
 
 
-## Tahap 13 — Pengingat lokal dan uji akhir (sebagian)
+## Tahap 13 — Pengingat lokal, desugaring, audit aksesibilitas
 
-- **Status:** sebagian (10 November 2026). Perencanaan pengingat selesai dan teruji; penjadwalan notifikasi sungguhan **menunggu persetujuan paket** `flutter_local_notifications`, `timezone`, `flutter_timezone` (belum ada di `pubspec.yaml`). Langkah 5 (uji dua HP) bukan bagian pekerjaan ini.
+- **Status:** selesai kode (10 November 2026). Yang tersisa hanya uji di perangkat dan pekerjaan yang menunggu pengguna (lihat Utang).
 - **Isi:**
-  - `lib/domain/reminder_plan.dart`: `PlannedReminder` + `planReminders(state, now, {maxCount = 50})`. Teks "{judul} untuk {anak} mulai {n} menit lagi."; waktu lewat dan kegiatan selesai dilewati; urut paling awal.
-  - `lib/data/reminder_service.dart`: antarmuka `ReminderService` + `NoopReminderService`; `reminderServiceProvider` di `providers.dart`.
-  - `lib/app.dart`: tiap `appStateProvider` atau sesi berubah memanggil `reschedule` (hanya `CaregiverSession`; selain itu `cancelAll`). Sementara Noop.
-  - `DaySummary`: tanggal kini `Flexible` (tidak overflow di 360 dp, skala 1.3). "Lihat langkah lengkap" kini minimal 48 dp dan ber-`Semantics`.
-  - `test/reminder_plan_test.dart`, `test/layout_small_screen_test.dart` (lima layar di 360 dp, skala teks 1.3).
-- **Sudah ada sebelumnya (diverifikasi):** "Berlaku 10 menit." di sheet pairing, "Bisa dikembalikan ke N langkah kapan saja.", tombol "Lihat langkah lengkap", dan tidak ada lagi teks "hanya disimpan sebagai angka" di `lib/`.
-- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 333 lulus. Worker tidak berubah.
+  - `lib/data/reminder_service.dart`: `NotificationGateway` (antarmuka tipis), `FlutterLocalNotificationsReminderService` (init + izin sekali, `cancelAll`, lalu jadwalkan tiap `PlannedReminder`), `PluginNotificationGateway` (plugin + `timezone` + `flutter_timezone`, `inexactAllowWhileIdle`, channel tanpa suara/getar), `reminderNotificationId` (FNV-1a). `main.dart` menimpa `reminderServiceProvider`; bawaan tetap Noop untuk tes.
+  - Paket: `flutter_local_notifications ^22.3.3` (23.0.0 butuh compileSdk 37), `timezone`, `flutter_timezone`. `android/app/build.gradle.kts`: desugaring aktif + `desugar_jdk_libs:2.1.4`.
+  - Audit aksesibilitas §14: `test/accessibility_test.dart` (96+ kasus). Temuan dan perbaikan ada di DECISIONS.md (kontras `teksSekunder`, label tombol kembali/lonceng/FAB, target sentuh chip anak/strip tanggal/isian/Tema, overflow baris masuk/daftar, Semantics chip dan tanggal).
+  - HANDOFF §11 dan §17 diperbarui; `test/reminder_service_test.dart`.
+- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 433 lulus; `flutter build apk --debug` berhasil (~3 menit).
 - **Utang:**
-  - `FlutterLocalNotificationsReminderService` (`AndroidScheduleMode.inexactAllowWhileIdle`, izin `POST_NOTIFICATIONS` sudah ada) dan core library desugaring di `android/app/build.gradle.kts` menunggu persetujuan paket; desugaring belum diaktifkan karena belum bisa dibuktikan lewat build.
-  - Baris HANDOFF §11 "Pengingat di prototipe hanya disimpan sebagai angka" masih ada dan perlu diperbarui setelah notifikasi sungguhan jalan.
-  - Audit aksesibilitas §14 menyeluruh (label Semantics tiap tombol, kontras) belum dilakukan di semua layar; baru kasus "Lihat langkah lengkap".
-  - Langkah 5, `flutter build apk --release`, deploy Worker: menunggu pengguna.
+  - Notifikasi belum diuji di perangkat nyata (izin runtime Android 13+, ketepatan `inexactAllowWhileIdle`, zona waktu, channel tanpa suara).
+  - Langkah 5 (uji dua HP), `flutter build apk --release`, dan deploy Worker menunggu pengguna.
+  - Uji TalkBack dan urutan baca di perangkat nyata belum dilakukan; audit otomatis tidak menilai teks di atas gambar.
+  - Naikkan `flutter_local_notifications` ke 23.x setelah Android SDK 37 terpasang dengan benar.
