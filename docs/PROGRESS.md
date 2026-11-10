@@ -306,3 +306,18 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Langkah 5 (uji dua HP), `flutter build apk --release`, dan deploy Worker menunggu pengguna.
   - Uji TalkBack dan urutan baca di perangkat nyata belum dilakukan; audit otomatis tidak menilai teks di atas gambar.
   - Naikkan `flutter_local_notifications` ke 23.x setelah Android SDK 37 terpasang dengan benar.
+
+
+## Perbaikan setelah uji di HP (10 November 2026)
+
+- **Status:** kode selesai dan di-push. Worker sudah dideploy ke `https://autiplan-worker.autiplan-app.workers.dev` dan secret `FIREBASE_SERVICE_ACCOUNT` terpasang, tetapi **deploy ulang** setelah perbaikan `fetch` menunggu pengguna.
+- **Isi:**
+  - Kode pairing tidak muncul: penyebab pertama aplikasi dijalankan tanpa `WORKER_URL` (memakai `NoopBackendApi`), lalu log `wrangler tail` menunjukkan `TypeError: Illegal invocation` di Worker. Perbaikan di `worker/src/firestore.ts` dan `worker/src/notify.ts` (lihat DECISIONS.md). Rute `/notify` memakai jalur yang sama, jadi ikut terperbaiki.
+  - `lib/features/caregiver/schedule_screen.dart`: pemilih bulan di header dan panah minggu di atas strip tanggal.
+  - `worker/wrangler.toml`: id namespace KV `ATTEMPTS` terisi.
+- **Hasil:** `flutter analyze` 0 isu; `flutter test` 433 lulus; `npx tsc --noEmit` bersih; `npx vitest run` 77 lulus.
+- **Utang:**
+  - Jalankan `npx wrangler deploy` dari `worker/`, lalu coba "Buat kode baru" dengan `wrangler tail` terbuka. Bila galat baru muncul, kemungkinan Firestore API belum aktif atau izin akun layanan kurang.
+  - Build APK memakai `--dart-define=WORKER_URL=https://autiplan-worker.autiplan-app.workers.dev`.
+  - Panah minggu dan pemilih bulan belum punya tes widget.
+  - Uji dua HP (klaim kode) dan uji push di perangkat nyata masih menunggu.
