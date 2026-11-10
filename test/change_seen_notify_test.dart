@@ -138,4 +138,23 @@ void main() {
 
     expect(find.text('Beranda anak'), findsOneWidget);
   });
+
+  testWidgets('tekan ganda hanya satu notifikasi dan satu push', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final container = await _pump(tester, _Api((_, n) async => sent.add(n)));
+
+    await tester.tap(find.text('Oke, aku mengerti'));
+    await tester.tap(find.text('Oke, aku mengerti'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    final seen = container
+        .read(appStateProvider)
+        .notifications
+        .where((n) => n.type == NotificationType.changeSeen);
+    expect(seen, hasLength(1));
+    expect(sent, hasLength(1));
+    expect(find.text('Beranda anak'), findsOneWidget);
+  });
 }

@@ -45,7 +45,8 @@ class CaregiverNotification {
     'id': id,
     'type': type.name,
     'text': text,
-    'at': at.toIso8601String(),
+    // UTC (berakhiran Z) agar Worker bisa menghitung umur notifikasi.
+    'at': at.toUtc().toIso8601String(),
     'read': read,
     if (badge != null) 'badge': badge,
   };
@@ -55,7 +56,7 @@ class CaregiverNotification {
       id: json['id'] as String,
       type: NotificationType.values.byName(json['type'] as String),
       text: json['text'] as String,
-      at: DateTime.parse(json['at'] as String),
+      at: DateTime.parse(json['at'] as String).toLocal(),
       read: json['read'] as bool,
       badge: json['badge'] as String?,
     );

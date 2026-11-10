@@ -282,11 +282,11 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - `PushService.unregister()` dipanggil sebelum `signOut`; `registerCaregiverDevice` idempoten; `onTokenRefresh` memakai `catchError`; `app.dart` memakai satu fungsi register.
   - `LinkDeviceScreen`: sesi selalu terbentuk setelah klaim sukses; galat tak terduga jadi pesan tenang. Sheet pairing: galat putus HP ditangani; baris "Putuskan" hanya tampil bila ada HP anak terhubung; nama anak terhubung dipetakan dari `childId`.
 - **Perbaikan Worker:** validasi masukan dan `encodeURIComponent`, JWKS dan token OAuth di-cache, `/notify` hanya `emergencyPressed` dan `changeSeen` dengan `Promise.allSettled` dan `android.priority: high`, dokumen hilang → 404, UNREGISTERED dari badan JSON, prasyarat Firestore yang tepat, rate limiter naik sebelum verifikasi dan fail-closed.
-- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 321 lulus; `npx tsc --noEmit` bersih; `npx vitest run` 77 lulus (4 berkas).
+- **Perbaikan susulan:** `CaregiverNotification.at` kini ditulis UTC (dibaca `toLocal()`), `_acknowledge` mengabaikan tap kedua (tanpa notifikasi/push ganda), `.agents/` dikeluarkan dari git dan di-ignore.
+- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 324 lulus; `npx tsc --noEmit` bersih; `npx vitest run` 77 lulus (4 berkas).
 - **Utang yang diketahui:**
   - Rate limiter memakai KV yang tidak atomik: pembatas upaya terbaik, bukan jaminan (Durable Object sengaja tidak dipakai).
-  - `CaregiverNotification.at` ditulis tanpa zona waktu, jadi cek umur notifikasi di Worker belum berlaku sampai klien menulis UTC.
+  - Notifikasi lama yang sudah tersimpan di Firestore tanpa zona waktu (sebelum perbaikan UTC) tidak terkena cek umur di Worker; yang baru ditulis UTC.
   - Klaim ganda atas kode pasangan (Firestore `FAILED_PRECONDITION` → HTTP 400) dan `/notify` di perangkat nyata belum diuji di emulator/deploy.
-  - `ChildChangeScreen._acknowledge` belum punya penjaga tekan ganda.
   - Sisa masa berlaku kode pasangan belum ditampilkan (teks wajib "Berlaku 10 menit.").
   - Worker belum dideploy; uji dua perangkat dan uji push di perangkat menunggu deploy.

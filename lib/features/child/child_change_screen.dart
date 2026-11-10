@@ -251,6 +251,12 @@ class ChildChangeScreen extends ConsumerWidget {
       now: now,
       notificationId: notificationId,
     );
+    // Tap kedua (notice sudah dilihat): state tidak berubah, jangan kirim
+    // notifikasi atau push lagi.
+    if (identical(updated, state)) {
+      context.go('/anak');
+      return;
+    }
     final written = ref
         .read(appStateProvider.notifier)
         .updateStateAndWait(updated);
