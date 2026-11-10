@@ -97,7 +97,7 @@ class CaregiverScheduleScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context, monthYear, state.notifications),
+            _buildHeader(context, ref, monthYear, selectedDate, state),
             Expanded(
               child: ListView(
                 // Samping 12 (bukan 16) supaya tujuh tanggal tiap minimal 48 dp
@@ -118,19 +118,36 @@ class CaregiverScheduleScreen extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: AppSpacing.grid12),
+                  // Panah memberi petunjuk bahwa minggu bisa digeser; geser
+                  // jari pada strip tetap berfungsi.
+                  Row(
+                    children: [
+                      _WeekArrow(
+                        icon: LucideIcons.chevronLeft,
+                        label: 'Minggu sebelumnya',
+                        onTap: () => _shift(ref, weekStart, selectedDate, -1),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _weekRange(weekDates),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.meta.copyWith(
+                            color: AppColors.teksSekunder,
+                          ),
+                        ),
+                      ),
+                      _WeekArrow(
+                        icon: LucideIcons.chevronRight,
+                        label: 'Minggu berikutnya',
+                        onTap: () => _shift(ref, weekStart, selectedDate, 1),
+                      ),
+                    ],
+                  ),
                   GestureDetector(
                     onHorizontalDragEnd: (details) {
                       final v = details.primaryVelocity ?? 0;
                       if (v == 0) return;
-                      final shifted = shiftWeek(
-                        weekStart,
-                        selectedDate,
-                        v < 0 ? 1 : -1,
-                      );
-                      ref.read(selectedWeekStartProvider.notifier).state =
-                          shifted.weekStart;
-                      ref.read(selectedDateProvider.notifier).state =
-                          shifted.selectedDate;
+                      _shift(ref, weekStart, selectedDate, v < 0 ? 1 : -1);
                     },
                     child: WeekStrip(
                       dates: weekDates,
@@ -182,31 +199,116 @@ class CaregiverScheduleScreen extends ConsumerWidget {
     );
   }
 
+  static void _shift(WidgetRef ref, DateTime weekStart, DateTime date, int w) {
+    final shifted = shiftWeek(weekStart, date, w);
+    ref.read(selectedWeekStartProvider.notifier).state = shifted.weekStart;
+    ref.read(selectedDateProvider.notifier).state = shifted.selectedDate;
+  }
+
+  static String _weekRange(List<DateTime> days) {
+    final first = days.first;
+    final last = days.last;
+    final end = DateFormat('d MMM', 'id_ID').format(last);
+    final start = first.month == last.month
+        ? '${first.day}'
+        : DateFormat('d MMM', 'id_ID').format(first);
+    return '$start – $end';
+  }
+
+  Future<void> _pickMonth(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime selectedDate,
+  ) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(selectedDate.year - 2),
+      lastDate: DateTime(selectedDate.year + 2, 12, 31),
+      locale: const Locale('id', 'ID'),
+    );
+    if (picked == null) return;
+    final day = DateTime(picked.year, picked.month, picked.day);
+    ref.read(selectedDateProvider.notifier).state = day;
+    ref.read(selectedWeekStartProvider.notifier).state = mondayOf(day);
+  }
+
   Widget _buildHeader(
     BuildContext context,
+    WidgetRef ref,
     String monthYear,
-    List<CaregiverNotification> notifications,
+    DateTime selectedDate,
+    AppState state,
   ) {
     return CaregiverHeader(
       title: 'Jadwal',
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            monthYear,
-            style: AppTypography.judulBaris.copyWith(color: AppColors.utama),
+      trailing: Semantics(
+        button: true,
+        label: 'Pilih bulan, $monthYear',
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: () => _pickMonth(context, ref, selectedDate),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppSpacing.minTouchTarget,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  monthYear,
+                  style: AppTypography.judulBaris.copyWith(
+                    color: AppColors.utama,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.grid4),
+                const Icon(
+                  LucideIcons.chevronDown,
+                  size: AppSpacing.iconSize18,
+                  color: AppColors.utama,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: AppSpacing.grid4),
-          const Icon(
-            LucideIcons.chevronDown,
-            size: AppSpacing.iconSize18,
-            color: AppColors.utama,
-          ),
-        ],
+        ),
       ),
       showBell: true,
       onBellTap: () => context.push('/ortu/notifikasi'),
-      bellHasBadge: notifications.any((n) => !n.read),
+      bellHasBadge: state.notifications.any((n) => !n.read),
+    );
+  }
+}
+
+class _WeekArrow extends StatelessWidget {
+  const _WeekArrow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: AppSpacing.minTouchTarget,
+          height: AppSpacing.minTouchTarget,
+          child: Icon(
+            icon,
+            size: AppSpacing.iconSize24,
+            color: AppColors.utama,
+          ),
+        ),
+      ),
     );
   }
 }

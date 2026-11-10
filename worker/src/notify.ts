@@ -27,7 +27,7 @@ export async function handleNotify(
   firestore: FirestoreClient,
   projectId: string,
   tokenGetter: () => Promise<string>,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = (input, init) => fetch(input, init),
   nowMs: number = Date.now(),
 ): Promise<Response> {
   const { familyId, notificationId } = body;

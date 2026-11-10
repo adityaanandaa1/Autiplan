@@ -21,7 +21,7 @@ export function clearTokenCache(): void {
 
 export async function getAccessToken(
   sa: ServiceAccount,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = (input, init) => fetch(input, init),
   nowMs: number = Date.now(),
 ): Promise<string> {
   const cached = tokenCache.get(sa.client_email);
@@ -80,7 +80,7 @@ export class FirestoreClient {
   constructor(
     private readonly projectId: string,
     private readonly tokenGetter: () => Promise<string>,
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
   private get baseUrl(): string {
@@ -293,7 +293,7 @@ export async function sendFcmMessage(
   fcmToken: string,
   title: string,
   body: string,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<{ ok: boolean; unregistered: boolean }> {
   const accessToken = await tokenGetter();
   const url = `https://fcm.googleapis.com/v1/projects/${enc(projectId)}/messages:send`;

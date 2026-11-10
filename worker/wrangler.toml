@@ -8,7 +8,7 @@ compatibility_date = "2026-11-01"
 # persetujuan pengguna), lalu id-nya ditempel di sini.
 [[kv_namespaces]]
 binding = "ATTEMPTS"
-id = ""
+id = "a8077551b6274f4eb012f398cab8f52d"
 
 [vars]
 FIREBASE_PROJECT_ID = "autiplan-bd927"
