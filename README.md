@@ -22,17 +22,20 @@ Anak dengan spektrum autisme (*Autism Spectrum Disorder* / ASD) memiliki kebutuh
 AutiPlan mengintegrasikan dua antarmuka dalam satu ekosistem:
 
 ### 1. 👨‍👩‍👧 Sisi Orang Tua / Pengasuh (*Caregiver*)
-* **Dashboard & Manajemen Jadwal:** Menyusun, mengubah, dan menghapus jadwal kegiatan harian maupun mingguan dengan mudah.
+* **Dashboard & Manajemen Jadwal:** Menyusun, mengubah, dan menghapus jadwal kegiatan harian maupun mingguan dengan navigasi kalender yang intuitif.
+* **Jadwal Berulang (*Recurring Activities*):** Mendukung pengaturan kegiatan rutin otomatis berdasarkan hari (Senin–Minggu).
 * **Deteksi Bentrok Otomatis (*Conflict Resolution*):** Mendeteksi jadwal yang bertumpukan secara *real-time* dan memberikan rekomendasi slot waktu luang terdekat.
 * **Jeda Transisi & Waktu Tenang (*Quiet Time*):** Menganalisis jeda antar-kegiatan (minimal 10 menit) serta menyarankan waktu istirahat tanpa gawai minimal 30 menit sebelum jam tidur.
 * **Mesin Saran Cerdas (*Smart Suggestion Engine*):** Merekomendasikan pengisian hari kosong (*empty day*) dan mode mandiri (*independence mode*) saat anak konsisten menyelesaikan kegiatan tepat waktu.
-* **Pemantauan Status (*Real-time Notice*):** Mengetahui secara pasti kapan anak telah membuka dan memahami informasi perubahan jadwal.
+* **Sinkronisasi Multi-Perangkat (Cloud Firestore):** Terhubung langsung dengan HP anak melalui kode pasang (*pairing code*) 6 digit yang aman tanpa perlu login akun yang rumit.
+* **Notifikasi Push Instan (FCM):** Menerima notifikasi langsung di ponsel pengasuh ketika anak menekan tombol darurat atau membaca perubahan jadwal.
 
 ### 2. 🧒 Sisi Anak (*Child - Rafi, 12 Tahun*)
 * **Antarmuka Tenang & Ramah Sensorik (*Calm Palette*):** Dirancang tanpa warna merah tajam, tanpa hitam pekat (*pure black*), tanpa gradien kontras, serta bebas dari animasi pantul atau getaran yang memicu distorsi sensorik.
 * **Pemberitahuan Perubahan Lembut ("Dulu ➔ Sekarang"):** Perubahan jadwal disajikan melalui banner komparatif yang menenangkan—bukan berupa *pop-up* mendadak yang mengejutkan.
 * **Ceklis Langkah Terurai (*Step-by-Step Checklist*):** Memecah setiap kegiatan menjadi sub-langkah konkret yang dapat dicentang secara mandiri oleh anak.
-* **Tombol Darurat Satu Sentuhan (*Emergency Button*):** Tombol mengambang (*floating*) di pojok kanan bawah yang langsung menghubungkan anak ke panggilan telepon orang tua saat merasa cemas atau butuh bantuan.
+* **Pengingat Jadwal Lokal (*Local Notifications*):** Menampilkan pengingat otomatis di perangkat sebelum kegiatan dimulai dengan kanal notifikasi tenang tanpa suara yang mengejutkan.
+* **Tombol Darurat Satu Sentuhan (*Emergency Button*):** Tombol mengambang (*floating*) di pojok kanan bawah yang langsung menghubungkan anak ke panggilan telepon orang tua saat merasa cemas atau butuh bantuan mendesak.
 * **Personalisasi Tema Visual:** Pilihan warna pastel yang menenangkan sesuai preferensi anak.
 
 ---
@@ -63,39 +66,43 @@ Sesuai pedoman desain untuk neurodivergensi:
 
 ## 🛠️ Arsitektur & Teknologi
 
-* **Framework:** [Flutter](https://flutter.dev) (Dart 3)
-* **State Management:** [Riverpod](https://riverpod.dev)
-* **Routing:** [GoRouter](https://pub.dev/packages/go_router) (*StatefulShellRoute* untuk navigasi multi-tab)
-* **Desain & Ikonografi:** [Lucide Icons](https://lucide.dev)
-* **Penyimpanan Lokal:** `LocalRepository` dengan model serialisasi JSON dan data *seed* simulasi.
-* **Mode Demo:** Dilengkapi jam demo statis (*Demo Clock*) dan tombol alih peran cepat (*Role Switcher*) untuk keperluan pengujian dan evaluasi.
+* **Aplikasi Mobile (Client):**
+  * **Framework:** [Flutter](https://flutter.dev) (Dart 3)
+  * **State Management:** [Riverpod](https://riverpod.dev)
+  * **Routing & Deep Linking:** [GoRouter](https://pub.dev/packages/go_router) (*StatefulShellRoute* untuk multi-tab & session guard)
+  * **Desain & Ikonografi:** [Lucide Icons](https://lucide.dev)
+  * **Notifikasi Lokal:** `flutter_local_notifications` dengan dukungan zona waktu (*timezone*) dan Java 8 Desugaring
+* **Layanan Cloud & Backend:**
+  * **Database & Aturan Akses:** [Firebase Firestore](https://firebase.google.com/docs/firestore) dengan *family-scoped security rules*
+  * **Push Notification:** [Firebase Cloud Messaging (FCM HTTP v1)](https://firebase.google.com/docs/cloud-messaging)
+  * **Edge API & Rate Limiting:** [Cloudflare Workers](https://workers.cloudflare.com/) (TypeScript) & Cloudflare KV
+* **Kualitas Kode & Aksesibilitas:**
+  * **433 Tes Otomatis (Flutter):** Meliputi unit test aturan jadwal, suggestion engine, sinkronisasi, dan tes widget.
+  * **77 Tes Backend (Vitest):** Pengujian menyeluruh untuk API pairing dan push dispatch.
+  * **Audit Aksesibilitas Penuh:** 96+ pengujian aksesibilitas mencakup kontras warna WCAG, target sentuh (min. 48dp), dan dukungan pembaca layar (*Semantics / TalkBack*).
 
 ---
 
 ## 📂 Struktur Direktori
 
 ```text
-lib/
-├── core/
-│   ├── clock.dart               # Simulasi jam demo
-│   ├── router.dart              # Konfigurasi navigasi & rute
-│   ├── theme/                   # Token desain (warna, tipografi, radius, spasi)
-│   └── widgets/                 # Komponen UI bersama (header, card, buttons, mascot)
-├── data/
-│   ├── models/                  # Data class (Activity, Child, ChangeNotice, Suggestion)
-│   ├── providers.dart           # Provider state Riverpod
-│   ├── repository.dart          # Abstraksi repository
-│   └── seed.dart                # Data awal untuk pengujian
-├── domain/
-│   ├── schedule_rules.dart      # Logika bisnis jadwal, bentrok, & validasi
-│   └── suggestion_engine.dart   # Algoritma saran otomatis (quiet time, empty day, dll.)
-├── features/
-│   ├── caregiver/               # Layar & form sisi orang tua (Beranda, Jadwal, Akun, Saran)
-│   ├── child/                   # Layar sisi anak (Beranda anak, Aktivitas, Darurat, Tema)
-│   ├── role_picker/             # Layar pilih peran (Mode Pengasuh vs Mode Anak)
-│   └── dev/                     # Galeri komponen (khusus mode debug)
-├── app.dart                     # Inisialisasi MaterialApp
-└── main.dart                    # Entry point aplikasi
+Autiplan/
+├── lib/
+│   ├── core/                    # Token desain (warna, tipografi), router, clock, & komponen UI
+│   ├── data/                    # Models, repository (lokal & Firestore), sync, push, reminder, & providers
+│   ├── domain/                  # Aturan jadwal, deteksi bentrok, & mesin saran otomatis
+│   ├── features/
+│   │   ├── caregiver/           # Layar orang tua (Beranda, Jadwal mingguan, Notifikasi, Akun)
+│   │   ├── child/               # Layar anak (Jadwal visual, Ceklis langkah, Panggilan darurat, Tema)
+│   │   ├── pairing/             # Alur penghubung perangkat (Pairing code 6 digit)
+│   │   └── role_picker/         # Layar pilih peran & mode demo
+│   ├── app.dart                 # Konfigurasi MaterialApp, tema, & session watcher
+│   └── main.dart                # Entry point aplikasi Flutter
+├── worker/                      # Backend Cloudflare Worker (TypeScript)
+│   ├── src/                     # Endpoint /pair, /notify, & integrasi Firestore FCM
+│   └── test/                    # Pengujian unit backend (Vitest)
+├── test/                        # 433 unit, widget, dan accessibility tests
+└── docs/                        # Dokumentasi arsitektur, laporan pengujian, & tangkapan layar
 ```
 
 ---
