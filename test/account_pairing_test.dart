@@ -109,6 +109,46 @@ void main() {
       );
     });
 
+    testWidgets('dua anak: setiap anak punya barisnya sendiri', (tester) async {
+      bigView(tester);
+      final rafi = buildFixtureState().children.first.copyWith(
+        id: 'child-1',
+        name: 'Rafi',
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sessionProvider.overrideWithValue(testCaregiverSession),
+            clockProvider.overrideWithValue(Clock(() => fixtureNow)),
+            backendApiProvider.overrideWithValue(backend),
+            linkedDevicesProvider.overrideWith(
+              (ref) => Stream.value(const [
+                LinkedDevice(uid: 'u1', childId: 'child-1'),
+              ]),
+            ),
+            appStateProvider.overrideWith(
+              (ref) => AppStateNotifier(
+                InMemoryRepository(),
+                buildFixtureState().copyWith(
+                  children: [
+                    rafi,
+                    rafi.copyWith(id: 'child-2', name: 'Atalia'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          child: const MaterialApp(home: CaregiverAccountScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('HP anak'), findsOneWidget);
+      expect(find.text('Putuskan HP Rafi'), findsOneWidget);
+      expect(find.text('Hubungkan HP Atalia'), findsOneWidget);
+      expect(find.text('Hubungkan HP Rafi'), findsNothing);
+      expect(find.text('Putuskan HP Atalia'), findsNothing);
+    });
+
     testWidgets('perangkat anak lain: Putuskan HP Rafi tidak tampil', (
       tester,
     ) async {

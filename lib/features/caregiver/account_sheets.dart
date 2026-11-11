@@ -19,6 +19,7 @@ void showProfileListSheet(
 ) {
   final isLikes = field == 'Suka';
   final items = [...(isLikes ? child.likes : child.avoids)];
+  final input = TextEditingController();
 
   showModalBottomSheet(
     context: context,
@@ -26,10 +27,13 @@ void showProfileListSheet(
     isScrollControlled: true,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setSheetState) {
+        // Menambah isi kolom ke daftar, lalu mengosongkan kolom.
         void addItem(String text) {
           final t = text.trim();
-          if (t.isEmpty || items.length >= 5 || items.contains(t)) return;
-          setSheetState(() => items.add(t));
+          if (t.isNotEmpty && items.length < 5 && !items.contains(t)) {
+            setSheetState(() => items.add(t));
+          }
+          input.clear();
         }
 
         return _SheetFrame(
@@ -49,10 +53,11 @@ void showProfileListSheet(
             ),
             const SizedBox(height: AppSpacing.grid12),
             Text(
-              'Tulis dan tekan Enter untuk menambah (maks 5).',
+              'Tulis lalu tekan Enter untuk menambah, atau langsung Simpan (maks 5).',
               style: AppTypography.meta,
             ),
             TextField(
+              controller: input,
               textInputAction: TextInputAction.done,
               onSubmitted: addItem,
               decoration: const InputDecoration(hintText: 'Tambah item'),
@@ -61,10 +66,16 @@ void showProfileListSheet(
             PrimaryButton(
               label: 'Simpan',
               onPressed: () {
+                // Teks yang belum ditambah dengan Enter ikut disimpan.
+                addItem(input.text);
                 final state = ref.read(appStateProvider);
-                final updated = child.copyWith(
-                  likes: isLikes ? items : child.likes,
-                  avoids: isLikes ? child.avoids : items,
+                final current = state.children.firstWhere(
+                  (c) => c.id == child.id,
+                  orElse: () => child,
+                );
+                final updated = current.copyWith(
+                  likes: isLikes ? items : current.likes,
+                  avoids: isLikes ? current.avoids : items,
                 );
                 ref
                     .read(appStateProvider.notifier)
@@ -294,10 +305,19 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
 }
 
 /// Sheet "Tambah anak": nama lengkap, nama panggilan, umur.
-void showAddChildSheet(BuildContext context, WidgetRef ref) {
-  final fullName = TextEditingController();
-  final nickname = TextEditingController();
-  final age = TextEditingController();
+void showAddChildSheet(BuildContext context, WidgetRef ref) =>
+    showChildFormSheet(context, ref);
+
+/// Sheet form anak. Tanpa [existing] menambah anak baru; dengan [existing]
+/// mengubah nama dan umur anak itu (id, tema, dan profil tetap).
+void showChildFormSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  Child? existing,
+}) {
+  final fullName = TextEditingController(text: existing?.fullName ?? '');
+  final nickname = TextEditingController(text: existing?.name ?? '');
+  final age = TextEditingController(text: existing?.age.toString() ?? '');
 
   showModalBottomSheet(
     context: context,
@@ -316,7 +336,7 @@ void showAddChildSheet(BuildContext context, WidgetRef ref) {
             ageValue <= 18;
 
         return _SheetFrame(
-          title: 'Tambah anak',
+          title: existing == null ? 'Tambah anak' : 'Ubah ${existing.name}',
           children: [
             const FormLabel('Nama lengkap anak'),
             FormTextField(
@@ -342,20 +362,35 @@ void showAddChildSheet(BuildContext context, WidgetRef ref) {
               enabled: canSave,
               onPressed: () {
                 final state = ref.read(appStateProvider);
-                final child = Child(
-                  id: generateId('child'),
-                  name: nickname.text.trim(),
-                  fullName: fullName.text.trim(),
-                  age: ageValue!,
-                  theme: ChildTheme.lautTenang,
-                  likes: const [],
-                  avoids: const [],
-                );
+                final base = existing;
+                final List<Child> children;
+                if (base == null) {
+                  children = [
+                    ...state.children,
+                    Child(
+                      id: generateId('child'),
+                      name: nickname.text.trim(),
+                      fullName: fullName.text.trim(),
+                      age: ageValue!,
+                      theme: ChildTheme.lautTenang,
+                      likes: const [],
+                      avoids: const [],
+                    ),
+                  ];
+                } else {
+                  final edited = base.copyWith(
+                    name: nickname.text.trim(),
+                    fullName: fullName.text.trim(),
+                    age: ageValue!,
+                  );
+                  children = [
+                    for (final c in state.children)
+                      c.id == base.id ? edited : c,
+                  ];
+                }
                 ref
                     .read(appStateProvider.notifier)
-                    .updateState(
-                      state.copyWith(children: [...state.children, child]),
-                    );
+                    .updateState(state.copyWith(children: children));
                 Navigator.of(ctx).pop();
               },
             ),

@@ -6,9 +6,11 @@ import '../../core/theme/theme.dart';
 import '../../core/widgets/calm_empty_screen.dart';
 import '../../core/widgets/card_surface.dart';
 import '../../core/widgets/caregiver_header.dart';
+import '../../data/models/models.dart';
 import '../../data/providers.dart';
 import 'account_sheets.dart';
 import 'account_widgets.dart';
+import 'child_list_sheet.dart';
 import 'pairing_sheet.dart';
 
 class CaregiverAccountScreen extends ConsumerWidget {
@@ -22,7 +24,6 @@ class CaregiverAccountScreen extends ConsumerWidget {
 
     final linkedDevices = ref.watch(linkedDevicesProvider).value ?? const [];
     final linkedChild = linkedChildNamesOf(linkedDevices, state.children);
-    final childLinked = linkedDevices.any((d) => d.childId == child.id);
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -111,6 +112,20 @@ class CaregiverAccountScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
+                  _buildGroupLabel('HP anak'),
+                  CardSurface(
+                    padding: const EdgeInsets.all(AppSpacing.grid16),
+                    child: Column(
+                      children: [
+                        for (final c in state.children) ...[
+                          if (c != state.children.first)
+                            const AccountListDivider(),
+                          _buildDeviceRow(context, ref, c, linkedDevices),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.grid16),
                   _buildGroupLabel('Akun'),
                   CardSurface(
                     padding: const EdgeInsets.all(AppSpacing.grid16),
@@ -124,20 +139,11 @@ class CaregiverAccountScreen extends ConsumerWidget {
                         ),
                         const AccountListDivider(),
                         AccountListRow(
-                          icon: LucideIcons.smartphone,
-                          label: 'Hubungkan HP ${child.name}',
+                          icon: LucideIcons.users,
+                          label: 'Daftar anak',
                           value: '',
-                          onTap: () => showPairingSheet(context, ref, child),
+                          onTap: () => showChildListSheet(context, ref),
                         ),
-                        if (childLinked) ...[
-                          const AccountListDivider(),
-                          AccountListRow(
-                            icon: LucideIcons.unlink,
-                            label: 'Putuskan HP ${child.name}',
-                            value: '',
-                            onTap: () => showUnlinkDialog(context, ref, child),
-                          ),
-                        ],
                         const AccountListDivider(),
                         AccountListRow(
                           icon: LucideIcons.logOut,
@@ -156,6 +162,25 @@ class CaregiverAccountScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Satu baris per anak: "Hubungkan HP {anak}" bila belum ada HP, atau
+  /// "Putuskan HP {anak}" bila sudah terhubung.
+  Widget _buildDeviceRow(
+    BuildContext context,
+    WidgetRef ref,
+    Child c,
+    List<LinkedDevice> linkedDevices,
+  ) {
+    final linked = linkedDevices.any((d) => d.childId == c.id);
+    return AccountListRow(
+      icon: linked ? LucideIcons.unlink : LucideIcons.smartphone,
+      label: linked ? 'Putuskan HP ${c.name}' : 'Hubungkan HP ${c.name}',
+      value: linked ? 'Terhubung' : 'Belum terhubung',
+      onTap: () => linked
+          ? showUnlinkDialog(context, ref, c)
+          : showPairingSheet(context, ref, c),
     );
   }
 

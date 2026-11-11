@@ -165,9 +165,15 @@ class ChildHomeScreen extends ConsumerWidget {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: ChildHeader(
-                    greeting: greeting,
-                    childName: 'Halo, ${child.name}!',
+                  // Ruang di kanan untuk tautan "Tema" supaya tidak bertumpuk.
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      right: AppSpacing.minTouchTarget + AppSpacing.grid8,
+                    ),
+                    child: ChildHeader(
+                      greeting: greeting,
+                      childName: 'Halo, ${child.name}!',
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -296,7 +302,7 @@ class ChildHomeScreen extends ConsumerWidget {
         ),
         Positioned(
           top: MediaQuery.of(context).padding.top + AppSpacing.grid20,
-          left: AppSpacing.screenPaddingChild,
+          right: AppSpacing.screenPaddingChild,
           child: Semantics(
             button: true,
             label: 'Pilih tema',

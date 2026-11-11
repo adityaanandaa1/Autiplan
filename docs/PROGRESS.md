@@ -321,3 +321,18 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Build APK memakai `--dart-define=WORKER_URL=https://autiplan-worker.autiplan-app.workers.dev`.
   - Panah minggu dan pemilih bulan belum punya tes widget.
   - Uji dua HP (klaim kode) dan uji push di perangkat nyata masih menunggu.
+
+
+## Perbaikan HP anak per anak, Daftar anak, Suka/Hindari (11 November 2026)
+
+- **Status:** kode selesai; uji di dua HP nyata menunggu pengguna.
+- **Isi:**
+  - Bug hanya anak pertama yang bisa dihubungkan: tombol di Akun terikat ke `currentChildProvider`. Worker dan Firestore sudah mendukung banyak HP, jadi hanya UI yang diubah: kelompok "HP anak" dengan satu baris per anak ("Hubungkan HP {nama}" / "Putuskan HP {nama}") di `account_screen.dart`.
+  - `lib/features/caregiver/child_list_sheet.dart`: sheet "Daftar anak" (ubah, hapus, Suka, Hindari per anak). Hapus ikut membersihkan jadwal, catatan selesai, dan pemberitahuan perubahan anak itu, lalu memutuskan HP-nya. Anak satu-satunya tidak bisa dihapus.
+  - `account_sheets.dart`: `showChildFormSheet` (tambah dan ubah). Bug Suka/Hindari tidak tersimpan: teks yang belum ditekan Enter hilang saat Simpan; kini ikut disimpan dan kolom dikosongkan setelah Enter.
+  - Tautan "Tema" di beranda anak pindah ke kanan atas.
+- **Hasil:** `flutter analyze` 0 isu; `flutter test` 442 lulus. Tes baru: `child_list_sheet_test.dart`, `profile_list_save_test.dart`, kasus dua anak di `account_pairing_test.dart`.
+- **Utang:**
+  - Belum diuji di dua HP nyata (kode untuk anak kedua) dan belum ada build APK baru.
+  - Teks "Daftar anak", "Ubah", "Hapus" dan susunan sheet adalah usulan; belum ada di HANDOFF.md.
+  - Notifikasi/jadwal anak yang dihapus hanya dibersihkan lewat state aplikasi; dokumen yatim yang sudah ada sebelumnya tidak dibersihkan.
