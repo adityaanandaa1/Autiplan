@@ -142,11 +142,28 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('HP anak'), findsOneWidget);
+      // Kartu "Anak" di paling atas: Daftar anak + satu baris HP per anak.
+      expect(find.text('Anak'), findsOneWidget);
+      expect(find.text('Daftar anak'), findsOneWidget);
       expect(find.text('Putuskan HP Rafi'), findsOneWidget);
       expect(find.text('Hubungkan HP Atalia'), findsOneWidget);
       expect(find.text('Hubungkan HP Rafi'), findsNothing);
       expect(find.text('Putuskan HP Atalia'), findsNothing);
+    });
+
+    testWidgets('Tambah anak ada di kartu Anak, di bawah baris HP anak', (
+      tester,
+    ) async {
+      bigView(tester);
+      await tester.pumpWidget(wrap(const CaregiverAccountScreen()));
+      await tester.pumpAndSettle();
+      double top(String text) => tester.getTopLeft(find.text(text)).dy;
+      expect(find.text('Tambah anak'), findsOneWidget);
+      expect(top('Daftar anak'), lessThan(top('Hubungkan HP Rafi')));
+      expect(top('Hubungkan HP Rafi'), lessThan(top('Tambah anak')));
+      // Kartu Anak berada di atas Pengaturan dan Akun (Keluar).
+      expect(top('Tambah anak'), lessThan(top('Pengaturan')));
+      expect(top('Pengaturan'), lessThan(top('Keluar')));
     });
 
     testWidgets('perangkat anak lain: Putuskan HP Rafi tidak tampil', (

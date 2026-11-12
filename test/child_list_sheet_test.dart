@@ -59,9 +59,9 @@ void main() {
   ) async {
     await tester.pumpWidget(wrap());
     await openList(tester);
-    // Nama lengkap juga tampil di grup "Anak" di belakang sheet: 2 kali.
-    expect(find.text('Rafi Pratama'), findsNWidgets(2));
-    expect(find.text('Atalia Putri'), findsNWidgets(2));
+    // Layar Akun tidak lagi menampilkan nama lengkap, jadi hanya di sheet.
+    expect(find.text('Rafi Pratama'), findsOneWidget);
+    expect(find.text('Atalia Putri'), findsOneWidget);
     expect(find.byTooltip('Ubah Atalia'), findsOneWidget);
     expect(find.byTooltip('Hapus Atalia'), findsOneWidget);
   });

@@ -336,3 +336,16 @@ Tahap 6: layar anak (A-01 s.d. A-09). Pasang `RoleSwitchButton` di Jadwal anak y
   - Belum diuji di dua HP nyata (kode untuk anak kedua) dan belum ada build APK baru.
   - Teks "Daftar anak", "Ubah", "Hapus" dan susunan sheet adalah usulan; belum ada di HANDOFF.md.
   - Notifikasi/jadwal anak yang dihapus hanya dibersihkan lewat state aplikasi; dokumen yatim yang sudah ada sebelumnya tidak dibersihkan.
+
+
+## Susunan ulang layar Akun (12 November 2026)
+
+- **Status:** kode selesai; belum di-commit dan belum ada build APK baru.
+- **Isi:**
+  - `account_screen.dart`: grup "Anak" dan grup "Profil {anak}" (Suka/Hindari) dihapus. Kartu "Anak" baru di paling atas berisi "Daftar anak", baris HP per anak (gabungan dengan grup "HP anak" lama), dan "Tambah anak" di bagian bawah kartu. Grup "Akun" tinggal "Keluar".
+  - `account_widgets.dart`: `AccountListRow` bertinggi minimal 48 dp (baris "Daftar anak", "Tambah anak", "Keluar" sebelumnya 40 dp). `AccountChildRow` dan `themeName` dihapus.
+  - Tes diperbarui: `account_pairing_test.dart` (label "Anak"), `child_list_sheet_test.dart` (nama lengkap kini hanya di sheet).
+- **Hasil:** `dart format` bersih; `flutter analyze` 0 isu; `flutter test` 443 lulus (satu tes baru untuk urutan baris di kartu Anak).
+- **Utang:**
+  - HANDOFF.md OT-14 belum diperbarui; perbedaannya dicatat di DECISIONS.md.
+  - Harus membangun APK baru: `flutter build apk --release --dart-define=WORKER_URL=https://autiplan-worker.autiplan-app.workers.dev`.

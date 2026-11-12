@@ -19,8 +19,9 @@ class CaregiverAccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appStateProvider);
-    final child = ref.watch(currentChildProvider);
-    if (child == null) return const CalmEmptyScreen();
+    if (ref.watch(currentChildProvider) == null) {
+      return const CalmEmptyScreen();
+    }
 
     final linkedDevices = ref.watch(linkedDevicesProvider).value ?? const [];
     final linkedChild = linkedChildNamesOf(linkedDevices, state.children);
@@ -35,51 +36,33 @@ class CaregiverAccountScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.grid16),
                 children: [
-                  AccountProfileCard(linkedChildName: linkedChild),
-                  const SizedBox(height: AppSpacing.grid16),
                   _buildGroupLabel('Anak'),
                   CardSurface(
                     padding: const EdgeInsets.all(AppSpacing.grid16),
                     child: Column(
                       children: [
-                        for (final child in state.children)
-                          AccountChildRow(
-                            child: child,
-                            isLast: child == state.children.last,
-                          ),
+                        AccountListRow(
+                          icon: LucideIcons.users,
+                          label: 'Daftar anak',
+                          value: '',
+                          onTap: () => showChildListSheet(context, ref),
+                        ),
+                        for (final c in state.children) ...[
+                          const AccountListDivider(),
+                          _buildDeviceRow(context, ref, c, linkedDevices),
+                        ],
+                        const AccountListDivider(),
+                        AccountListRow(
+                          icon: LucideIcons.userPlus,
+                          label: 'Tambah anak',
+                          value: '',
+                          onTap: () => showAddChildSheet(context, ref),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
-                  _buildGroupLabel(
-                    'Profil ${child.name} · dipakai untuk saran',
-                  ),
-                  CardSurface(
-                    padding: const EdgeInsets.all(AppSpacing.grid16),
-                    child: Column(
-                      children: [
-                        AccountListRow(
-                          icon: LucideIcons.heart,
-                          label: 'Suka',
-                          value: child.likes.join(', '),
-                          onTap: () =>
-                              showProfileListSheet(context, ref, child, 'Suka'),
-                        ),
-                        const AccountListDivider(),
-                        AccountListRow(
-                          icon: LucideIcons.sun,
-                          label: 'Hindari',
-                          value: child.avoids.join(', '),
-                          onTap: () => showProfileListSheet(
-                            context,
-                            ref,
-                            child,
-                            'Hindari',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  AccountProfileCard(linkedChildName: linkedChild),
                   const SizedBox(height: AppSpacing.grid16),
                   _buildGroupLabel('Pengaturan'),
                   CardSurface(
@@ -112,39 +95,11 @@ class CaregiverAccountScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.grid16),
-                  _buildGroupLabel('HP anak'),
-                  CardSurface(
-                    padding: const EdgeInsets.all(AppSpacing.grid16),
-                    child: Column(
-                      children: [
-                        for (final c in state.children) ...[
-                          if (c != state.children.first)
-                            const AccountListDivider(),
-                          _buildDeviceRow(context, ref, c, linkedDevices),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.grid16),
                   _buildGroupLabel('Akun'),
                   CardSurface(
                     padding: const EdgeInsets.all(AppSpacing.grid16),
                     child: Column(
                       children: [
-                        AccountListRow(
-                          icon: LucideIcons.userPlus,
-                          label: 'Tambah anak',
-                          value: '',
-                          onTap: () => showAddChildSheet(context, ref),
-                        ),
-                        const AccountListDivider(),
-                        AccountListRow(
-                          icon: LucideIcons.users,
-                          label: 'Daftar anak',
-                          value: '',
-                          onTap: () => showChildListSheet(context, ref),
-                        ),
-                        const AccountListDivider(),
                         AccountListRow(
                           icon: LucideIcons.logOut,
                           label: 'Keluar',

@@ -99,3 +99,11 @@ Tulis setiap keputusan yang tidak tertulis di HANDOFF.md, atau setiap perbedaan 
 
 ## Tautan "Tema" di kanan atas beranda anak (2026-11-11)
 - Atas permintaan pengguna: "Tema" pindah dari kiri atas ke kanan atas karena bertumpuk dengan sapaan "Halo, {nama}!". Header diberi ruang kanan 56 supaya sapaan panjang tidak menabraknya. Bila gambar A-01 menunjukkan "Tema" di kiri, perubahan ini sengaja berbeda dari gambar.
+
+## Layar Akun disusun ulang: kartu "Anak" di paling atas (2026-11-12)
+- Atas permintaan pengguna, sengaja berbeda dari HANDOFF.md OT-14 (baris 518–522) dan menggantikan catatan 2026-11-11 bahwa grup "Profil {anak}" tetap ada.
+- Dihapus dari Akun: grup "Anak" (daftar nama anak) dan grup "Profil {anak} · dipakai untuk saran" (Suka/Hindari). Suka dan Hindari tetap bisa diubah per anak lewat "Suka (n)" dan "Hindari (n)" di "Daftar anak".
+- Ditambah: satu kartu berlabel "Anak" di paling atas, berisi baris "Daftar anak", satu baris HP per anak ("Hubungkan HP {nama}" / "Putuskan HP {nama}"), lalu "Tambah anak" (dipindah dari grup Akun atas permintaan pengguna). Ini menggabungkan "Daftar anak" dengan grup "HP anak" yang lama. Label "Anak" adalah pilihan saya.
+- Urutan baru: kartu "Anak", kartu profil pengasuh, Pengaturan, Akun (hanya Keluar).
+- Perbaikan sampingan: `AccountListRow` diberi tinggi minimal `AppSpacing.minTouchTarget` (48). Baris tanpa nilai (Daftar anak, Tambah anak, Keluar) hanya setinggi ubin ikon 40 dan lolos tes aksesibilitas hanya karena dulu berada di luar layar uji.
+- `AccountChildRow` dan `themeName` di `account_widgets.dart` dihapus karena tidak dipakai lagi.
