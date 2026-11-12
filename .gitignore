@@ -50,3 +50,7 @@ worker/.dev.vars
 
 # Skill agen lokal
 .agents/
+
+# Instruksi agen dan dokumentasi lokal (tidak diunggah ke GitHub)
+/CLAUDE.md
+/docs/
