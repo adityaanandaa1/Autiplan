@@ -81,6 +81,7 @@ class AccountListRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    this.loading = false,
   });
 
   final IconData icon;
@@ -88,11 +89,14 @@ class AccountListRow extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
 
+  /// Menampilkan spinner pengganti panah dan mengabaikan ketukan.
+  final bool loading;
+
   @override
   Widget build(BuildContext context) {
     // Baris tanpa nilai hanya setinggi ubin ikon (40), di bawah batas sentuh.
     return InkWell(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       borderRadius: AppRadius.kolomIsian,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
@@ -124,11 +128,21 @@ class AccountListRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              LucideIcons.chevronRight,
-              size: AppSpacing.iconSize20,
-              color: AppColors.teksSekunder,
-            ),
+            if (loading)
+              const SizedBox(
+                width: AppSpacing.iconSize20,
+                height: AppSpacing.iconSize20,
+                child: CircularProgressIndicator(
+                  strokeWidth: AppSpacing.grid2,
+                  color: AppColors.utama,
+                ),
+              )
+            else
+              const Icon(
+                LucideIcons.chevronRight,
+                size: AppSpacing.iconSize20,
+                color: AppColors.teksSekunder,
+              ),
           ],
         ),
       ),

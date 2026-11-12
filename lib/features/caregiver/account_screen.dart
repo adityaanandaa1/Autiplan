@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import 'account_sheets.dart';
 import 'account_widgets.dart';
 import 'child_list_sheet.dart';
+import 'logout_row.dart';
 import 'pairing_sheet.dart';
 
 class CaregiverAccountScreen extends ConsumerWidget {
@@ -98,18 +99,7 @@ class CaregiverAccountScreen extends ConsumerWidget {
                   _buildGroupLabel('Akun'),
                   CardSurface(
                     padding: const EdgeInsets.all(AppSpacing.grid16),
-                    child: Column(
-                      children: [
-                        AccountListRow(
-                          icon: LucideIcons.logOut,
-                          label: 'Keluar',
-                          value: '',
-                          onTap: () => ref
-                              .read(sessionNotifierProvider.notifier)
-                              .signOut(),
-                        ),
-                      ],
-                    ),
+                    child: Column(children: [const LogoutRow()]),
                   ),
                 ],
               ),
