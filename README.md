@@ -45,12 +45,12 @@ AutiPlan mengintegrasikan dua antarmuka dalam satu ekosistem:
 ### 👨‍👩‍👧 Mode Demo & Sisi Pengasuh (Caregiver)
 | Pilih Peran Demo | Beranda Pengasuh | Manajemen Jadwal | Profil & Akun |
 | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/01_pilih_peran.jpg" width="220" alt="Pilih Peran Demo" /> | <img src="docs/screenshots/02_beranda_orang_tua.jpg" width="220" alt="Beranda Pengasuh" /> | <img src="docs/screenshots/03_jadwal_orang_tua.jpg" width="220" alt="Manajemen Jadwal" /> | <img src="docs/screenshots/04_akun_orang_tua.jpg" width="220" alt="Profil dan Pengaturan" /> |
+| <img src="screenshots/01_pilih_peran.jpg" width="220" alt="Pilih Peran Demo" /> | <img src="screenshots/02_beranda_orang_tua.jpg" width="220" alt="Beranda Pengasuh" /> | <img src="screenshots/03_jadwal_orang_tua.jpg" width="220" alt="Manajemen Jadwal" /> | <img src="screenshots/04_akun_orang_tua.jpg" width="220" alt="Profil dan Pengaturan" /> |
 
 ### 🧒 Sisi Anak (Ramah Sensorik - Rafi)
 | Jadwal Hari Ini | Ceklis Langkah Kegiatan | Apresiasi Selesai (Maskot) | Panggilan Darurat Cepat | Personalisasi Tema |
 | :---: | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/05_jadwal_anak.jpg" width="190" alt="Jadwal Hari Ini" /> | <img src="docs/screenshots/06_ceklis_langkah_anak.jpg" width="190" alt="Ceklis Langkah Kegiatan" /> | <img src="docs/screenshots/07_selesai_maskot.jpg" width="190" alt="Apresiasi Maskot" /> | <img src="docs/screenshots/08_panggilan_darurat.jpg" width="190" alt="Panggilan Darurat" /> | <img src="docs/screenshots/09_pilih_tema_anak.jpg" width="190" alt="Pilihan Tema Warna" /> |
+| <img src="screenshots/05_jadwal_anak.jpg" width="190" alt="Jadwal Hari Ini" /> | <img src="screenshots/06_ceklis_langkah_anak.jpg" width="190" alt="Ceklis Langkah Kegiatan" /> | <img src="screenshots/07_selesai_maskot.jpg" width="190" alt="Apresiasi Maskot" /> | <img src="screenshots/08_panggilan_darurat.jpg" width="190" alt="Panggilan Darurat" /> | <img src="screenshots/09_pilih_tema_anak.jpg" width="190" alt="Pilihan Tema Warna" /> |
 
 ---
 
@@ -102,7 +102,7 @@ Autiplan/
 │   ├── src/                     # Endpoint /pair, /notify, & integrasi Firestore FCM
 │   └── test/                    # Pengujian unit backend (Vitest)
 ├── test/                        # 433 unit, widget, dan accessibility tests
-└── docs/                        # Dokumentasi arsitektur, laporan pengujian, & tangkapan layar
+└── screenshots/                 # Tangkapan layar aplikasi untuk README
 ```
 
 ---
