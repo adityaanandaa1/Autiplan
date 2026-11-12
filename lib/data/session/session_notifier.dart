@@ -110,6 +110,25 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
     unawaited(_prefs.setString(_prefsKey, jsonEncode(json)));
   }
 
+  /// Apakah snapshot `devices/{uid}` berarti HP anak ini sudah diputus.
+  ///
+  /// Snapshot dari cache lokal tidak dipercaya: setelah diputus lalu
+  /// disambung lagi, cache masih menyimpan "dokumen tidak ada" dan listener
+  /// baru menerimanya lebih dulu daripada dokumen baru dari server. Hanya
+  /// jawaban server yang boleh memutus sesi.
+  @visibleForTesting
+  static bool shouldUnlinkChildDevice({
+    required bool exists,
+    required bool fromCache,
+    required Object? role,
+    required Object? deviceChildId,
+    required String childId,
+  }) {
+    if (fromCache) return false;
+    final stillChild = exists && role == 'child' && deviceChildId == childId;
+    return !stillChild;
+  }
+
   void _watchChildDevice(String familyId, String childId) {
     final db = _db;
     if (db == null) return;
@@ -124,12 +143,14 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
         .listen(
           (snapshot) {
             final data = snapshot.data();
-            final stillChild =
-                snapshot.exists &&
-                data != null &&
-                data['role'] == 'child' &&
-                data['childId'] == childId;
-            if (!stillChild) _clear();
+            final unlink = shouldUnlinkChildDevice(
+              exists: snapshot.exists,
+              fromCache: snapshot.metadata.isFromCache,
+              role: data?['role'],
+              deviceChildId: data?['childId'],
+              childId: childId,
+            );
+            if (unlink) _clear();
           },
           onError: (Object e) {
             debugPrint('Perangkat anak tidak lagi terhubung: $e');
