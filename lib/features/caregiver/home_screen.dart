@@ -19,6 +19,7 @@ import '../../domain/schedule_rules.dart';
 import '../../domain/suggestion_engine.dart';
 import 'widgets/add_activity_sheet.dart';
 import 'widgets/current_activity_card.dart';
+import 'widgets/live_tutor_dialog.dart';
 
 /// Sapaan Beranda (OT-01): pagi 04–10.59, siang 11–14.59, sore 15–17.59,
 /// malam 18–03.59.
@@ -38,11 +39,27 @@ String caregiverGreeting(DateTime now, String caregiverName) {
   return 'Selamat $part, $name';
 }
 
-class CaregiverHomeScreen extends ConsumerWidget {
+class CaregiverHomeScreen extends ConsumerStatefulWidget {
   const CaregiverHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CaregiverHomeScreen> createState() =>
+      _CaregiverHomeScreenState();
+}
+
+class _CaregiverHomeScreenState extends ConsumerState<CaregiverHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        showCaregiverLiveTutorIfNeeded(context, ref);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
     final child = ref.watch(currentChildProvider);
     if (child == null) return const CalmEmptyScreen();
@@ -73,6 +90,20 @@ class CaregiverHomeScreen extends ConsumerWidget {
               showBell: true,
               onBellTap: () => context.push('/ortu/notifikasi'),
               bellHasBadge: state.notifications.any((n) => !n.read),
+              trailing: IconButton(
+                icon: const Icon(
+                  LucideIcons.helpCircle,
+                  size: AppSpacing.iconSize22,
+                  color: AppColors.teksSekunder,
+                ),
+                onPressed: () => showCaregiverLiveTutor(context, ref),
+                tooltip: 'Panduan aplikasi (Live Tutor)',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: AppSpacing.minTouchTarget,
+                  minHeight: AppSpacing.minTouchTarget,
+                ),
+              ),
             ),
             Expanded(
               child: ListView(

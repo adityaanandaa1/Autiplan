@@ -18,6 +18,7 @@ import '../../domain/schedule_rules.dart';
 import '../../domain/suggestion_engine.dart';
 import 'schedule_providers.dart';
 import 'widgets/add_activity_sheet.dart';
+import 'widgets/routine_template_sheet.dart';
 import 'widgets/schedule_activity_rows.dart';
 import 'widgets/schedule_empty_day.dart';
 
@@ -169,6 +170,12 @@ class CaregiverScheduleScreen extends ConsumerWidget {
                     ScheduleEmptyDay(
                       childName: child.name,
                       suggestion: emptyDaySuggestion,
+                      onUseTemplate: () => showRoutineTemplateSheet(
+                        context,
+                        ref,
+                        child: child,
+                        date: selectedDate,
+                      ),
                     )
                   else
                     ...buildScheduleActivityRows(

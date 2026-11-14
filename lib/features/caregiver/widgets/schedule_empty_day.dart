@@ -8,10 +8,16 @@ import '../../../data/models/models.dart';
 import 'suggestion_detail_sheet.dart';
 
 class ScheduleEmptyDay extends StatelessWidget {
-  const ScheduleEmptyDay({super.key, required this.childName, this.suggestion});
+  const ScheduleEmptyDay({
+    super.key,
+    required this.childName,
+    this.suggestion,
+    this.onUseTemplate,
+  });
 
   final String childName;
   final Suggestion? suggestion;
+  final VoidCallback? onUseTemplate;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +50,28 @@ class ScheduleEmptyDay extends StatelessWidget {
                 style: AppTypography.isi,
                 textAlign: TextAlign.center,
               ),
+              if (onUseTemplate != null) ...[
+                const SizedBox(height: AppSpacing.grid16),
+                SizedBox(
+                  height: AppSpacing.buttonHeightParent,
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onUseTemplate,
+                    icon: const Icon(
+                      LucideIcons.sparkles,
+                      size: AppSpacing.iconSize18,
+                    ),
+                    label: const Text('Gunakan Template Rutinitas'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.utama,
+                      side: const BorderSide(color: AppColors.utama),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.tombolOrangTua,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

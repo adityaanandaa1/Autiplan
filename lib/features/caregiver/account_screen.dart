@@ -13,6 +13,7 @@ import 'account_widgets.dart';
 import 'child_list_sheet.dart';
 import 'logout_row.dart';
 import 'pairing_sheet.dart';
+import 'widgets/live_tutor_dialog.dart';
 
 class CaregiverAccountScreen extends ConsumerWidget {
   const CaregiverAccountScreen({super.key});
@@ -91,6 +92,13 @@ class CaregiverAccountScreen extends ConsumerWidget {
                           label: 'Nomor darurat',
                           value: state.settings.emergencyNumber,
                           onTap: () => showEmergencyNumbersSheet(context, ref),
+                        ),
+                        const AccountListDivider(),
+                        AccountListRow(
+                          icon: LucideIcons.sparkles,
+                          label: 'Panduan Aplikasi (Live Tutor)',
+                          value: 'Buka',
+                          onTap: () => showCaregiverLiveTutor(context, ref),
                         ),
                       ],
                     ),

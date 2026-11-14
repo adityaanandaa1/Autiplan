@@ -16,6 +16,7 @@ import '../forms/sheet_scaffold.dart';
 import '../forms/time_feedback.dart';
 import '../forms/time_picker_sheet.dart';
 import 'add_activity_advanced.dart';
+import 'routine_template_sheet.dart';
 
 /// Sheet Tambah jadwal (OT-08, aturan §8.6).
 class AddActivitySheet extends ConsumerStatefulWidget {
@@ -177,6 +178,43 @@ class _AddActivitySheetState extends ConsumerState<AddActivitySheet> {
             onSegmentSelected: (idx) {
               setState(() => _childId = state.children[idx].id);
             },
+          ),
+          const SizedBox(height: AppSpacing.grid16),
+          Semantics(
+            button: true,
+            label: 'Pilih dari Template Rutinitas',
+            child: SizedBox(
+              height: AppSpacing.buttonHeightParent,
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showRoutineTemplateSheet(
+                    context,
+                    ref,
+                    child: child,
+                    date: _date,
+                  );
+                },
+                icon: const Icon(
+                  LucideIcons.sparkles,
+                  size: AppSpacing.iconSize18,
+                  color: AppColors.utama,
+                ),
+                label: const Text(
+                  'Pilih dari Template Rutinitas',
+                  style: AppTypography.tombol,
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppColors.permukaan,
+                  foregroundColor: AppColors.teks,
+                  side: const BorderSide(color: AppColors.garis),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.tombolOrangTua,
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: AppSpacing.grid16),
           const FormLabel('Nama kegiatan'),
