@@ -37,7 +37,7 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
     await _auth.signUp(email, password);
     final uid = _auth.uid;
     if (uid == null) {
-      throw const AuthException('Belum bisa masuk. Coba lagi sebentar.');
+      throw const AuthException(authFallbackMessage);
     }
     _setCaregiver(uid);
   }
@@ -46,7 +46,7 @@ class SessionNotifier extends StateNotifier<DeviceSession> {
     await _auth.signIn(email, password);
     final uid = _auth.uid;
     if (uid == null) {
-      throw const AuthException('Belum bisa masuk. Coba lagi sebentar.');
+      throw const AuthException(authFallbackMessage);
     }
     _setCaregiver(uid);
   }

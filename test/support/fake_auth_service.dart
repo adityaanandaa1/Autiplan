@@ -25,8 +25,35 @@ class FakeAuthService implements AuthService {
     _uid = 'user_${email.hashCode}';
   }
 
+  /// Isi untuk membuat [sendPasswordReset] melempar galat tersebut.
+  AuthException? resetError;
+  final List<String> resetEmails = [];
+
+  /// Isi untuk membuat verifikasi/konfirmasi kode melempar galat tersebut.
+  AuthException? codeError;
+  final List<String> verifiedCodes = [];
+  final List<(String, String)> confirmed = [];
+
   @override
-  Future<void> sendPasswordReset(String email) async {}
+  Future<void> sendPasswordReset(String email) async {
+    resetEmails.add(email);
+    final err = resetError;
+    if (err != null) throw err;
+  }
+
+  @override
+  Future<void> verifyPasswordResetCode(String code) async {
+    verifiedCodes.add(code);
+    final err = codeError;
+    if (err != null) throw err;
+  }
+
+  @override
+  Future<void> confirmPasswordReset(String code, String newPassword) async {
+    final err = codeError;
+    if (err != null) throw err;
+    confirmed.add((code, newPassword));
+  }
 
   @override
   Future<String> signInAnonymously() async {

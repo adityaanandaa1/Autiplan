@@ -67,7 +67,7 @@ class _LinkDeviceScreenState extends ConsumerState<LinkDeviceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: AppColors.permukaan,
       body: SafeArea(
         child: Column(
           children: [

@@ -34,12 +34,20 @@ class FormLabel extends StatelessWidget {
   }
 }
 
-/// Kotak isian dengan latar `latar`, sudut 12.
+/// Kotak isian dengan latar `latar`, sudut 12. [focused] menggambar cincin
+/// `utama` setebal [AppSpacing.strokeFocus] di dalam kotak (tanpa mengubah
+/// ukuran isinya).
 class FormBox extends StatelessWidget {
-  const FormBox({super.key, required this.child, this.padding});
+  const FormBox({
+    super.key,
+    required this.child,
+    this.padding,
+    this.focused = false,
+  });
 
   final Widget child;
   final EdgeInsets? padding;
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
@@ -54,21 +62,34 @@ class FormBox extends StatelessWidget {
         color: AppColors.latar,
         borderRadius: AppRadius.kolomIsian,
       ),
+      // Selalu ada (transparan saat tidak aktif): bila dekorasi depan muncul
+      // dan hilang, Container menambah/membuang satu lapis di atas isinya, dan
+      // TextField di dalamnya dibuat ulang sehingga fokus dan keyboard hilang.
+      foregroundDecoration: BoxDecoration(
+        borderRadius: AppRadius.kolomIsian,
+        border: Border.all(
+          color: focused ? AppColors.utama : AppColors.transparan,
+          width: AppSpacing.strokeFocus,
+        ),
+      ),
       child: child,
     );
   }
 }
 
-/// Kolom teks satu baris di dalam [FormBox].
-class FormTextField extends StatelessWidget {
+/// Kolom teks satu baris di dalam [FormBox]. Kotak abu-abu itulah kolomnya:
+/// tidak ada garis tepi lain, hanya cincin `utama` saat kolom aktif.
+class FormTextField extends StatefulWidget {
   const FormTextField({
     super.key,
     required this.controller,
     this.hint,
     this.maxLength,
     this.keyboardType,
+    this.textInputAction,
     this.obscureText = false,
     this.onChanged,
+    this.onSubmitted,
     this.errorText,
   });
 
@@ -76,32 +97,71 @@ class FormTextField extends StatelessWidget {
   final String? hint;
   final int? maxLength;
   final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
 
   /// Pesan validasi tenang di bawah kotak (bukan merah, mengikuti §8.4).
   final String? errorText;
 
   @override
+  State<FormTextField> createState() => _FormTextFieldState();
+}
+
+class _FormTextFieldState extends State<FormTextField> {
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() => setState(() {});
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final errorText = widget.errorText;
     final field = FormBox(
-      // Tinggi isian 48 dp dipegang oleh `constraints` di bawah, jadi padding
-      // vertikal kotak dibuang supaya target sentuh seluruh kotak.
+      focused: _focusNode.hasFocus,
+      // Tinggi 48 dp dipegang `constraints` pada dekorasi (target sentuh dan
+      // node semantik TextField tetap 48), jadi padding vertikal kotak dibuang.
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.grid14),
       child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        maxLength: maxLength,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
+        controller: widget.controller,
+        focusNode: _focusNode,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        maxLength: widget.maxLength,
+        keyboardType: widget.keyboardType,
+        textInputAction: widget.textInputAction,
+        textAlignVertical: TextAlignVertical.center,
+        obscureText: widget.obscureText,
         style: AppTypography.isi,
         decoration: InputDecoration(
-          hintText: hint,
+          hintText: widget.hint,
           hintStyle: AppTypography.isiHint,
+          filled: false,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
           isDense: true,
           counterText: '',
-          contentPadding: EdgeInsets.zero,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.grid12,
+          ),
           constraints: const BoxConstraints(
             minHeight: AppSpacing.minTouchTarget,
           ),
@@ -116,7 +176,7 @@ class FormTextField extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.grid6),
           child: Text(
-            errorText!,
+            errorText,
             style: AppTypography.meta.copyWith(color: AppColors.saranTeks),
           ),
         ),

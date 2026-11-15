@@ -56,11 +56,12 @@ void showProfileListSheet(
               'Tulis lalu tekan Enter untuk menambah, atau langsung Simpan (maks 5).',
               style: AppTypography.meta,
             ),
-            TextField(
+            const SizedBox(height: AppSpacing.grid8),
+            FormTextField(
               controller: input,
               textInputAction: TextInputAction.done,
               onSubmitted: addItem,
-              decoration: const InputDecoration(hintText: 'Tambah item'),
+              hint: 'Tambah item',
             ),
             const SizedBox(height: AppSpacing.grid16),
             PrimaryButton(
@@ -243,24 +244,20 @@ void showEmergencyNumbersSheet(BuildContext context, WidgetRef ref) {
       builder: (ctx, setSheetState) => _SheetFrame(
         title: 'Nomor darurat',
         children: [
-          const Text('Nomor utama', style: AppTypography.meta),
-          TextField(
+          const FormLabel('Nomor utama'),
+          FormTextField(
             controller: primary,
             keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              hintText: '081234567890',
-              errorText: primaryError,
-            ),
+            hint: '081234567890',
+            errorText: primaryError,
           ),
           const SizedBox(height: AppSpacing.grid12),
-          const Text('Kontak cadangan', style: AppTypography.meta),
-          TextField(
+          const FormLabel('Kontak cadangan'),
+          FormTextField(
             controller: backup,
             keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              hintText: '081298765432',
-              errorText: backupError,
-            ),
+            hint: '081298765432',
+            errorText: backupError,
           ),
           const SizedBox(height: AppSpacing.grid16),
           PrimaryButton(

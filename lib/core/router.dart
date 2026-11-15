@@ -17,8 +17,10 @@ import '../features/child/child_emergency_screen.dart';
 import '../features/child/child_home_screen.dart';
 import '../features/child/child_success_screen.dart';
 import '../features/child/child_theme_screen.dart';
+import '../features/onboarding/check_email_screen.dart';
 import '../features/onboarding/link_device_screen.dart';
 import '../features/onboarding/profile_setup_screen.dart';
+import '../features/onboarding/reset_password_screen.dart';
 import '../features/onboarding/sign_in_screen.dart';
 import '../features/onboarding/sign_up_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
@@ -63,6 +65,34 @@ GoRouter createRouter(Ref ref) {
         path: '/daftar',
         name: 'signUp',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/cek-email',
+        name: 'checkEmail',
+        builder: (context, state) =>
+            CheckEmailScreen(email: state.uri.queryParameters['email'] ?? ''),
+      ),
+      GoRoute(
+        path: '/atur-ulang',
+        name: 'resetPassword',
+        builder: (context, state) =>
+            ResetPasswordScreen(code: state.uri.queryParameters['oobCode']),
+      ),
+      // Alamat tindakan bawaan Firebase (`/__/auth/action?mode=...&oobCode=...`).
+      // Hanya `resetPassword` yang dikenali; mode lain kembali ke Masuk.
+      GoRoute(
+        path: '/__/auth/action',
+        redirect: (context, state) {
+          final params = state.uri.queryParameters;
+          final code = params['oobCode'];
+          if (params['mode'] != 'resetPassword' || code == null) {
+            return '/masuk';
+          }
+          return Uri(
+            path: '/atur-ulang',
+            queryParameters: {'oobCode': code},
+          ).toString();
+        },
       ),
       GoRoute(
         path: '/hubungkan',
@@ -178,6 +208,9 @@ String? redirectFor(
   required String path,
   required bool hasChildren,
 }) {
+  // Tautan atur ulang kata sandi bisa dibuka kapan saja, login atau belum.
+  // HP anak tidak ikut: ia tetap di sisi anak.
+  if (session is! ChildSession && _isPasswordResetPath(path)) return null;
   switch (session) {
     case UnlinkedSession():
       if (path == '/mulai' ||
@@ -204,6 +237,9 @@ String? redirectFor(
       return _isChildPath(path) ? null : '/anak';
   }
 }
+
+bool _isPasswordResetPath(String path) =>
+    path == '/cek-email' || path == '/atur-ulang' || path == '/__/auth/action';
 
 bool _isStart(String path) => path == '/';
 

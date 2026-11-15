@@ -28,6 +28,24 @@ void main() {
     }
   });
 
+  group('Alamat tindakan Firebase', () {
+    for (final session in [unlinked, caregiverNoChild]) {
+      test('/__/auth/action lolos untuk ${session.runtimeType}', () {
+        expect(
+          redirectFor(session, path: '/__/auth/action', hasChildren: false),
+          isNull,
+        );
+      });
+    }
+
+    test('/__/auth/action tidak lolos untuk HP anak', () {
+      expect(
+        redirectFor(child, path: '/__/auth/action', hasChildren: false),
+        '/anak',
+      );
+    });
+  });
+
   group('CaregiverSession tanpa anak', () {
     test('/profil-awal → null (tetap)', () {
       expect(

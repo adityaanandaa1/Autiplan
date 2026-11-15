@@ -103,7 +103,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: AppColors.permukaan,
       body: SafeArea(
         child: Column(
           children: [

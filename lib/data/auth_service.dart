@@ -17,11 +17,21 @@ abstract class AuthService {
 
   Future<void> sendPasswordReset(String email);
 
+  /// Memastikan kode dari tautan atur ulang masih berlaku. Melempar
+  /// [InvalidResetCodeException] bila kode kedaluwarsa, sudah dipakai, atau salah.
+  Future<void> verifyPasswordResetCode(String code);
+
+  /// Menyimpan kata sandi baru memakai kode dari tautan atur ulang.
+  Future<void> confirmPasswordReset(String code, String newPassword);
+
   /// Masuk anonim untuk HP anak. Mengembalikan uid.
   Future<String> signInAnonymously();
 
   Future<void> signOut();
 }
+
+/// Pesan umum untuk galat apa pun yang tidak dikenal (mis. tanpa internet).
+const String authFallbackMessage = 'Belum bisa masuk. Coba lagi sebentar.';
 
 /// Galat autentikasi dengan pesan yang sudah diterjemahkan ke bahasa yang
 /// tenang dan tanpa kata teknis. Layar cukup menampilkan [message].
@@ -32,6 +42,13 @@ class AuthException implements Exception {
 
   @override
   String toString() => message;
+}
+
+/// Kode atur ulang kata sandi sudah tidak berlaku (kedaluwarsa, sudah dipakai,
+/// atau tidak valid). Layar membedakannya dari galat lain lewat tipe ini.
+class InvalidResetCodeException extends AuthException {
+  const InvalidResetCodeException()
+    : super('Tautan ini sudah tidak berlaku. Minta tautan baru.');
 }
 
 /// Implementasi nyata di atas `firebase_auth`.
@@ -55,6 +72,8 @@ class FirebaseAuthService implements AuthService {
       );
     } on fa.FirebaseAuthException catch (e) {
       throw AuthException(_messageFor(e.code));
+    } catch (_) {
+      throw const AuthException(authFallbackMessage);
     }
   }
 
@@ -64,6 +83,8 @@ class FirebaseAuthService implements AuthService {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on fa.FirebaseAuthException catch (e) {
       throw AuthException(_messageFor(e.code));
+    } catch (_) {
+      throw const AuthException(authFallbackMessage);
     }
   }
 
@@ -73,6 +94,36 @@ class FirebaseAuthService implements AuthService {
       await _auth.sendPasswordResetEmail(email: email);
     } on fa.FirebaseAuthException catch (e) {
       throw AuthException(_messageFor(e.code));
+    } catch (_) {
+      throw const AuthException(authFallbackMessage);
+    }
+  }
+
+  @override
+  Future<void> verifyPasswordResetCode(String code) async {
+    try {
+      await _auth.verifyPasswordResetCode(code);
+    } on fa.FirebaseAuthException catch (e) {
+      throw _resetError(e.code);
+    }
+  }
+
+  @override
+  Future<void> confirmPasswordReset(String code, String newPassword) async {
+    try {
+      await _auth.confirmPasswordReset(code: code, newPassword: newPassword);
+    } on fa.FirebaseAuthException catch (e) {
+      throw _resetError(e.code);
+    }
+  }
+
+  static AuthException _resetError(String code) {
+    switch (code) {
+      case 'expired-action-code':
+      case 'invalid-action-code':
+        return const InvalidResetCodeException();
+      default:
+        return AuthException(_messageFor(code));
     }
   }
 
@@ -83,6 +134,8 @@ class FirebaseAuthService implements AuthService {
       return credential.user?.uid ?? '';
     } on fa.FirebaseAuthException catch (e) {
       throw AuthException(_messageFor(e.code));
+    } catch (_) {
+      throw const AuthException(authFallbackMessage);
     }
   }
 
@@ -105,7 +158,7 @@ class FirebaseAuthService implements AuthService {
       case 'weak-password':
         return 'Kata sandi minimal 8 karakter.';
       default:
-        return 'Belum bisa masuk. Coba lagi sebentar.';
+        return authFallbackMessage;
     }
   }
 }

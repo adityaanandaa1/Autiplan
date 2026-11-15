@@ -49,6 +49,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       await ref.read(sessionNotifierProvider.notifier).signUp(email, password);
     } on AuthException catch (e) {
       if (mounted) setState(() => _message = e.message);
+    } on Object {
+      if (mounted) setState(() => _message = authFallbackMessage);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -57,7 +59,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: AppColors.permukaan,
       body: SafeArea(
         child: Column(
           children: [

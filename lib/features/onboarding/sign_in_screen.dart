@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/theme.dart';
 import '../../core/widgets/buttons.dart';
-import '../../core/widgets/calm_snackbar.dart';
 import '../../core/widgets/caregiver_header.dart';
 import '../../data/auth_service.dart';
 import '../../data/providers.dart';
@@ -46,6 +45,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       await ref.read(sessionNotifierProvider.notifier).signIn(email, password);
     } on AuthException catch (e) {
       if (mounted) setState(() => _message = e.message);
+    } on Object {
+      if (mounted) setState(() => _message = authFallbackMessage);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -53,24 +54,44 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   Future<void> _forgotPassword() async {
     final email = _email.text.trim();
-    setState(() => _message = null);
+    if (email.isEmpty) {
+      setState(() => _message = 'Isi email dulu, lalu tekan Lupa kata sandi.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _message = null;
+    });
+    var sent = false;
     try {
       await ref.read(authServiceProvider).sendPasswordReset(email);
-      if (mounted) {
-        CalmSnackbar.show(
-          context,
-          message: 'Tautan untuk mengganti kata sandi sudah dikirim.',
-        );
-      }
+      sent = true;
     } on AuthException catch (e) {
-      if (mounted) setState(() => _message = e.message);
+      // Email tidak terdaftar dianggap berhasil supaya keberadaan akun tidak
+      // bocor; AuthService memetakan `user-not-found` ke pesan "belum cocok".
+      if (e.message == _notFoundMessage) {
+        sent = true;
+      } else if (mounted) {
+        setState(() => _message = e.message);
+      }
+    } on Object {
+      if (mounted) setState(() => _message = authFallbackMessage);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+    if (sent && mounted) {
+      context.go(
+        Uri(path: '/cek-email', queryParameters: {'email': email}).toString(),
+      );
     }
   }
+
+  static const _notFoundMessage = 'Email atau kata sandi belum cocok.';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: AppColors.permukaan,
       body: SafeArea(
         child: Column(
           children: [

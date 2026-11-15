@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.adit.autiplan",
+      "sha256_cert_fingerprints": [
+        "75:41:7F:F0:99:AF:A7:44:EF:9F:FE:42:4E:1B:04:58:A4:E9:5B:82:8E:E2:46:44:B5:04:FE:91:D1:C0:7F:8A"
+      ]
+    }
+  }
+]

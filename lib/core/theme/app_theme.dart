@@ -45,28 +45,16 @@ ThemeData buildParentTheme({
       shape: RoundedRectangleBorder(borderRadius: AppRadius.kartuOrangTua),
       margin: EdgeInsets.zero,
     ),
+    // Kolom isian digambar oleh FormBox/FormTextField (kotak `latar` dengan
+    // cincin fokus). Tema ini hanya memastikan tidak ada garis tepi bawaan.
     inputDecorationTheme: const InputDecorationTheme(
-      filled: true,
-      fillColor: AppColors.latar,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.grid14,
-        vertical: AppSpacing.grid13,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: AppRadius.kolomIsian,
-        borderSide: BorderSide(color: AppColors.garis),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: AppRadius.kolomIsian,
-        borderSide: BorderSide(color: AppColors.garis),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: AppRadius.kolomIsian,
-        borderSide: BorderSide(
-          color: AppColors.utama,
-          width: AppSpacing.strokeFocus,
-        ),
-      ),
+      filled: false,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      disabledBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
       hintStyle: AppTypography.isiHint,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
