@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../data/models/app_state.dart';
 import '../../../data/providers.dart';
+import '../../../domain/routine_templates.dart';
 
 const _liveTutorPrefKey = 'has_seen_caregiver_live_tutor';
 
@@ -13,45 +16,49 @@ Future<void> showCaregiverLiveTutorIfNeeded(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  // Hindari auto-popup pada saat unit/widget testing agar tidak mengganggu audit layar.
-  if (WidgetsBinding.instance.runtimeType.toString().contains('Test')) return;
-
   try {
     final prefs = ref.read(sharedPreferencesProvider);
     final hasSeen = prefs.getBool(_liveTutorPrefKey) ?? false;
     if (!hasSeen && context.mounted) {
       await showCaregiverLiveTutor(context, ref);
     }
-  } catch (_) {
-    // Abaikan galat preferensi di mode uji coba/fallback.
+  } catch (e) {
+    debugPrint('Live Tutor: gagal membaca penanda "sudah dilihat": $e');
   }
 }
 
 /// Membuka pop-up Live Tutor secara langsung (misal saat ditekan dari menu Akun).
-Future<void> showCaregiverLiveTutor(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> showCaregiverLiveTutor(BuildContext context, WidgetRef ref) async {
+  // Ambil preferensi sebelum await: widget pemanggil bisa sudah dispose
+  // setelah dialog tertutup, sehingga ref tidak aman dipakai lagi.
+  SharedPreferences? prefs;
+  try {
+    prefs = ref.read(sharedPreferencesProvider);
+  } catch (e) {
+    debugPrint(
+      'Live Tutor: preferensi tidak tersedia, penanda tidak disimpan: $e',
+    );
+  }
+
   await showGeneralDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Tutup panduan',
-    barrierColor: AppColors.teks.withValues(alpha: 0.45),
-    transitionDuration: const Duration(milliseconds: 250),
+    barrierColor: AppColors.teks.withValues(alpha: AppColors.alphaBayangan),
+    transitionDuration: AppDurations.normal,
     pageBuilder: (ctx, anim1, anim2) => const _LiveTutorDialog(),
     transitionBuilder: (ctx, anim, secondaryAnim, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return ScaleTransition(
-        scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
-        child: FadeTransition(opacity: curved, child: child),
-      );
+      final curved = CurvedAnimation(parent: anim, curve: AppDurations.curve);
+      return FadeTransition(opacity: curved, child: child);
     },
   );
 
+  if (prefs == null) return;
   try {
-    final prefs = ref.read(sharedPreferencesProvider);
     await prefs.setBool(_liveTutorPrefKey, true);
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('Live Tutor: gagal menyimpan penanda "sudah dilihat": $e');
+  }
 }
 
 class _TutorStep {
@@ -72,157 +79,149 @@ class _TutorStep {
   final Widget illustrationWidget;
 }
 
-class _LiveTutorDialog extends StatefulWidget {
+class _LiveTutorDialog extends ConsumerStatefulWidget {
   const _LiveTutorDialog();
 
   @override
-  State<_LiveTutorDialog> createState() => _LiveTutorDialogState();
+  ConsumerState<_LiveTutorDialog> createState() => _LiveTutorDialogState();
 }
 
-class _LiveTutorDialogState extends State<_LiveTutorDialog> {
+class _LiveTutorDialogState extends ConsumerState<_LiveTutorDialog> {
   int _currentStep = 0;
 
-  late final List<_TutorStep> _steps = [
-    _TutorStep(
-      title: 'Pemilihan & Filter Anak',
-      targetButtonName: 'Tombol Tab Anak (Rafi / Atalia)',
-      badgeLabel: '1 dari 5 · Pengalihan Anak',
-      icon: LucideIcons.users,
-      description:
-          'Gunakan tombol segmen di bagian atas layar untuk beralih antara profil anak (Rafi dan Atalia). Setiap anak memiliki jadwal dan pengaturan kemandirian yang terpisah.',
-      illustrationWidget: _buildChildSegmentIllustration(),
-    ),
-    _TutorStep(
-      title: 'Kalender & Navigasi Mingguan',
-      targetButtonName: 'Strip Tanggal & Panah Minggu',
-      badgeLabel: '2 dari 5 · Waktu & Kalender',
-      icon: LucideIcons.calendar,
-      description:
-          'Gunakan panah kiri/kanan atau geser dengan jari untuk berpindah minggu. Titik biru di bawah angka tanggal menandakan adanya jadwal kegiatan yang telah terisi.',
-      illustrationWidget: _buildCalendarIllustration(),
-    ),
-    _TutorStep(
-      title: 'Tambah Jadwal & Template Rutinitas',
-      targetButtonName: 'Tombol Tambah (+) & Template',
-      badgeLabel: '3 dari 5 · Input Lebih Praktis',
-      icon: LucideIcons.sparkles,
-      description:
-          'Tidak perlu mengetik dari nol! Tekan tombol (+) untuk jadwal manual, atau gunakan Template Rutinitas (23+ pilihan) untuk memasukkan jadwal pagi, sekolah, sore, dan ibadah malam dalam 1 klik.',
-      illustrationWidget: _buildTemplateIllustration(),
-    ),
-    _TutorStep(
-      title: 'Jeda Transisi & Waktu Tenang',
-      targetButtonName: 'Aturan 10 Menit & Quiet Time',
-      badgeLabel: '4 dari 5 · Sensorik Ramah Autis',
-      icon: LucideIcons.moon,
-      description:
-          'Aplikasi otomatis menjaga jeda minimal 10 menit antar-kegiatan agar anak tidak stres, serta mengingatkan waktu tenang tanpa gawai (Quiet Time) minimal 30 menit sebelum tidur.',
-      illustrationWidget: _buildQuietTimeIllustration(),
-    ),
-    _TutorStep(
-      title: 'Sisi Anak & Tombol Darurat',
-      targetButtonName: 'Mode Anak & Panggilan Cepat',
-      badgeLabel: '5 dari 5 · Aman & Terlindungi',
-      icon: LucideIcons.shieldCheck,
-      description:
-          'Di sisi anak, antarmuka dirancang tenang tanpa tombol edit/hapus. Anak dapat mencentang langkah kegiatan dan memiliki tombol darurat satu sentuhan untuk menelepon pengasuh saat cemas.',
-      illustrationWidget: _buildEmergencyIllustration(),
-    ),
-  ];
+  static const _dayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+  List<_TutorStep> _buildSteps(AppState state) {
+    final settings = state.settings;
+    final names = state.children.map((c) => c.name).toList();
+    final namesText = names.isEmpty ? 'anak' : names.join(' dan ');
+    return [
+      _TutorStep(
+        title: 'Pemilihan & Filter Anak',
+        targetButtonName: 'Pemilih Anak di Beranda & Jadwal',
+        badgeLabel: '1 dari 5 · Pengalihan Anak',
+        icon: LucideIcons.users,
+        description:
+            'Di tab Beranda (di bawah sapaan) dan tab Jadwal (di bagian atas daftar), ketuk nama anak pada pemilih untuk beralih antara $namesText. Setiap anak memiliki jadwal dan pengaturan kemandirian yang terpisah.',
+        illustrationWidget: _buildChildSegmentIllustration(state),
+      ),
+      _TutorStep(
+        title: 'Kalender & Navigasi Mingguan',
+        targetButtonName: 'Tab Jadwal: Strip Tanggal & Panah Minggu',
+        badgeLabel: '2 dari 5 · Waktu & Kalender',
+        icon: LucideIcons.calendar,
+        description:
+            'Buka tab Jadwal. Gunakan panah kiri/kanan atau geser dengan jari untuk berpindah minggu. Titik kecil di bawah angka tanggal menandakan adanya jadwal kegiatan pada hari itu.',
+        illustrationWidget: _buildCalendarIllustration(),
+      ),
+      _TutorStep(
+        title: 'Tambah Jadwal & Template Rutinitas',
+        targetButtonName: 'Tombol Tambah (+) di Tab Jadwal',
+        badgeLabel: '3 dari 5 · Input Lebih Praktis',
+        icon: LucideIcons.sparkles,
+        description:
+            'Tidak perlu mengetik dari nol! Di tab Jadwal, tekan tombol (+) untuk menambah jadwal, lalu pilih Template Rutinitas (${allRoutineTemplates.length} pilihan kegiatan) untuk memasukkan jadwal pagi, sekolah, sore, dan malam dengan cepat.',
+        illustrationWidget: _buildTemplateIllustration(),
+      ),
+      _TutorStep(
+        title: 'Jeda Transisi & Waktu Tenang',
+        targetButtonName:
+            'Aturan ${settings.minGapMinutes} Menit & Waktu Tenang',
+        badgeLabel: '4 dari 5 · Sensorik Ramah Autis',
+        icon: LucideIcons.moon,
+        description:
+            'Aplikasi menjaga jeda minimal ${settings.minGapMinutes} menit antar-kegiatan agar anak tidak stres, serta mengingatkan waktu tenang tanpa gawai (Quiet Time) ${settings.quietTimeMinutes} menit sebelum tidur. Angka ini bisa diubah di tab Akun.',
+        illustrationWidget: _buildQuietTimeIllustration(
+          settings.quietTimeMinutes,
+        ),
+      ),
+      _TutorStep(
+        title: 'Sisi Anak & Tombol Darurat',
+        targetButtonName: 'Mode Anak & Panggilan Cepat',
+        badgeLabel: '5 dari 5 · Aman & Terlindungi',
+        icon: LucideIcons.shieldCheck,
+        description:
+            'Di sisi anak, antarmuka dirancang tenang tanpa tombol edit/hapus. Anak dapat mencentang langkah kegiatan dan memiliki tombol darurat satu sentuhan untuk menelepon pengasuh saat cemas.',
+        illustrationWidget: _buildEmergencyIllustration(),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final step = _steps[_currentStep];
-    final isLast = _currentStep == _steps.length - 1;
+    final steps = _buildSteps(ref.watch(appStateProvider));
+    final step = steps[_currentStep];
+    final isLast = _currentStep == steps.length - 1;
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: AppSpacing.maxContentWidth,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.grid20),
-            padding: const EdgeInsets.all(AppSpacing.grid20),
-            decoration: BoxDecoration(
-              color: AppColors.permukaan,
-              borderRadius: AppRadius.dialog,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.teks.withValues(alpha: 0.12),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(step),
-                const SizedBox(height: AppSpacing.grid16),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.04, 0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
+        constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.grid20),
+          child: Material(
+            color: AppColors.permukaan,
+            elevation: AppSpacing.fabElevation,
+            shape: const RoundedRectangleBorder(borderRadius: AppRadius.dialog),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.grid20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(step),
+                    const SizedBox(height: AppSpacing.grid16),
+                    AnimatedSwitcher(
+                      duration: AppDurations.normal,
+                      switchInCurve: AppDurations.curve,
+                      transitionBuilder: (child, animation) =>
+                          FadeTransition(opacity: animation, child: child),
+                      child: KeyedSubtree(
+                        key: ValueKey<int>(_currentStep),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            step.illustrationWidget,
+                            const SizedBox(height: AppSpacing.grid16),
+                            Text(
+                              step.title,
+                              style: AppTypography.judulSheet,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: AppSpacing.grid4),
+                            Text(
+                              step.targetButtonName,
+                              style: AppTypography.meta.copyWith(
+                                color: AppColors.utama,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: AppSpacing.grid10),
+                            Text(
+                              step.description,
+                              style: AppTypography.isiDetail.copyWith(
+                                color: AppColors.teksSekunder,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                  child: KeyedSubtree(
-                    key: ValueKey<int>(_currentStep),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        step.illustrationWidget,
-                        const SizedBox(height: AppSpacing.grid16),
-                        Text(
-                          step.title,
-                          style: AppTypography.judulSheet,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.grid4),
-                        Text(
-                          step.targetButtonName,
-                          style: AppTypography.meta.copyWith(
-                            color: AppColors.utama,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.grid10),
-                        Text(
-                          step.description,
-                          style: AppTypography.isi.copyWith(
-                            color: AppColors.teksSekunder,
-                            height: 1.45,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.grid20),
+                    _buildStepIndicators(steps.length),
+                    const SizedBox(height: AppSpacing.grid20),
+                    _buildNavigationButtons(isLast),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.grid20),
-                _buildStepIndicators(),
-                const SizedBox(height: AppSpacing.grid20),
-                _buildNavigationButtons(isLast),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildHeader(_TutorStep step) {
     return Row(
@@ -281,13 +280,13 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
     );
   }
 
-  Widget _buildStepIndicators() {
+  Widget _buildStepIndicators(int count) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        for (var i = 0; i < _steps.length; i++) ...[
+        for (var i = 0; i < count; i++) ...[
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: AppDurations.normal,
             width: i == _currentStep ? AppSpacing.grid20 : AppSpacing.grid8,
             height: AppSpacing.grid8,
             decoration: BoxDecoration(
@@ -295,7 +294,7 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
               borderRadius: AppRadius.pil,
             ),
           ),
-          if (i < _steps.length - 1) const SizedBox(width: AppSpacing.grid6),
+          if (i < count - 1) const SizedBox(width: AppSpacing.grid6),
         ],
       ],
     );
@@ -326,9 +325,7 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Lewati',
-              style: AppTypography.meta.copyWith(
-                color: AppColors.teksSekunder,
-              ),
+              style: AppTypography.meta.copyWith(color: AppColors.teksSekunder),
             ),
           ),
           const SizedBox(width: AppSpacing.grid10),
@@ -350,7 +347,38 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
     );
   }
 
-  static Widget _buildChildSegmentIllustration() {
+  Widget _segment(String label, {required bool selected}) {
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.grid12,
+          vertical: AppSpacing.grid6,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.utama : AppColors.permukaan,
+          borderRadius: AppRadius.segmenTerpilih,
+        ),
+        child: Text(
+          label,
+          style: AppTypography.meta.copyWith(
+            color: selected
+                ? AppColors.teksDiAtasUtama
+                : AppColors.teksSekunder,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChildSegmentIllustration(AppState state) {
+    final labels = state.children
+        .take(2)
+        .map((c) => '${c.name} · ${c.age} th')
+        .toList();
+    if (labels.isEmpty) labels.add('Nama Anak');
+    if (labels.length == 1) labels.add('Anak lain');
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.grid12,
@@ -364,54 +392,17 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.grid12,
-                vertical: AppSpacing.grid6,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.utama,
-                borderRadius: AppRadius.segmenTerpilih,
-              ),
-              child: const Text(
-                'Rafi · 12 th',
-                style: TextStyle(
-                  color: AppColors.teksDiAtasUtama,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
+          _segment(labels[0], selected: true),
           const SizedBox(width: AppSpacing.grid8),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.grid12,
-                vertical: AppSpacing.grid6,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.permukaan,
-                borderRadius: AppRadius.segmenTerpilih,
-              ),
-              child: const Text(
-                'Atalia · 9 th',
-                style: TextStyle(
-                  color: AppColors.teksSekunder,
-                  fontSize: 13,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
+          _segment(labels[1], selected: false),
         ],
       ),
     );
   }
 
-  static Widget _buildCalendarIllustration() {
+  Widget _buildCalendarIllustration() {
+    final now = DateTime.now();
+    final monday = DateTime(now.year, now.month, now.day - (now.weekday - 1));
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.grid12,
@@ -425,90 +416,107 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          const Icon(LucideIcons.chevronLeft, size: 16, color: AppColors.teksSekunder),
-          for (final day in ['Sen', 'Sel', 'Rab', 'Kam', 'Jum']) ...[
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(day, style: const TextStyle(fontSize: 11, color: AppColors.teksSekunder)),
-                const SizedBox(height: 2),
-                Container(
-                  width: 24,
-                  height: 24,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: day == 'Jum' ? AppColors.utama : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: day == 'Jum' ? AppColors.teksDiAtasUtama : AppColors.teks,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.utama,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
+          const Icon(
+            LucideIcons.chevronLeft,
+            size: AppSpacing.iconSize16,
+            color: AppColors.teksSekunder,
+          ),
+          for (var i = 0; i < 7; i++)
+            _calendarDay(
+              _dayLabels[i],
+              DateTime(monday.year, monday.month, monday.day + i),
+              isToday: i == now.weekday - 1,
             ),
-          ],
-          const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.teksSekunder),
+          const Icon(
+            LucideIcons.chevronRight,
+            size: AppSpacing.iconSize16,
+            color: AppColors.teksSekunder,
+          ),
         ],
       ),
     );
   }
 
-  static Widget _buildTemplateIllustration() {
+  Widget _calendarDay(String label, DateTime date, {required bool isToday}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: AppTypography.mikro.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.teksSekunder,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.grid2),
+        Container(
+          width: AppSpacing.grid24,
+          height: AppSpacing.grid24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isToday ? AppColors.utama : AppColors.transparan,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            '${date.day}',
+            style: AppTypography.mikro.copyWith(
+              color: isToday ? AppColors.teksDiAtasUtama : AppColors.teks,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.grid2),
+        Container(
+          width: AppSpacing.weekDot,
+          height: AppSpacing.weekDot,
+          decoration: BoxDecoration(
+            color: isToday ? AppColors.anakAksen : AppColors.transparan,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _illustrationBox({
+    required Color color,
+    required Color borderColor,
+    required Widget leading,
+    required String title,
+    required String subtitle,
+    required Color titleColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.grid14,
         vertical: AppSpacing.grid10,
       ),
       decoration: BoxDecoration(
-        color: AppColors.utamaLembut,
+        color: color,
         borderRadius: AppRadius.kolomIsian,
-        border: Border.all(color: AppColors.utama.withValues(alpha: 0.3)),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.grid6),
-            decoration: const BoxDecoration(
-              color: AppColors.utama,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              LucideIcons.sparkles,
-              size: 16,
-              color: AppColors.teksDiAtasUtama,
-            ),
-          ),
+          leading,
           const SizedBox(width: AppSpacing.grid10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Template Rutinitas (23 Pilihan)',
-                  style: TextStyle(
-                    fontSize: 13,
+                  title,
+                  style: AppTypography.meta.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.utama,
+                    color: titleColor,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'Paket Pagi · Sekolah · Sore · Malam',
-                  style: TextStyle(fontSize: 11, color: AppColors.teksSekunder),
+                  subtitle,
+                  style: AppTypography.mikro.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.teksSekunder,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -519,85 +527,59 @@ class _LiveTutorDialogState extends State<_LiveTutorDialog> {
     );
   }
 
-  static Widget _buildQuietTimeIllustration() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.grid14,
-        vertical: AppSpacing.grid10,
+  Widget _buildTemplateIllustration() {
+    return _illustrationBox(
+      color: AppColors.utamaLembut,
+      borderColor: AppColors.utama.withValues(alpha: AppColors.alphaBayangan),
+      leading: Container(
+        padding: const EdgeInsets.all(AppSpacing.grid6),
+        decoration: const BoxDecoration(
+          color: AppColors.utama,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          LucideIcons.sparkles,
+          size: AppSpacing.iconSize16,
+          color: AppColors.teksDiAtasUtama,
+        ),
       ),
-      decoration: BoxDecoration(
-        color: AppColors.saranLembut,
-        borderRadius: AppRadius.kolomIsian,
-        border: Border.all(color: AppColors.saranTeks.withValues(alpha: 0.2)),
-      ),
-      child: const Row(
-        children: [
-          Icon(LucideIcons.moon, size: 20, color: AppColors.saranTeks),
-          SizedBox(width: AppSpacing.grid10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Waktu Tenang (Quiet Time)',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.saranTeks,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Bebas layar gawai 30 mnt sebelum tidur',
-                  style: TextStyle(fontSize: 11, color: AppColors.teksSekunder),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      title: 'Template Rutinitas (${allRoutineTemplates.length} Pilihan)',
+      subtitle: 'Paket Pagi · Sekolah · Sore · Malam',
+      titleColor: AppColors.utama,
     );
   }
 
-  static Widget _buildEmergencyIllustration() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.grid14,
-        vertical: AppSpacing.grid10,
+  Widget _buildQuietTimeIllustration(int quietMinutes) {
+    return _illustrationBox(
+      color: AppColors.saranLembut,
+      borderColor: AppColors.saranTeks.withValues(
+        alpha: AppColors.alphaBayangan,
       ),
-      decoration: BoxDecoration(
-        color: AppColors.anakLembut,
-        borderRadius: AppRadius.kolomIsian,
-        border: Border.all(color: AppColors.anakAksen.withValues(alpha: 0.3)),
+      leading: const Icon(
+        LucideIcons.moon,
+        size: AppSpacing.iconSize20,
+        color: AppColors.saranTeks,
       ),
-      child: const Row(
-        children: [
-          Icon(LucideIcons.phoneCall, size: 20, color: AppColors.utama),
-          SizedBox(width: AppSpacing.grid10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tombol Darurat Satu Sentuhan',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.teks,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Sisi anak: tenang, aman, langsung menelepon',
-                  style: TextStyle(fontSize: 11, color: AppColors.teksSekunder),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
+      title: 'Waktu Tenang (Quiet Time)',
+      subtitle: 'Bebas layar gawai $quietMinutes mnt sebelum tidur',
+      titleColor: AppColors.saranTeks,
+    );
+  }
+
+  Widget _buildEmergencyIllustration() {
+    return _illustrationBox(
+      color: AppColors.anakLembut,
+      borderColor: AppColors.anakAksen.withValues(
+        alpha: AppColors.alphaBayangan,
       ),
+      leading: const Icon(
+        LucideIcons.phoneCall,
+        size: AppSpacing.iconSize20,
+        color: AppColors.utama,
+      ),
+      title: 'Tombol Darurat Satu Sentuhan',
+      subtitle: 'Sisi anak: tenang, aman, langsung menelepon',
+      titleColor: AppColors.teks,
     );
   }
 }

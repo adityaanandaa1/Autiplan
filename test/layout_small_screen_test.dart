@@ -13,13 +13,14 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fixture_state.dart';
+import 'support/live_tutor_prefs.dart';
 import 'support/in_memory_repository.dart';
 import 'support/test_session.dart';
 
 // Lebar 360 dp dan skala teks 1.3 (HANDOFF 14): tidak boleh ada overflow.
 void main() {
   Future<void> pumpAt(WidgetTester tester, Widget screen) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(liveTutorSeenPrefs);
     final prefs = await SharedPreferences.getInstance();
     await initializeDateFormatting('id_ID');
     tester.view.physicalSize = const Size(360, 740);

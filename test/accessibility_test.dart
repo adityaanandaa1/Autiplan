@@ -38,6 +38,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'support/fake_auth_service.dart';
 import 'support/fake_backend_api.dart';
 import 'support/fixture_state.dart';
+import 'support/live_tutor_prefs.dart';
 import 'support/in_memory_repository.dart';
 import 'support/test_session.dart';
 
@@ -49,7 +50,7 @@ void main() {
     Widget screen, {
     ChildTheme childTheme = ChildTheme.lautTenang,
   }) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(liveTutorSeenPrefs);
     final prefs = await SharedPreferences.getInstance();
     await initializeDateFormatting('id_ID');
     tester.view.physicalSize = const Size(360, 780);

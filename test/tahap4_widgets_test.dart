@@ -11,6 +11,7 @@ import 'package:autiplan/core/widgets/week_strip.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/data/providers.dart';
 import 'support/fixture_state.dart';
+import 'support/live_tutor_prefs.dart';
 import 'package:autiplan/domain/suggestion_engine.dart';
 import 'package:autiplan/features/caregiver/caregiver_shell.dart';
 import 'package:autiplan/features/caregiver/home_screen.dart';
@@ -34,7 +35,7 @@ Future<ProviderContainer> _pump(
   Widget screen, {
   AppState? state,
 }) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(liveTutorSeenPrefs);
   final prefs = await SharedPreferences.getInstance();
   await initializeDateFormatting('id_ID');
   tester.view.physicalSize = const Size(900, 1600);
