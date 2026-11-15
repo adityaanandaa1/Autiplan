@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:autiplan/data/models/models.dart';
 import 'package:autiplan/domain/routine_templates.dart';
+import 'package:autiplan/domain/schedule_rules.dart';
 
 void main() {
   group('Routine Templates', () {
@@ -30,24 +31,30 @@ void main() {
       expect(spiritualItems.length, greaterThanOrEqualTo(3));
     });
 
-    test('generateActivitiesFromTemplate mengonversi template ke Activity valid', () {
-      final date = DateTime(2026, 5, 1);
-      final activities = generateActivitiesFromTemplate(
-        items: allRoutineTemplates.take(3).toList(),
-        childId: 'c1',
-        date: date,
-      );
+    test(
+      'generateActivitiesFromTemplate mengonversi template ke Activity valid',
+      () {
+        final date = DateTime(2026, 5, 1);
+        var n = 0;
+        final activities = generateActivitiesFromTemplate(
+          items: allRoutineTemplates.take(3).toList(),
+          childId: 'c1',
+          date: date,
+          newId: () => 'x${n++}',
+        );
 
-      expect(activities.length, equals(3));
-      for (final a in activities) {
-        expect(a.childId, equals('c1'));
-        expect(a.date.year, equals(2026));
-        expect(a.date.month, equals(5));
-        expect(a.date.day, equals(1));
-        expect(a.title.isNotEmpty, isTrue);
-        expect(a.steps.isNotEmpty, isTrue);
-      }
-    });
+        expect(activities.length, equals(3));
+        expect(activities.map((a) => a.id).toSet().length, equals(3));
+        for (final a in activities) {
+          expect(a.childId, equals('c1'));
+          expect(a.date.year, equals(2026));
+          expect(a.date.month, equals(5));
+          expect(a.date.day, equals(1));
+          expect(a.title.isNotEmpty, isTrue);
+          expect(a.steps.isNotEmpty, isTrue);
+        }
+      },
+    );
 
     test('paket rutinitas (routinePacks) terisi dengan benar', () {
       expect(routinePacks.length, greaterThanOrEqualTo(4));
@@ -55,6 +62,49 @@ void main() {
         expect(pack.items.isNotEmpty, isTrue);
         expect(pack.name.isNotEmpty, isTrue);
       }
+    });
+
+    test('semua paket: jeda antar kegiatan >= 10 menit dan tanpa bentrok', () {
+      final date = DateTime(2026, 5, 1);
+      for (final pack in routinePacks) {
+        var n = 0;
+        final acts = sortActivitiesByStartTime(
+          generateActivitiesFromTemplate(
+            items: pack.items,
+            childId: 'c1',
+            date: date,
+            newId: () => 'a${n++}',
+          ),
+        );
+        for (final a in acts) {
+          expect(
+            findConflicts(activity: a, allActivities: acts),
+            isEmpty,
+            reason: '${pack.name}: ${a.title} bentrok',
+          );
+        }
+        for (var i = 0; i + 1 < acts.length; i++) {
+          final gap = calculateGapMinutes(acts[i], acts[i + 1]);
+          if (gap == null) continue; // tanpa jam selesai (tidur malam)
+          expect(
+            gap,
+            greaterThanOrEqualTo(10),
+            reason: '${pack.name}: ${acts[i].title} -> ${acts[i + 1].title}',
+          );
+        }
+        for (final a in acts) {
+          final end = a.end?.toMinutes();
+          if (end != null) expect(end, lessThanOrEqualTo(21 * 60));
+        }
+      }
+    });
+
+    test('tidur malam mulai 21.00 tanpa jam selesai', () {
+      final t = allRoutineTemplates.firstWhere(
+        (t) => t.id == 'malam_tidur_malam',
+      );
+      expect(t.start, const TimeOfDayLite(21, 0));
+      expect(t.end, isNull);
     });
   });
 }

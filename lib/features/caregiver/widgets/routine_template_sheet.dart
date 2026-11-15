@@ -9,6 +9,8 @@ import '../../../core/widgets/calm_snackbar.dart';
 import '../../../data/models/models.dart';
 import '../../../data/providers.dart';
 import '../../../domain/routine_templates.dart';
+import '../../../domain/schedule_rules.dart';
+import '../forms/form_utils.dart';
 import '../forms/sheet_scaffold.dart';
 
 /// Membuka sheet pemilih template rutinitas siap pakai untuk [child] pada [date].
@@ -27,10 +29,7 @@ void showRoutineTemplateSheet(
 }
 
 class _RoutineTemplateSheet extends ConsumerStatefulWidget {
-  const _RoutineTemplateSheet({
-    required this.child,
-    required this.targetDate,
-  });
+  const _RoutineTemplateSheet({required this.child, required this.targetDate});
 
   final Child child;
   final DateTime targetDate;
@@ -48,8 +47,7 @@ class _RoutineTemplateSheetState extends ConsumerState<_RoutineTemplateSheet> {
   Widget build(BuildContext context) {
     return SheetScaffold(
       title: 'Template Rutinitas',
-      subtitle:
-          'Pilih rutinitas siap pakai untuk jadwal ${widget.child.name}',
+      subtitle: 'Pilih rutinitas siap pakai untuk jadwal ${widget.child.name}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -110,7 +108,8 @@ class _RoutineTemplateSheetState extends ConsumerState<_RoutineTemplateSheet> {
           for (final cat in RoutineCategory.values) ...[
             const SizedBox(width: AppSpacing.grid8),
             _FilterChip(
-              label: '${cat.label} (${allRoutineTemplates.where((t) => t.category == cat).length})',
+              label:
+                  '${cat.label} (${allRoutineTemplates.where((t) => t.category == cat).length})',
               isSelected: _selectedCategory == cat,
               onTap: () => setState(() => _selectedCategory = cat),
             ),
@@ -124,10 +123,7 @@ class _RoutineTemplateSheetState extends ConsumerState<_RoutineTemplateSheet> {
     return Column(
       children: [
         for (final pack in routinePacks) ...[
-          _RoutinePackCard(
-            pack: pack,
-            onApply: () => _applyPack(pack),
-          ),
+          _RoutinePackCard(pack: pack, onApply: () => _applyPack(pack)),
           const SizedBox(height: AppSpacing.grid12),
         ],
       ],
@@ -138,60 +134,92 @@ class _RoutineTemplateSheetState extends ConsumerState<_RoutineTemplateSheet> {
     final filtered = _selectedCategory == null
         ? allRoutineTemplates
         : allRoutineTemplates
-            .where((t) => t.category == _selectedCategory)
-            .toList();
+              .where((t) => t.category == _selectedCategory)
+              .toList();
 
     return Column(
       children: [
         for (final item in filtered) ...[
-          _RoutineItemCard(
-            item: item,
-            onApply: () => _applySingleItem(item),
-          ),
+          _RoutineItemCard(item: item, onApply: () => _applySingleItem(item)),
           const SizedBox(height: AppSpacing.grid12),
         ],
       ],
     );
   }
 
-  void _applyPack(RoutinePack pack) {
-    final state = ref.read(appStateProvider);
-    final newActivities = generateActivitiesFromTemplate(
-      items: pack.items,
+  /// Kegiatan dari [items] yang tidak bentrok dengan jadwal yang ada maupun
+  /// dengan item yang sudah diterima lebih dulu (§8.4).
+  ({List<Activity> accepted, int skipped}) _filterConflicts(
+    List<RoutineTemplateItem> items,
+  ) {
+    final candidates = generateActivitiesFromTemplate(
+      items: items,
       childId: widget.child.id,
       date: widget.targetDate,
+      newId: () => generateId('act'),
     );
+    final pool = List<Activity>.from(ref.read(appStateProvider).activities);
+    final accepted = <Activity>[];
+    for (final a in candidates) {
+      if (findConflicts(activity: a, allActivities: pool).isEmpty) {
+        accepted.add(a);
+        pool.add(a);
+      }
+    }
+    return (accepted: accepted, skipped: candidates.length - accepted.length);
+  }
 
-    final updated = List<Activity>.from(state.activities)..addAll(newActivities);
-    ref.read(appStateProvider.notifier).updateState(
-      state.copyWith(activities: updated),
-    );
+  void _addActivities(List<Activity> added) {
+    final state = ref.read(appStateProvider);
+    ref
+        .read(appStateProvider.notifier)
+        .updateState(
+          state.copyWith(activities: [...state.activities, ...added]),
+        );
+  }
 
-    Navigator.of(context).pop();
-    CalmSnackbar.show(
+  /// Snackbar sebelumnya dibersihkan agar pesan terbaru langsung tampil,
+  /// tidak mengantre di belakang pesan lama.
+  void _notify(BuildContext context, {required String message}) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    CalmSnackbar.show(context, message: message);
+  }
+
+  void _applyPack(RoutinePack pack) {
+    final result = _filterConflicts(pack.items);
+    if (result.accepted.isEmpty) {
+      _notify(
+        context,
+        message: 'Semua kegiatan paket ini bentrok dengan jadwal yang ada.',
+      );
+      return;
+    }
+    _addActivities(result.accepted);
+    _notify(
       context,
-      message:
-          '${pack.name} (${pack.items.length} kegiatan) berhasil ditambahkan.',
+      message: result.skipped == 0
+          ? '${pack.name} (${pack.items.length} kegiatan) berhasil ditambahkan.'
+          : '${result.accepted.length} kegiatan ditambahkan, '
+                '${result.skipped} dilewati karena bentrok dengan jadwal yang ada.',
     );
+    Navigator.of(context).pop();
   }
 
   void _applySingleItem(RoutineTemplateItem item) {
-    final state = ref.read(appStateProvider);
-    final newActivity = item.toActivity(
-      childId: widget.child.id,
-      date: widget.targetDate,
-    );
-
-    final updated = List<Activity>.from(state.activities)..add(newActivity);
-    ref.read(appStateProvider.notifier).updateState(
-      state.copyWith(activities: updated),
-    );
-
-    Navigator.of(context).pop();
-    CalmSnackbar.show(
+    final result = _filterConflicts([item]);
+    if (result.accepted.isEmpty) {
+      _notify(
+        context,
+        message: '"${item.title}" bentrok dengan jadwal yang ada.',
+      );
+      return;
+    }
+    _addActivities(result.accepted);
+    _notify(
       context,
       message: '"${item.title}" berhasil ditambahkan ke jadwal.',
     );
+    Navigator.of(context).pop();
   }
 }
 
@@ -298,10 +326,7 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _RoutinePackCard extends StatelessWidget {
-  const _RoutinePackCard({
-    required this.pack,
-    required this.onApply,
-  });
+  const _RoutinePackCard({required this.pack, required this.onApply});
 
   final RoutinePack pack;
   final VoidCallback onApply;
@@ -411,10 +436,7 @@ class _RoutinePackCard extends StatelessWidget {
 }
 
 class _RoutineItemCard extends StatelessWidget {
-  const _RoutineItemCard({
-    required this.item,
-    required this.onApply,
-  });
+  const _RoutineItemCard({required this.item, required this.onApply});
 
   final RoutineTemplateItem item;
   final VoidCallback onApply;

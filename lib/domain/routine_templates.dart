@@ -4,7 +4,10 @@ enum RoutineCategory {
   pagi('Pagi', 'Rutinitas awal hari yang segar & teratur'),
   sekolah('Sekolah & Siang', 'Aktivitas belajar formal dan istirahat siang'),
   sore('Sore & Olahraga', 'Aktivitas fisik, hobi kreatif, dan kebersihan'),
-  malam('Malam & Spiritual', 'Ibadah, waktu tenang tanpa gawai, dan tidur nyenyak');
+  malam(
+    'Malam & Spiritual',
+    'Ibadah, waktu tenang tanpa gawai, dan tidur nyenyak',
+  );
 
   const RoutineCategory(this.label, this.description);
   final String label;
@@ -37,10 +40,10 @@ class RoutineTemplateItem {
   Activity toActivity({
     required String childId,
     required DateTime date,
-    String? customId,
+    required String activityId,
   }) {
     return Activity(
-      id: customId ?? 'tpl_${id}_${date.millisecondsSinceEpoch}_${start.hour}${start.minute}',
+      id: activityId,
       childId: childId,
       title: title,
       shortTitle: shortTitle,
@@ -81,7 +84,7 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     shortTitle: 'Bangun Tidur',
     icon: ActivityIcon.mandi,
     start: TimeOfDayLite(5, 30),
-    end: TimeOfDayLite(6, 0),
+    end: TimeOfDayLite(5, 45),
     category: RoutineCategory.pagi,
     description: 'Melatih anak memulai hari dengan teratur dan mandiri.',
     steps: [
@@ -95,8 +98,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Senam & Peregangan Pagi',
     shortTitle: 'Senam Pagi',
     icon: ActivityIcon.sepeda,
-    start: TimeOfDayLite(6, 0),
-    end: TimeOfDayLite(6, 20),
+    start: TimeOfDayLite(5, 55),
+    end: TimeOfDayLite(6, 15),
     category: RoutineCategory.pagi,
     description: 'Gerakan motorik ringan untuk menyegarkan fokus anak.',
     steps: [
@@ -111,8 +114,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Mandi Pagi & Sikat Gigi',
     shortTitle: 'Mandi Pagi',
     icon: ActivityIcon.mandi,
-    start: TimeOfDayLite(6, 20),
-    end: TimeOfDayLite(6, 40),
+    start: TimeOfDayLite(6, 25),
+    end: TimeOfDayLite(6, 45),
     category: RoutineCategory.pagi,
     description: 'Rutinitas kebersihan sensorik dengan air sejuk/hangat.',
     steps: [
@@ -127,8 +130,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Sarapan Pagi Bergizi',
     shortTitle: 'Sarapan Pagi',
     icon: ActivityIcon.makan,
-    start: TimeOfDayLite(6, 40),
-    end: TimeOfDayLite(7, 10),
+    start: TimeOfDayLite(6, 55),
+    end: TimeOfDayLite(7, 20),
     category: RoutineCategory.pagi,
     description: 'Waktu makan tenang bersama keluarga sebelum beraktivitas.',
     steps: [
@@ -143,8 +146,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Menyiapkan Perlengkapan Sekolah',
     shortTitle: 'Siap Sekolah',
     icon: ActivityIcon.sekolah,
-    start: TimeOfDayLite(7, 10),
-    end: TimeOfDayLite(7, 30),
+    start: TimeOfDayLite(7, 30),
+    end: TimeOfDayLite(7, 50),
     category: RoutineCategory.pagi,
     description: 'Mengecek isi tas dan memakai seragam secara mandiri.',
     steps: [
@@ -176,7 +179,7 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Belajar di Sekolah',
     shortTitle: 'Sekolah',
     icon: ActivityIcon.sekolah,
-    start: TimeOfDayLite(7, 30),
+    start: TimeOfDayLite(8, 0),
     end: TimeOfDayLite(11, 30),
     category: RoutineCategory.sekolah,
     description: 'Kegiatan belajar formal terstruktur bersama guru dan teman.',
@@ -208,8 +211,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Pulang Sekolah & Ganti Pakaian',
     shortTitle: 'Pulang Sekolah',
     icon: ActivityIcon.mandi,
-    start: TimeOfDayLite(12, 0),
-    end: TimeOfDayLite(12, 30),
+    start: TimeOfDayLite(11, 40),
+    end: TimeOfDayLite(12, 10),
     category: RoutineCategory.sekolah,
     description: 'Membiasakan transisi tenang saat kembali ke rumah.',
     steps: [
@@ -224,8 +227,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Makan Siang & Istirahat Santai',
     shortTitle: 'Makan Siang',
     icon: ActivityIcon.makan,
-    start: TimeOfDayLite(12, 30),
-    end: TimeOfDayLite(13, 0),
+    start: TimeOfDayLite(12, 20),
+    end: TimeOfDayLite(12, 50),
     category: RoutineCategory.sekolah,
     description: 'Asupan nutrisi siang dan istirahat dari suara bising luar.',
     steps: [
@@ -257,10 +260,11 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Bersepeda Santai di Taman',
     shortTitle: 'Sepeda Santai',
     icon: ActivityIcon.sepeda,
-    start: TimeOfDayLite(16, 0),
-    end: TimeOfDayLite(17, 0),
+    start: TimeOfDayLite(15, 30),
+    end: TimeOfDayLite(16, 15),
     category: RoutineCategory.sore,
-    description: 'Stimulasi sensori proprioseptif dan vestibular yang menyenangkan.',
+    description:
+        'Stimulasi sensori proprioseptif dan vestibular yang menyenangkan.',
     steps: [
       'Pakai helm pengaman dan sepatu',
       'Bersepeda di jalur aman',
@@ -288,8 +292,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Bermain Kreatif Balok / Lego',
     shortTitle: 'Bermain Lego',
     icon: ActivityIcon.main,
-    start: TimeOfDayLite(16, 30),
-    end: TimeOfDayLite(17, 15),
+    start: TimeOfDayLite(16, 25),
+    end: TimeOfDayLite(17, 0),
     category: RoutineCategory.sore,
     description: 'Melatih fokus visual spasial dan kreativitas anak.',
     steps: [
@@ -303,8 +307,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Menggambar & Mewarnai Tenang',
     shortTitle: 'Menggambar',
     icon: ActivityIcon.main,
-    start: TimeOfDayLite(16, 30),
-    end: TimeOfDayLite(17, 15),
+    start: TimeOfDayLite(16, 25),
+    end: TimeOfDayLite(17, 0),
     category: RoutineCategory.sore,
     description: 'Aktivitas motorik halus yang menenangkan suasana hati.',
     steps: [
@@ -318,8 +322,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Mandi Sore & Cuci Rambut',
     shortTitle: 'Mandi Sore',
     icon: ActivityIcon.mandi,
-    start: TimeOfDayLite(17, 30),
-    end: TimeOfDayLite(18, 0),
+    start: TimeOfDayLite(17, 10),
+    end: TimeOfDayLite(17, 35),
     category: RoutineCategory.sore,
     description: 'Membersihkan keringat setelah beraktivitas sore.',
     steps: [
@@ -336,8 +340,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Sholat Maghrib & Doa Bersama',
     shortTitle: 'Sholat Maghrib',
     icon: ActivityIcon.ngaji,
-    start: TimeOfDayLite(18, 0),
-    end: TimeOfDayLite(18, 30),
+    start: TimeOfDayLite(17, 45),
+    end: TimeOfDayLite(18, 5),
     category: RoutineCategory.malam,
     description: 'Ibadah awal malam untuk ketenangan jiwa dan spiritual.',
     steps: [
@@ -352,8 +356,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Mengaji Al-Qur\'an & Hafalan Doa',
     shortTitle: 'Mengaji',
     icon: ActivityIcon.ngaji,
-    start: TimeOfDayLite(18, 30),
-    end: TimeOfDayLite(19, 15),
+    start: TimeOfDayLite(18, 15),
+    end: TimeOfDayLite(18, 45),
     category: RoutineCategory.malam,
     description: 'Belajar membaca ayat suci dan doa harian dengan pembimbing.',
     steps: [
@@ -368,8 +372,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Makan Malam Bersama Keluarga',
     shortTitle: 'Makan Malam',
     icon: ActivityIcon.makan,
-    start: TimeOfDayLite(19, 15),
-    end: TimeOfDayLite(19, 45),
+    start: TimeOfDayLite(18, 55),
+    end: TimeOfDayLite(19, 20),
     category: RoutineCategory.malam,
     description: 'Kebersamaan keluarga yang hangat dan santai.',
     steps: [
@@ -384,8 +388,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Sholat Isya & Dzikir Penenang',
     shortTitle: 'Sholat Isya',
     icon: ActivityIcon.ngaji,
-    start: TimeOfDayLite(19, 45),
-    end: TimeOfDayLite(20, 15),
+    start: TimeOfDayLite(19, 30),
+    end: TimeOfDayLite(19, 50),
     category: RoutineCategory.malam,
     description: 'Menyempurnakan ibadah harian dengan dzikir penyejuk hati.',
     steps: [
@@ -400,8 +404,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Waktu Santai Tanpa Gawai (Quiet Time)',
     shortTitle: 'Waktu Tenang',
     icon: ActivityIcon.les,
-    start: TimeOfDayLite(20, 15),
-    end: TimeOfDayLite(20, 45),
+    start: TimeOfDayLite(20, 0),
+    end: TimeOfDayLite(20, 30),
     category: RoutineCategory.malam,
     description: 'Meredakan stimulasi layar minimal 30 menit sebelum tidur.',
     steps: [
@@ -416,8 +420,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     title: 'Sikat Gigi, Wudhu & Siap Tidur',
     shortTitle: 'Siap Tidur',
     icon: ActivityIcon.mandi,
-    start: TimeOfDayLite(20, 45),
-    end: TimeOfDayLite(21, 0),
+    start: TimeOfDayLite(20, 40),
+    end: TimeOfDayLite(20, 50),
     category: RoutineCategory.malam,
     description: 'Menjaga kebersihan dan kesucian diri menjelang istirahat.',
     steps: [
@@ -434,7 +438,8 @@ final List<RoutineTemplateItem> allRoutineTemplates = [
     start: TimeOfDayLite(21, 0),
     end: null, // Sesuai aturan AutiPlan: tidur malam tanpa batas selesai
     category: RoutineCategory.malam,
-    description: 'Tidur lelap untuk regenerasi fisik dan kestabilan emosi esok hari.',
+    description:
+        'Tidur lelap untuk regenerasi fisik dan kestabilan emosi esok hari.',
     steps: [
       'Membaca doa sebelum tidur dan ayat kursi',
       'Berbaring posisi miring ke kanan dengan nyaman',
@@ -449,7 +454,8 @@ final List<RoutinePack> routinePacks = [
   RoutinePack(
     id: 'pack_pagi_sekolah',
     name: 'Paket Hari Sekolah Lengkap',
-    description: 'Jadwal terpadu mulai bangun pagi, sekolah, istirahat siang, hingga pulang.',
+    description:
+        'Jadwal terpadu mulai bangun pagi, sekolah, istirahat siang, hingga pulang.',
     category: RoutineCategory.sekolah,
     icon: ActivityIcon.sekolah,
     items: [
@@ -465,7 +471,8 @@ final List<RoutinePack> routinePacks = [
   RoutinePack(
     id: 'pack_malam_spiritual',
     name: 'Paket Malam Spiritual & Tidur Tenang',
-    description: 'Rangkaian sholat Maghrib, mengaji, makan malam, sholat Isya, hingga istirahat.',
+    description:
+        'Rangkaian sholat Maghrib, mengaji, makan malam, sholat Isya, hingga istirahat.',
     category: RoutineCategory.malam,
     icon: ActivityIcon.ngaji,
     items: [
@@ -481,7 +488,8 @@ final List<RoutinePack> routinePacks = [
   RoutinePack(
     id: 'pack_sore_aktif',
     name: 'Paket Sore Olahraga & Kreatif',
-    description: 'Kombinasi aktivitas fisik di luar dan hobi menenangkan di rumah.',
+    description:
+        'Kombinasi aktivitas fisik di luar dan hobi menenangkan di rumah.',
     category: RoutineCategory.sore,
     icon: ActivityIcon.sepeda,
     items: [
@@ -493,7 +501,8 @@ final List<RoutinePack> routinePacks = [
   RoutinePack(
     id: 'pack_pagi_ceria',
     name: 'Paket Pagi Mandiri & Sehat',
-    description: 'Membangun kebiasaan bangun pagi, senam ringan, mandi, dan sarapan.',
+    description:
+        'Membangun kebiasaan bangun pagi, senam ringan, mandi, dan sarapan.',
     category: RoutineCategory.pagi,
     icon: ActivityIcon.mandi,
     items: [
@@ -505,27 +514,18 @@ final List<RoutinePack> routinePacks = [
   ),
 ];
 
-/// Mengubah daftar [RoutineTemplateItem] menjadi daftar [Activity] baru untuk anak pada [date].
+/// Mengubah daftar [RoutineTemplateItem] menjadi daftar [Activity] baru untuk
+/// anak pada [date]. [newId] dipanggil sekali per kegiatan sehingga setiap ID
+/// unik.
 List<Activity> generateActivitiesFromTemplate({
   required List<RoutineTemplateItem> items,
   required String childId,
   required DateTime date,
+  required String Function() newId,
 }) {
   final targetDate = DateTime(date.year, date.month, date.day);
-  final List<Activity> activities = [];
-  final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-  for (var i = 0; i < items.length; i++) {
-    final item = items[i];
-    final customId = 'act_${nowMs}_${item.id}_$i';
-    activities.add(
-      item.toActivity(
-        childId: childId,
-        date: targetDate,
-        customId: customId,
-      ),
-    );
-  }
-
-  return activities;
+  return [
+    for (final item in items)
+      item.toActivity(childId: childId, date: targetDate, activityId: newId()),
+  ];
 }

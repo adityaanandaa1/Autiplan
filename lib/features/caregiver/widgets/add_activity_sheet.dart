@@ -188,9 +188,13 @@ class _AddActivitySheetState extends ConsumerState<AddActivitySheet> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  // Ambil navigator induk sebelum sheet ini ditutup, supaya
+                  // tidak memakai context yang sudah lepas dari pohon widget.
+                  final navigator = Navigator.of(context);
+                  final parentContext = navigator.context;
+                  navigator.pop();
                   showRoutineTemplateSheet(
-                    context,
+                    parentContext,
                     ref,
                     child: child,
                     date: _date,

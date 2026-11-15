@@ -77,7 +77,10 @@ void main() {
 
     expect(find.text('Template Rutinitas'), findsOneWidget);
     expect(find.text('Paket Lengkap (${routinePacks.length})'), findsOneWidget);
-    expect(find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'), findsOneWidget);
+    expect(
+      find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'),
+      findsOneWidget,
+    );
 
     // Paket malam spiritual tampil
     expect(find.text('Paket Malam Spiritual & Tidur Tenang'), findsOneWidget);
@@ -87,7 +90,9 @@ void main() {
     await pumpTemplateSheet(tester);
 
     // Ketuk tab pilihan kegiatan
-    await tester.tap(find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'));
+    await tester.tap(
+      find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'),
+    );
     await tester.pumpAndSettle();
 
     // Chip filter tampil
@@ -98,7 +103,9 @@ void main() {
     expect(find.text('Bangun & Rapikan Tempat Tidur'), findsOneWidget);
   });
 
-  testWidgets('menerapkan paket menambahkan seluruh kegiatan paket ke state', (tester) async {
+  testWidgets('menerapkan paket menambahkan seluruh kegiatan paket ke state', (
+    tester,
+  ) async {
     final (_, notifier) = await pumpTemplateSheet(tester);
     final initialCount = notifier.state.activities.length;
 
@@ -112,5 +119,83 @@ void main() {
     expect(notifier.state.activities.length, greaterThan(initialCount));
     // Sheet tertutup
     expect(find.text('Template Rutinitas'), findsNothing);
+  });
+
+  testWidgets('menerapkan paket dua kali tidak menggandakan kegiatan', (
+    tester,
+  ) async {
+    final (_, notifier) = await pumpTemplateSheet(
+      tester,
+      initialState: buildFixtureState().copyWith(activities: const []),
+    );
+
+    final applyButton = find.textContaining('Terapkan Paket').first;
+    await tester.ensureVisible(applyButton);
+    await tester.tap(applyButton);
+    await tester.pumpAndSettle();
+    final afterFirst = notifier.state.activities.length;
+    expect(afterFirst, routinePacks.first.items.length);
+    expect(
+      notifier.state.activities.map((a) => a.id).toSet().length,
+      afterFirst,
+    );
+    expect(
+      notifier.state.activities.every((a) => a.id.startsWith('act-')),
+      isTrue,
+    );
+
+    await tester.tap(find.text('Buka Template'));
+    await tester.pumpAndSettle();
+    final again = find.textContaining('Terapkan Paket').first;
+    await tester.ensureVisible(again);
+    await tester.tap(again);
+    await tester.pumpAndSettle();
+
+    expect(notifier.state.activities.length, afterFirst);
+    expect(
+      find.text('Semua kegiatan paket ini bentrok dengan jadwal yang ada.'),
+      findsOneWidget,
+    );
+    // Sheet tetap terbuka.
+    expect(find.text('Template Rutinitas'), findsOneWidget);
+  });
+
+  testWidgets('kegiatan satuan yang bentrok tidak ditambahkan', (tester) async {
+    final (_, notifier) = await pumpTemplateSheet(
+      tester,
+      initialState: buildFixtureState().copyWith(activities: const []),
+    );
+
+    await tester.tap(
+      find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> addFirst() async {
+      final btn = find.text('Tambahkan ke Jadwal').first;
+      await tester.ensureVisible(btn);
+      await tester.tap(btn);
+      await tester.pumpAndSettle();
+    }
+
+    await addFirst();
+    expect(notifier.state.activities.length, 1);
+
+    await tester.tap(find.text('Buka Template'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text('Pilihan Kegiatan (${allRoutineTemplates.length})'),
+    );
+    await tester.pumpAndSettle();
+    await addFirst();
+
+    expect(notifier.state.activities.length, 1);
+    expect(
+      find.text(
+        '"Bangun & Rapikan Tempat Tidur" bentrok dengan jadwal yang ada.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Template Rutinitas'), findsOneWidget);
   });
 }
